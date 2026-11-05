@@ -41,6 +41,7 @@ interface FilesViewProps {
   onCreateNew?: () => void;
   onOpenCuratedCatalogModal?: () => void;
   onOpenDatabaseUpload?: (exam: Exam) => void;
+  onOpenDownloadCenter?: () => void;
   isAdmin?: boolean;
   user?: AppUser | null;
 }
@@ -55,6 +56,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
   onDeleteExam,
   onOpenCuratedCatalogModal,
   onOpenDatabaseUpload,
+  onOpenDownloadCenter,
   isAdmin = false,
   user,
 }) => {
@@ -372,6 +374,18 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   <CloudDownload className="w-3.5 h-3.5 text-black stroke-[2.5]" />
                 </span>
                 <span>Download Exams {user?.grade ? `(G${user.grade})` : ''}</span>
+              </button>
+            )}
+
+            {onOpenDownloadCenter && (
+              <button
+                type="button"
+                onClick={onOpenDownloadCenter}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs active:scale-98"
+                title="Download 1-3 or 1-5 year university & secondary exam bundles into offline SQLite database files"
+              >
+                <CloudDownload className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>SQLite Bundles (1-5 Yrs)</span>
               </button>
             )}
 

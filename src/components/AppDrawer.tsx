@@ -23,6 +23,7 @@ import {
   Download,
   Share2,
   Lock,
+  Database,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -42,6 +43,8 @@ interface AppDrawerProps {
   onExportAllData?: () => void;
   onResetDefaultExams?: () => void;
   onOpenSubscriptionModal: () => void;
+  onOpenDownloadCenter?: () => void;
+  onOpenSupabaseConfig?: () => void;
   activeSubscription: UserSubscription | null;
 }
 
@@ -54,6 +57,8 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onNavigateToSharedHistory,
   onOpenDatabaseUpload,
   onOpenSubscriptionModal,
+  onOpenDownloadCenter,
+  onOpenSupabaseConfig,
 }) => {
   const { user, signOut, firstRegisteredEmail } = useAuth();
   const { unreadAlertsCount, completedToday, dailyGoal, studyStreakDays } = useNotifications();
@@ -324,6 +329,68 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
                         Push exams and questions directly to Cloud Firestore
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
+
+              {/* Offline SQLite Download Center */}
+              {onOpenDownloadCenter && (
+                <button
+                  id="drawer-download-center-btn"
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenDownloadCenter();
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shadow-2xs">
+                      <Download className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                        <span>Offline Download Center</span>
+                        <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                          SQLite .db
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Download multi-year university &amp; high school exam bundles
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
+
+              {/* Supabase Cloud Storage Configuration */}
+              {onOpenSupabaseConfig && (
+                <button
+                  id="drawer-supabase-config-btn"
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenSupabaseConfig();
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shadow-2xs">
+                      <Database className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                        <span>Supabase Media Storage</span>
+                        <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-[#0f1d33] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10">
+                          Cloud
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Manage Supabase credentials for diagrams &amp; database
                       </div>
                     </div>
                   </div>

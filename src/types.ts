@@ -7,6 +7,11 @@ export interface Question {
   subject?: string;
   grade?: string;
   topic?: string;
+  // Rich media extensions (diagrams, graphs, tables)
+  imageUrl?: string;
+  imageCaption?: string;
+  tableMarkdown?: string;
+  optionImages?: (string | null | undefined)[];
 }
 
 export type SubjectType = 'theory' | 'calculation';
@@ -15,6 +20,11 @@ export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
 export type ExamCategory = 'official' | 'created';
 export type CreatedExamType = 'teacher' | 'student_draft';
 export type UserRole = 'student' | 'teacher' | 'admin';
+
+export type ExamTier = 'university' | 'secondary';
+export type ExamSemester = 'Semester 1' | 'Semester 2' | 'All';
+export type ExamTypeClassification = 'Mid' | 'Final' | 'National' | 'Model' | 'Quiz' | 'Make-up';
+export type YearDurationFilter = 'all' | '1-3' | '1-5';
 
 export interface ExamMetadata {
   subject: string;
@@ -28,11 +38,21 @@ export interface ExamMetadata {
   createdType?: CreatedExamType;
   school?: string;
   teacherName?: string;
-  examYear?: string;
+  examYear?: string | number;
   curator?: string;
   pushedToCloud?: boolean;
   offlineCapped?: boolean;
   originalQuestionCount?: number;
+  // University & Extended Classification
+  tier?: ExamTier;
+  university?: string;
+  department?: string;
+  academicYear?: string; // 'Freshman', '2nd Year', '3rd Year', 'Grade 12', etc.
+  semester?: ExamSemester;
+  examType?: ExamTypeClassification | string;
+  hasImages?: boolean;
+  hasTables?: boolean;
+  storageSource?: 'supabase' | 'firestore' | 'local';
 }
 
 export interface Exam {
@@ -60,9 +80,19 @@ export interface Exam {
   createdType?: CreatedExamType;
   school?: string;
   teacherName?: string;
-  examYear?: string;
+  examYear?: string | number;
+  // University & College Level Fields
+  tier?: ExamTier;
+  university?: string;
+  department?: string;
+  academicYear?: string; // e.g. 'Freshman', '2nd Year', 'Grade 12'
+  semester?: ExamSemester;
+  examType?: ExamTypeClassification | string;
+  hasImages?: boolean;
+  hasTables?: boolean;
+  storageSource?: 'supabase' | 'firestore' | 'local';
   // Dual-type exam categorization & curated catalog fields
-  sourceType?: 'user_created' | 'curated_catalog' | 'firestore';
+  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'supabase';
   isDownloaded?: boolean;
   catalogId?: string;
   stream?: string;
@@ -72,7 +102,7 @@ export interface Exam {
   downloadCount?: number;
   // Cloud Database Storage tracking
   isUploadedToCloud?: boolean;
-  cloudStorageEngine?: 'firestore';
+  cloudStorageEngine?: 'firestore' | 'supabase';
   cloudUploadedAt?: string;
   authorEmail?: string;
   adminTag?: string;
@@ -193,3 +223,73 @@ export interface UserSubscription {
   verifiedBy?: string;
   notes?: string;
 }
+
+export const ETHIOPIAN_UNIVERSITIES = [
+  'Addis Ababa University (AAU)',
+  'Adama Science & Technology University (ASTU)',
+  'Addis Ababa Science & Technology University (AASTU)',
+  'Hawassa University (HU)',
+  'Jimma University (JU)',
+  'Bahir Dar University (BDU)',
+  'University of Gondar (UoG)',
+  'Haramaya University',
+  'Mekelle University',
+  'Arba Minch University',
+  'Dilla University',
+  'Wollo University',
+  'Dire Dawa University',
+  'Debre Markos University',
+  'Debre Berhan University',
+  'Jigjiga University',
+  'Wachemo University',
+  'Ambo University',
+  'Assosa University',
+  'Semera University',
+] as const;
+
+export const FRESHMAN_SUBJECTS = [
+  'General Physics (Phys 1011)',
+  'Calculus I (Math 1011)',
+  'Calculus II (Math 1012)',
+  'Applied Mathematics I',
+  'General Chemistry (Chem 1011)',
+  'Introduction to Emerging Technologies',
+  'Communicative English Language Skills I',
+  'Communicative English Language Skills II',
+  'Critical Thinking & Logic',
+  'General Psychology',
+  'Geography of Ethiopia & the Horn',
+  'Physical Fitness & Health',
+  'Social Anthropology',
+  'Inclusiveness',
+  'Moral & Civic Education',
+] as const;
+
+export const SECONDARY_SUBJECTS = [
+  'Physics',
+  'Mathematics',
+  'Chemistry',
+  'Biology',
+  'English',
+  'General Aptitude',
+  'Economics',
+  'Geography',
+  'History',
+  'Civics & Ethical Education',
+  'Information Technology (IT)',
+  'Amharic',
+  'Afaan Oromoo',
+  'Tigrigna',
+] as const;
+
+export const ETHIOPIAN_EXAM_YEARS = [
+  '2017 E.C. (2025 G.C.)',
+  '2016 E.C. (2024 G.C.)',
+  '2015 E.C. (2023 G.C.)',
+  '2014 E.C. (2022 G.C.)',
+  '2013 E.C. (2021 G.C.)',
+  '2012 E.C. (2020 G.C.)',
+  '2011 E.C. (2019 G.C.)',
+  '2010 E.C. (2018 G.C.)',
+] as const;
+

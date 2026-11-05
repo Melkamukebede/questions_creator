@@ -112,6 +112,12 @@ const DatabaseUploadModal = lazyWithRetry(() =>
 const UserRegistrationModal = lazyWithRetry(() =>
   import('./components/UserRegistrationModal').then((m) => ({ default: m.UserRegistrationModal }))
 );
+const DownloadCenterModal = lazyWithRetry(() =>
+  import('./components/DownloadCenterModal').then((m) => ({ default: m.DownloadCenterModal }))
+);
+const SupabaseConfigModal = lazyWithRetry(() =>
+  import('./components/SupabaseConfigModal').then((m) => ({ default: m.SupabaseConfigModal }))
+);
 import { TeacherPendingVerificationView } from './components/TeacherPendingVerificationView';
 import { AppSplashScreen } from './components/AppSplashScreen';
 
@@ -226,6 +232,8 @@ function MainApp() {
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isCuratedModalOpen, setIsCuratedModalOpen] = useState(false);
+  const [isDownloadCenterOpen, setIsDownloadCenterOpen] = useState(false);
+  const [isSupabaseConfigOpen, setIsSupabaseConfigOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [examForDatabaseUpload, setExamForDatabaseUpload] = useState<Exam | null>(null);
 
@@ -824,6 +832,8 @@ function MainApp() {
         onOpenNotifications={() => setIsNotificationsModalOpen(true)}
         onOpenDrawer={() => setIsDrawerOpen(true)}
         onOpenSubscriptionModal={isTeacher ? undefined : () => setIsSubscriptionModalOpen(true)}
+        onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
+        onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
         activeSubscription={activeSubscription}
       />
 
@@ -848,6 +858,8 @@ function MainApp() {
             onOpenCuratedModal={() => setIsCuratedModalOpen(true)}
             onOpenRegistrationModal={openRegistrationModal}
             onOpenNotificationsModal={() => setIsNotificationsModalOpen(true)}
+            onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
+            onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
             activeSubscription={activeSubscription}
             userTier={userTier}
             user={user}
@@ -870,6 +882,7 @@ function MainApp() {
               setActiveTab('create');
             }}
             onOpenCuratedCatalogModal={() => setIsCuratedModalOpen(true)}
+            onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
             onOpenDatabaseUpload={(isAdmin || isTeacher) ? (exam) => setExamForDatabaseUpload(exam) : undefined}
             isAdmin={isAdmin}
             user={user}
@@ -1007,6 +1020,8 @@ function MainApp() {
         onExportAllData={handleExportAllData}
         onResetDefaultExams={handleResetDefaultExams}
         onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
+        onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
+        onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
         activeSubscription={activeSubscription}
       />
 
@@ -1066,6 +1081,31 @@ function MainApp() {
             officialExams={officialExams}
             onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
             onStartPractice={handleStartPractice}
+          />
+        )}
+
+        {/* Offline Exam Download Center Modal (Multi-Year SQLite Bundles) */}
+        {isDownloadCenterOpen && (
+          <DownloadCenterModal
+            isOpen={isDownloadCenterOpen}
+            onClose={() => setIsDownloadCenterOpen(false)}
+            allExams={[...officialExams, ...exams]}
+            onStartExam={(exam) => {
+              setIsDownloadCenterOpen(false);
+              handleStartPractice(exam);
+            }}
+            userAcademicYear={user?.grade || 'Freshman'}
+          />
+        )}
+
+        {/* Supabase Storage & Database Configuration Modal */}
+        {isSupabaseConfigOpen && (
+          <SupabaseConfigModal
+            isOpen={isSupabaseConfigOpen}
+            onClose={() => setIsSupabaseConfigOpen(false)}
+            onSuccess={() => {
+              showToast('Supabase storage credentials verified and connected!');
+            }}
           />
         )}
 

@@ -282,6 +282,9 @@ const parsePlainTextRobust = (raw: string): Question[] => {
     const explanationLines: string[] = [];
     let inExplanation = false;
     let foundFirstOption = false;
+    let imageUrl: string | undefined = undefined;
+    let imageCaption: string | undefined = undefined;
+    const tableLines: string[] = [];
 
     const firstLine = lines[0].trim();
     const headerMatch = firstLine.match(/^(?:question\s*\d+[:\.]?|\bq\d+[:\.\)]|\d+[\.\)]|\#+\s*\d+[\.\)]?)\s*(.*)/i);
@@ -299,6 +302,30 @@ const parsePlainTextRobust = (raw: string): Question[] => {
         if (inExplanation) {
           explanationLines.push('');
         }
+        continue;
+      }
+
+      // Check for image or diagram directives: ![caption](url) or Image: http... or Diagram: ...
+      const imgMatch = line.match(/^!\[(.*?)\]\((.*?)\)/) || line.match(/^(?:image|diagram|figure|circuit|schematic)(?:\s*(?:url|link))?\s*[:\-\=]\s*(https?:\/\/[^\s]+|data:image\/[^\s]+)/i);
+      if (imgMatch) {
+        if (line.startsWith('![')) {
+          imageCaption = imgMatch[1] || undefined;
+          imageUrl = imgMatch[2];
+        } else {
+          imageUrl = imgMatch[1];
+        }
+        continue;
+      }
+
+      const captionMatch = line.match(/^(?:caption|image\s*caption|figure\s*caption|diagram\s*caption)\s*[:\-\=]\s*(.+)$/i);
+      if (captionMatch) {
+        imageCaption = captionMatch[1].trim();
+        continue;
+      }
+
+      // Check for markdown table line
+      if (line.startsWith('|') && line.endsWith('|')) {
+        tableLines.push(line);
         continue;
       }
 
@@ -349,6 +376,9 @@ const parsePlainTextRobust = (raw: string): Question[] => {
         options: options.slice(0, 4).map((opt) => cleanMathNotation(opt)),
         correct: correct >= 0 && correct < 4 ? correct : 0,
         explanation: cleanMathNotation(explanationLines.join('\n').trim()),
+        imageUrl,
+        imageCaption,
+        tableMarkdown: tableLines.length >= 2 ? tableLines.join('\n') : undefined,
       });
     }
   });
@@ -858,6 +888,9 @@ Time Limit: 25 minutes
     const resolvedTopic = topic.trim();
 
     const isTeacher = user?.role === 'teacher' || Boolean(user?.isVerifiedTeacher);
+    const hasImages = questions.some((q) => Boolean(q.imageUrl));
+    const hasTables = questions.some((q) => Boolean(q.tableMarkdown));
+    const isUniv = String(grade).toLowerCase().includes('freshman') || String(grade).toLowerCase().includes('university');
 
     const examData: Exam = {
       id: initialExam?.id || 'exam_' + Date.now(),
@@ -865,6 +898,9 @@ Time Limit: 25 minutes
       subject: resolvedSubject,
       topic: resolvedTopic || undefined,
       grade: grade || '12',
+      tier: isUniv ? 'university' : 'secondary',
+      hasImages,
+      hasTables,
       timeLimit: Number(timeLimit) || 20,
       description: description.trim() || undefined,
       questions,

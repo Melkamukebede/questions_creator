@@ -15,11 +15,14 @@ import {
   Check,
   CloudOff,
   Shuffle,
+  Maximize2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Exam, ExamAnswerRecord, ExamResult, Question } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { ConfirmationDialog } from './ConfirmationDialog';
+import { MarkdownTableRenderer } from './MarkdownTableRenderer';
+import { MediaLightboxModal } from './MediaLightboxModal';
 import { useNotifications } from '../context/NotificationContext';
 import { isAppOffline } from '../firebase';
 
@@ -56,6 +59,9 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
 
   // Submit confirmation dialog
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+
+  // Lightbox modal for technical diagrams/circuits/images
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string; title?: string } | null>(null);
 
   // Scroll ref to top of question container when page/question changes
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -341,6 +347,56 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
         <div className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white leading-relaxed pt-1">
           <MathRenderer content={q.text} />
         </div>
+
+        {/* Technical Diagram / Circuit / Anatomical Illustration */}
+        {q.imageUrl && (
+          <div className="pt-2">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() =>
+                setLightboxImage({
+                  url: q.imageUrl!,
+                  caption: q.imageCaption,
+                  title: `Question ${qIndex + 1} Diagram`,
+                })
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setLightboxImage({
+                    url: q.imageUrl!,
+                    caption: q.imageCaption,
+                    title: `Question ${qIndex + 1} Diagram`,
+                  });
+                }
+              }}
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#070e1a] p-3 flex flex-col items-center justify-center max-w-xl hover:border-zinc-400 dark:hover:border-white/30 transition shadow-2xs"
+            >
+              <img
+                src={q.imageUrl}
+                alt={q.imageCaption || `Question ${qIndex + 1} diagram`}
+                className="max-h-64 sm:max-h-80 w-auto object-contain rounded-xl transition duration-200 group-hover:scale-[1.01]"
+                loading="lazy"
+              />
+              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-zinc-950/80 dark:bg-black/85 text-white text-[11px] font-semibold flex items-center gap-1.5 backdrop-blur-xs shadow-xs pointer-events-none opacity-90 group-hover:opacity-100">
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Enlarge</span>
+              </div>
+              {q.imageCaption && (
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 italic text-center px-2">
+                  {q.imageCaption}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Markdown Structured Data Table (KaTeX supported) */}
+        {q.tableMarkdown && (
+          <div className="pt-2">
+            <MarkdownTableRenderer markdown={q.tableMarkdown} />
+          </div>
+        )}
 
         {/* Options List */}
         <div className="space-y-2.5 pt-1">
@@ -722,6 +778,15 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
         cancelText="Review Questions"
         onConfirm={handleFinalSubmit}
         onCancel={() => setShowSubmitConfirm(false)}
+      />
+
+      {/* Media Lightbox Zoom Modal for Diagrams */}
+      <MediaLightboxModal
+        isOpen={Boolean(lightboxImage)}
+        imageUrl={lightboxImage?.url || ''}
+        caption={lightboxImage?.caption}
+        title={lightboxImage?.title}
+        onClose={() => setLightboxImage(null)}
       />
     </>
   );

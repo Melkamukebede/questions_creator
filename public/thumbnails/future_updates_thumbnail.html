@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SinaHard - Future Updates & Next-Gen Roadmap Thumbnail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .heading-font {
+      font-family: 'Outfit', sans-serif;
+    }
+    .mono-font {
+      font-family: 'Fira Code', monospace;
+    }
+    /* 16:9 Presentation Canvas Container */
+    .thumbnail-canvas {
+      width: 1280px;
+      height: 720px;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at 80% 20%, #172c4a 0%, #0d1a2d 40%, #040812 100%);
+      box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+    .glow-sphere-1 {
+      position: absolute;
+      top: -100px;
+      right: -80px;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, rgba(2, 132, 199, 0.05) 55%, transparent 75%);
+      pointer-events: none;
+      filter: blur(45px);
+    }
+    .glow-sphere-2 {
+      position: absolute;
+      bottom: -120px;
+      left: -80px;
+      width: 650px;
+      height: 650px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(126, 34, 206, 0.04) 55%, transparent 75%);
+      pointer-events: none;
+      filter: blur(55px);
+    }
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .card-hover-border {
+      position: relative;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 16:9 THUMBNAIL CANVAS (1280x720) -->
+  <div class="thumbnail-canvas flex flex-col justify-between p-12 text-white">
+    <div class="glow-sphere-1"></div>
+    <div class="glow-sphere-2"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- TOP BAR: BRANDING & OUTRO HEADER -->
+    <div class="relative z-10 flex items-center justify-between">
+      
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1e3a5f] to-[#08101d] border border-white/20 p-2 shadow-lg flex items-center justify-center">
+          <svg viewBox="0 0 100 100" fill="none" class="w-full h-full">
+            <circle cx="50" cy="8" r="34" fill="#38bdf8" opacity="0.3" />
+            <path d="M68 25 C68 21 64 18 57 18 C46 18 35 24 35 34 C35 44 45 48 57 51 C69 54 75 60 75 70 C75 82 62 86 49 86 C37 86 28 81 27 75" stroke="#ffffff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M33 37 C37 32 44 28 54 28 C64 28 67 34 65 39 C62 44 54 47 45 50 C36 53 31 59 31 68 C31 73 34 78 39 81" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M72 16 L74.5 22 L80.5 24.5 L74.5 27 L72 33 L69.5 27 L63.5 24.5 L69.5 22 Z" fill="#ffffff" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="heading-font text-2xl font-black text-white">SinaHard</h1>
+            <span class="text-[11px] px-2 py-0.5 rounded-full font-bold bg-white/10 text-sky-300 border border-white/10">
+              ExamMaster Pro
+            </span>
+          </div>
+          <p class="text-xs font-semibold text-slate-400">Next-Generation Engineering Vision</p>
+        </div>
+      </div>
+
+      <!-- Outro Badge -->
+      <div class="flex items-center gap-3">
+        <div class="glass-card px-4 py-1.5 rounded-2xl flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
+          <span class="text-xs font-bold uppercase tracking-wider text-purple-300">
+            Upcoming Innovations Roadmap
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAIN TITLE BANNER -->
+    <div class="relative z-10 text-center space-y-2 mt-2">
+      <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold tracking-wider text-slate-300 uppercase">
+        <span>🚀 What's Coming Next in SinaHard</span>
+      </div>
+      <h2 class="heading-font text-4xl sm:text-5xl font-black tracking-tight text-white">
+        Future Updates &amp; Architectural Expansion
+      </h2>
+      <p class="text-sm font-medium text-slate-400 max-w-2xl mx-auto">
+        Scaling from individual exam mastery to an autonomous, multi-modal, and decentralized pan-Ethiopian educational network.
+      </p>
+    </div>
+
+    <!-- 4 MAJOR FUTURE UPDATE PILLARS (2x2 GRID) -->
+    <div class="relative z-10 grid grid-cols-2 gap-4 my-auto">
+
+      <!-- PILLAR 1: LANGCHAIN & AGENT ADVANCEMENT -->
+      <div class="card-hover-border p-5 rounded-3xl space-y-2.5 shadow-xl">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              ⚡
+            </div>
+            <div>
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                Pillar 1 • Autonomous AI
+              </span>
+              <h3 class="heading-font text-base font-bold text-white mt-0.5">
+                LangChain &amp; Multi-Agent Consensus
+              </h3>
+            </div>
+          </div>
+          <span class="text-[11px] font-mono font-bold text-purple-400">v2.0</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Expanding from 3 nodes into an autonomous self-evaluating swarm: <strong>Automated Syllabus Crawling</strong>, multi-model cross-auditing (Gemini + Claude + DeepSeek consensus), and zero-shot hallucination prevention.
+        </p>
+        <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 pt-1">
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">Dynamic Reflection Loops</span>
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">MoE National Alignment</span>
+        </div>
+      </div>
+
+      <!-- PILLAR 2: LOCALIZED FINTECH & PAYMENTS -->
+      <div class="card-hover-border p-5 rounded-3xl space-y-2.5 shadow-xl">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              💳
+            </div>
+            <div>
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Pillar 2 • Fintech Engine
+              </span>
+              <h3 class="heading-font text-base font-bold text-white mt-0.5">
+                Next-Gen Telebirr &amp; Chapa Ecosystem
+              </h3>
+            </div>
+          </div>
+          <span class="text-[11px] font-mono font-bold text-emerald-400">v2.0</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Native <strong>Telebirr SuperApp Mini-Program</strong> integration, automated recurring high-school enterprise subscriptions via Chapa v2, and offline CBE Birr USSD OTP tokens for students without smartphones.
+        </p>
+        <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 pt-1">
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">Telebirr Mini-App</span>
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">Automated Webhooks</span>
+        </div>
+      </div>
+
+      <!-- PILLAR 3: MULTIMODAL DIAGRAM & VISION SOLVER -->
+      <div class="card-hover-border p-5 rounded-3xl space-y-2.5 shadow-xl">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-600 to-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              📷
+            </div>
+            <div>
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                Pillar 3 • Vision AI
+              </span>
+              <h3 class="heading-font text-base font-bold text-white mt-0.5">
+                Multimodal STEM Diagram &amp; Photo Solver
+              </h3>
+            </div>
+          </div>
+          <span class="text-[11px] font-mono font-bold text-sky-400">v2.0</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Instant camera photo parsing for hand-drawn physics circuits, Euclidean geometry triangles, and organic chemical structures with automatic KaTeX LaTeX conversion and step-by-step solving.
+        </p>
+        <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 pt-1">
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">Gemini 3.8 Flash Vision</span>
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">Circuit &amp; Geometry Math</span>
+        </div>
+      </div>
+
+      <!-- PILLAR 4: P2P MESH SYNC & NATIONAL TOURNAMENTS -->
+      <div class="card-hover-border p-5 rounded-3xl space-y-2.5 shadow-xl">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-orange-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
+              🏆
+            </div>
+            <div>
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Pillar 4 • Decentralized P2P
+              </span>
+              <h3 class="heading-font text-base font-bold text-white mt-0.5">
+                Offline P2P Mesh Sync &amp; Tournaments
+              </h3>
+            </div>
+          </div>
+          <span class="text-[11px] font-mono font-bold text-amber-400">v2.0</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Zero-data Bluetooth / Local Wi-Fi direct peer-to-peer exam sharing, regional high-school speed-run tournaments, and weekly live matriculation simulations across all 12 regional states.
+        </p>
+        <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 pt-1">
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">Bluetooth Mesh Sync</span>
+          <span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">National Leaderboards</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM BAR: CALL TO ACTION & CONTACT -->
+    <div class="relative z-10 flex items-center justify-between pt-4 border-t border-white/10">
+      
+      <!-- Thank You Message -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-bold border border-emerald-500/30">
+          ✓
+        </div>
+        <div>
+          <p class="text-xs font-bold text-white">Thank You for Watching the Capstone Walkthrough!</p>
+          <p class="text-[11px] text-slate-400">Designed &amp; Built for Ethiopian High School Students &bull; Addis Ababa, Ethiopia</p>
+        </div>
+      </div>
+
+      <!-- Developer Contact & Links -->
+      <div class="flex items-center gap-4 text-xs font-semibold text-slate-300">
+        <div class="flex items-center gap-1.5 text-sky-300">
+          <span>GitHub: Melkamukebede/questions_creator</span>
+        </div>
+        <div class="px-3 py-1 rounded-xl bg-white/10 text-white font-mono text-[11px] border border-white/15">
+          melkamukebede11@gmail.com
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

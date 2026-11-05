@@ -30,6 +30,7 @@ import {
   FileDown,
   Layers,
   Flame,
+  Database,
 } from 'lucide-react';
 import { Exam, ExamResult, UserSubscription, AppUser } from '../types';
 import { PageTab } from './Navbar';
@@ -51,6 +52,8 @@ export interface HomeViewProps {
   onOpenRegistrationModal?: () => void;
   onOpenNotificationsModal?: () => void;
   onOpenDatabaseUpload?: (exam: Exam) => void;
+  onOpenDownloadCenter?: () => void;
+  onOpenSupabaseConfig?: () => void;
   onEditExam?: (exam: Exam) => void;
   onDeleteExam?: (examId: string) => void;
   activeSubscription?: UserSubscription | null;
@@ -90,6 +93,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenRegistrationModal,
   onOpenNotificationsModal,
   onOpenDatabaseUpload,
+  onOpenDownloadCenter,
+  onOpenSupabaseConfig,
   onEditExam,
   onDeleteExam,
   activeSubscription,
@@ -747,6 +752,57 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-normal">
                       When you upload PDFs, read textbooks, or study notes, passive reading alone isn't enough to build lasting exam confidence. To truly retain knowledge, you require an active testing environment. <strong className="font-semibold text-zinc-950 dark:text-white">Sinahard</strong> provides timed tests, instant evaluation, peer sharing, and pre-prepared curriculum exams.
                     </p>
+
+                    {/* Dual-Tier Exam Repository & Offline SQLite Download Center */}
+                    <div className="pt-3">
+                      <div className="p-4 sm:p-5 rounded-2xl bg-zinc-50 dark:bg-[#0c182b] border border-zinc-200/80 dark:border-white/10 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                Dual-Tier Repository
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/60 dark:bg-white/10 text-zinc-800 dark:text-zinc-200">
+                                University &amp; Secondary
+                              </span>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/60 dark:bg-white/10 text-zinc-800 dark:text-zinc-200">
+                                SQLite .db Bundles
+                              </span>
+                            </div>
+                            <h4 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-950 dark:text-white">
+                              Offline Multi-Year Exam Download Center &amp; Supabase Storage
+                            </h4>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-2xl">
+                              Download official university exams (Freshman Semester 1 &amp; 2, AAU, ASTU, Hawassa, Jimma) and secondary matriculation exams packaged into single-file offline SQLite databases with full technical diagrams, circuits, and markdown data tables.
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            {onOpenDownloadCenter && (
+                              <button
+                                type="button"
+                                onClick={onOpenDownloadCenter}
+                                className="px-4 py-2 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-xs hover:opacity-90 active:scale-98"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Download Center</span>
+                              </button>
+                            )}
+                            {onOpenSupabaseConfig && (
+                              <button
+                                type="button"
+                                onClick={onOpenSupabaseConfig}
+                                className="px-3.5 py-2 rounded-full bg-white dark:bg-[#0f1d33] border border-zinc-200/80 dark:border-white/10 text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 hover:bg-zinc-100 dark:hover:bg-[#132238] active:scale-98"
+                                title="Configure Supabase Storage for diagrams and questions"
+                              >
+                                <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Supabase</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

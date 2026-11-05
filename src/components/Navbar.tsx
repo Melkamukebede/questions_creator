@@ -20,6 +20,8 @@ import {
   Edit3,
   CheckCircle2,
   Lock,
+  Download,
+  Database,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -41,6 +43,8 @@ interface NavbarProps {
   onOpenNotifications: () => void;
   onOpenDrawer: () => void;
   onOpenSubscriptionModal?: () => void;
+  onOpenDownloadCenter?: () => void;
+  onOpenSupabaseConfig?: () => void;
   activeSubscription: UserSubscription | null;
 }
 
@@ -50,6 +54,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNotifications,
   onOpenDrawer,
   onOpenSubscriptionModal,
+  onOpenDownloadCenter,
+  onOpenSupabaseConfig,
   activeSubscription,
 }) => {
   const { theme, toggleTheme, isDark } = useTheme();
@@ -243,6 +249,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Admin Hub</span>
+            </button>
+          )}
+
+          {/* Download Center Button (Offline Multi-Year SQLite Bundles) */}
+          {onOpenDownloadCenter && (
+            <button
+              id="nav-tab-download-center"
+              type="button"
+              onClick={onOpenDownloadCenter}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-semibold transition cursor-pointer text-xs active:scale-98 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5"
+              title="Download University and Secondary exams in offline SQLite database bundles"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Download Center</span>
             </button>
           )}
         </nav>
