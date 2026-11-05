@@ -767,15 +767,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/60 dark:bg-white/10 text-zinc-800 dark:text-zinc-200">
                                 University &amp; Secondary
                               </span>
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/60 dark:bg-white/10 text-zinc-800 dark:text-zinc-200">
-                                SQLite .db Bundles
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                                100% Offline Ready
                               </span>
                             </div>
                             <h4 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-950 dark:text-white">
-                              Offline Multi-Year Exam Download Center &amp; Supabase Storage
+                              Official University Archive &amp; Verified Past Papers
                             </h4>
                             <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-2xl">
-                              Download official university exams (Freshman Semester 1 &amp; 2, AAU, ASTU, Hawassa, Jimma) and secondary matriculation exams packaged into single-file offline SQLite databases with full technical diagrams, circuits, and markdown data tables.
+                              Practice official university exams (Freshman Semester 1 &amp; 2, AAU, ASTU, Hawassa, Jimma) and secondary matriculation exams directly in-app with complete technical diagrams, formulas, and data tables with zero internet requirement.
                             </p>
                           </div>
 
@@ -787,15 +787,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                                 className="px-4 py-2 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-xs hover:opacity-90 active:scale-98"
                               >
                                 <Download className="w-3.5 h-3.5" />
-                                <span>Download Center</span>
+                                <span>Download Questions</span>
                               </button>
                             )}
-                            {onOpenSupabaseConfig && (
+                            {isAdmin && onOpenSupabaseConfig && (
                               <button
                                 type="button"
                                 onClick={onOpenSupabaseConfig}
                                 className="px-3.5 py-2 rounded-full bg-white dark:bg-[#0f1d33] border border-zinc-200/80 dark:border-white/10 text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 hover:bg-zinc-100 dark:hover:bg-[#132238] active:scale-98"
-                                title="Configure Supabase Storage for diagrams and questions"
+                                title="Admin: Configure Supabase Storage for diagrams and questions"
                               >
                                 <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                 <span>Supabase</span>

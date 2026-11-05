@@ -1,6 +1,6 @@
 {
-  "summary": "Architecture and implementation plan for the AI-Assisted Official Exam Studio parser, 3-toggle media detection, inline Supabase image uploaders for questions and choices, and the integrated Admin Hard-Copy Exam Vision Prompt Generator.",
-  "updatedAt": "2026-11-05T13:36:48.506560938Z",
+  "summary": "Implementation plan for dynamic [IMAGE: label] detection in the Official Exam Studio, dedicated Pre-Publish Preview tab with KaTeX and media verification, and elimination of technical jargon (Supabase, Cloud SQL) from the homepage for non-admin students.",
+  "updatedAt": "2026-11-05T14:38:46.406495398Z",
   "requestFeedback": true,
   "userFacing": true
 }
