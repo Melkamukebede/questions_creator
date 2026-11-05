@@ -24,6 +24,7 @@ import {
   Share2,
   Lock,
   Database,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
@@ -45,6 +46,7 @@ interface AppDrawerProps {
   onOpenSubscriptionModal: () => void;
   onOpenDownloadCenter?: () => void;
   onOpenSupabaseConfig?: () => void;
+  onOpenAdminOfficialStudio?: () => void;
   activeSubscription: UserSubscription | null;
 }
 
@@ -59,6 +61,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenSubscriptionModal,
   onOpenDownloadCenter,
   onOpenSupabaseConfig,
+  onOpenAdminOfficialStudio,
 }) => {
   const { user, signOut, firstRegisteredEmail } = useAuth();
   const { unreadAlertsCount, completedToday, dailyGoal, studyStreakDays } = useNotifications();
@@ -298,6 +301,37 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
                         Verify teachers &amp; student payments
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
+
+              {/* Official Exam & Media Studio (Admin Only - Supabase Cloud) */}
+              {isUserAdmin(user) && onOpenAdminOfficialStudio && (
+                <button
+                  id="drawer-admin-official-studio-btn"
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenAdminOfficialStudio();
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shadow-2xs">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                        <span>Official Exam &amp; Media Studio</span>
+                        <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                          Admin Only
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Upload diagrams to Supabase &amp; publish official exams
                       </div>
                     </div>
                   </div>

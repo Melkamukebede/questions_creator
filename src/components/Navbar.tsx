@@ -45,6 +45,7 @@ interface NavbarProps {
   onOpenSubscriptionModal?: () => void;
   onOpenDownloadCenter?: () => void;
   onOpenSupabaseConfig?: () => void;
+  onOpenAdminOfficialStudio?: () => void;
   activeSubscription: UserSubscription | null;
 }
 
@@ -56,6 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSubscriptionModal,
   onOpenDownloadCenter,
   onOpenSupabaseConfig,
+  onOpenAdminOfficialStudio,
   activeSubscription,
 }) => {
   const { theme, toggleTheme, isDark } = useTheme();
@@ -237,19 +239,34 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Admin Verification Panel Link (Melkamu / Admin) */}
           {isAdmin && (
-            <button
-              id="nav-tab-admin-subs"
-              type="button"
-              onClick={() => onTabChange('admin-subs')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-semibold transition cursor-pointer text-xs active:scale-98 ${
-                activeTab === 'admin-subs'
-                  ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Admin Hub</span>
-            </button>
+            <>
+              <button
+                id="nav-tab-admin-subs"
+                type="button"
+                onClick={() => onTabChange('admin-subs')}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-semibold transition cursor-pointer text-xs active:scale-98 ${
+                  activeTab === 'admin-subs'
+                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Admin Hub</span>
+              </button>
+
+              {onOpenAdminOfficialStudio && (
+                <button
+                  id="nav-tab-admin-official-studio"
+                  type="button"
+                  onClick={onOpenAdminOfficialStudio}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer active:scale-98"
+                  title="Author and publish official exams with diagrams to Supabase"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Official Studio</span>
+                </button>
+              )}
+            </>
           )}
 
           {/* Download Center Button (Offline Multi-Year SQLite Bundles) */}

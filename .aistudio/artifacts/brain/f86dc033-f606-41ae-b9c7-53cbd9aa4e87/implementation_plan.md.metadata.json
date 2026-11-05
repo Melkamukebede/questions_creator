@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan for Supabase linking guide, admin-only official exam & diagram uploader, in-app offline question repository storage without file downloads, and fixing the SQLite WASM fetch failure.",
+  "updatedAt": "2026-11-05T11:40:55.098420115Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

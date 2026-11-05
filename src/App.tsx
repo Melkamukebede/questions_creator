@@ -118,6 +118,9 @@ const DownloadCenterModal = lazyWithRetry(() =>
 const SupabaseConfigModal = lazyWithRetry(() =>
   import('./components/SupabaseConfigModal').then((m) => ({ default: m.SupabaseConfigModal }))
 );
+const AdminOfficialExamStudioModal = lazyWithRetry(() =>
+  import('./components/AdminOfficialExamStudioModal').then((m) => ({ default: m.AdminOfficialExamStudioModal }))
+);
 import { TeacherPendingVerificationView } from './components/TeacherPendingVerificationView';
 import { AppSplashScreen } from './components/AppSplashScreen';
 
@@ -234,6 +237,7 @@ function MainApp() {
   const [isCuratedModalOpen, setIsCuratedModalOpen] = useState(false);
   const [isDownloadCenterOpen, setIsDownloadCenterOpen] = useState(false);
   const [isSupabaseConfigOpen, setIsSupabaseConfigOpen] = useState(false);
+  const [isAdminOfficialStudioOpen, setIsAdminOfficialStudioOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [examForDatabaseUpload, setExamForDatabaseUpload] = useState<Exam | null>(null);
 
@@ -834,6 +838,7 @@ function MainApp() {
         onOpenSubscriptionModal={isTeacher ? undefined : () => setIsSubscriptionModalOpen(true)}
         onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
         onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
+        onOpenAdminOfficialStudio={isAdmin ? () => setIsAdminOfficialStudioOpen(true) : undefined}
         activeSubscription={activeSubscription}
       />
 
@@ -1022,6 +1027,7 @@ function MainApp() {
         onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
         onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
         onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
+        onOpenAdminOfficialStudio={isAdmin ? () => setIsAdminOfficialStudioOpen(true) : undefined}
         activeSubscription={activeSubscription}
       />
 
@@ -1094,6 +1100,15 @@ function MainApp() {
               setIsDownloadCenterOpen(false);
               handleStartPractice(exam);
             }}
+            onExamsDownloaded={(downloaded) => {
+              setExams((prev) => {
+                const map = new Map<string, Exam>();
+                prev.forEach((e) => map.set(e.id, e));
+                downloaded.forEach((e) => map.set(e.id, { ...e, isDownloaded: true, category: 'official' }));
+                return Array.from(map.values());
+              });
+              showToast(`Saved ${downloaded.length} exams into your Exams Repository for offline practice!`);
+            }}
             userAcademicYear={user?.grade || 'Freshman'}
           />
         )}
@@ -1103,8 +1118,22 @@ function MainApp() {
           <SupabaseConfigModal
             isOpen={isSupabaseConfigOpen}
             onClose={() => setIsSupabaseConfigOpen(false)}
-            onSuccess={() => {
+            onConfigSaved={() => {
               showToast('Supabase storage credentials verified and connected!');
+            }}
+          />
+        )}
+
+        {/* Dedicated Admin Official Exam & Media Studio */}
+        {isAdminOfficialStudioOpen && (
+          <AdminOfficialExamStudioModal
+            isOpen={isAdminOfficialStudioOpen}
+            onClose={() => setIsAdminOfficialStudioOpen(false)}
+            isAdmin={isAdmin}
+            onExamPublished={(newExam) => {
+              setOfficialExams((prev) => [newExam, ...prev]);
+              setExams((prev) => [newExam, ...prev]);
+              showToast(`Published "${newExam.title}" to Supabase & local repository!`);
             }}
           />
         )}

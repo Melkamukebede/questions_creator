@@ -54,6 +54,7 @@ export interface HomeViewProps {
   onOpenDatabaseUpload?: (exam: Exam) => void;
   onOpenDownloadCenter?: () => void;
   onOpenSupabaseConfig?: () => void;
+  onOpenAdminOfficialStudio?: () => void;
   onEditExam?: (exam: Exam) => void;
   onDeleteExam?: (examId: string) => void;
   activeSubscription?: UserSubscription | null;
@@ -95,6 +96,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenDatabaseUpload,
   onOpenDownloadCenter,
   onOpenSupabaseConfig,
+  onOpenAdminOfficialStudio,
   onEditExam,
   onDeleteExam,
   activeSubscription,
@@ -797,6 +799,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
                               >
                                 <Database className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                 <span>Supabase</span>
+                              </button>
+                            )}
+                            {isAdmin && onOpenAdminOfficialStudio && (
+                              <button
+                                type="button"
+                                onClick={onOpenAdminOfficialStudio}
+                                className="px-3.5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer flex items-center gap-1.5 hover:bg-emerald-500/20 active:scale-98"
+                                title="Admin: Author and publish official exams with diagrams to Supabase"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Official Studio</span>
                               </button>
                             )}
                           </div>

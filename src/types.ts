@@ -92,8 +92,9 @@ export interface Exam {
   hasTables?: boolean;
   storageSource?: 'supabase' | 'firestore' | 'local';
   // Dual-type exam categorization & curated catalog fields
-  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'supabase';
+  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'supabase' | 'official';
   isDownloaded?: boolean;
+  downloadedAt?: string;
   catalogId?: string;
   stream?: string;
   targetExamYear?: string;

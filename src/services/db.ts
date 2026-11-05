@@ -258,6 +258,49 @@ export function saveLocalExams(exams: Exam[]) {
   }
 }
 
+/**
+ * Saves downloaded official or bundle exams directly into the local repository
+ * so they appear in FilesView (Exams Repository) for zero-data offline practice,
+ * avoiding raw .sqlite file download prompts.
+ */
+export function addDownloadedExamsToRepository(newExams: Exam[]): {
+  addedCount: number;
+  updatedCount: number;
+  totalRepositoryCount: number;
+} {
+  const current = getLocalExams();
+  let addedCount = 0;
+  let updatedCount = 0;
+
+  const mergedMap = new Map<string, Exam>();
+  current.forEach((e) => mergedMap.set(e.id, e));
+
+  newExams.forEach((e) => {
+    const preparedExam: Exam = {
+      ...e,
+      isDownloaded: true,
+      category: 'official',
+      sourceType: 'official',
+      downloadedAt: new Date().toISOString(),
+    };
+    if (mergedMap.has(e.id)) {
+      updatedCount++;
+    } else {
+      addedCount++;
+    }
+    mergedMap.set(e.id, preparedExam);
+  });
+
+  const updatedList = Array.from(mergedMap.values());
+  saveLocalExams(updatedList);
+
+  return {
+    addedCount,
+    updatedCount,
+    totalRepositoryCount: updatedList.length,
+  };
+}
+
 export function getLocalResults(): ExamResult[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_RESULTS);

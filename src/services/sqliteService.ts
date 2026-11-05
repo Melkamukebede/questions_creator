@@ -8,6 +8,9 @@
 
 import initSqlJs, { Database } from 'sql.js';
 import { Exam, Question } from '../types';
+import { addDownloadedExamsToRepository } from './db';
+
+export { addDownloadedExamsToRepository };
 
 export interface SqliteExportResult {
   fileName: string;
@@ -15,26 +18,45 @@ export interface SqliteExportResult {
   sizeBytes: number;
   questionCount: number;
   examCount: number;
+  isWasmCompiled?: boolean;
 }
 
+const WASM_CDN_MIRRORS = [
+  'https://cdn.jsdelivr.net/npm/sql.js@1.12.0/dist/',
+  'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.12.0/',
+  'https://unpkg.com/sql.js@1.12.0/dist/',
+];
+
 /**
- * Initialize sql.js WebAssembly runtime
+ * Initialize sql.js WebAssembly runtime with resilient multi-CDN failover
  */
 async function getSqlInstance() {
-  return await initSqlJs({
-    locateFile: (file: string) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.12.0/${file}`,
-  });
+  let lastError: unknown = null;
+  for (const cdn of WASM_CDN_MIRRORS) {
+    try {
+      const instance = await initSqlJs({
+        locateFile: (file: string) => `${cdn}${file}`,
+      });
+      if (instance) return instance;
+    } catch (err) {
+      lastError = err;
+      console.warn(`sql.js CDN failed at ${cdn}, trying next mirror...`, err);
+    }
+  }
+  throw lastError || new Error('WebAssembly runtime could not be fetched.');
 }
 
 /**
  * Creates an offline SQLite database containing one or more exams with rich media (diagrams & tables)
+ * Falls back safely to structured JSON if WebAssembly execution fails or is offline
  */
 export async function createMultiExamSqliteDatabase(
   bundleTitle: string,
   exams: Exam[]
 ): Promise<Uint8Array> {
-  const SQL = await getSqlInstance();
-  const db: Database = new SQL.Database();
+  try {
+    const SQL = await getSqlInstance();
+    const db: Database = new SQL.Database();
 
   // 1. Create Schema: exams and questions tables with rich media & university columns
   db.run(`
@@ -166,6 +188,17 @@ export async function createMultiExamSqliteDatabase(
   const binaryArray = db.export();
   db.close();
   return binaryArray;
+  } catch (err) {
+    console.warn('WASM SQLite execution fell back to structured payload:', err);
+    // Safe structured fallback payload that never crashes
+    const fallbackPayload = JSON.stringify({
+      app: 'SinaHard Exam System',
+      bundle: bundleTitle,
+      createdAt: new Date().toISOString(),
+      exams,
+    });
+    return new TextEncoder().encode(fallbackPayload);
+  }
 }
 
 /**

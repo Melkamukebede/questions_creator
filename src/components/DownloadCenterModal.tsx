@@ -17,10 +17,12 @@ import {
   Building2,
   Clock,
   ChevronDown,
+  Check,
 } from 'lucide-react';
 import { Exam, ETHIOPIAN_UNIVERSITIES, FRESHMAN_SUBJECTS, SECONDARY_SUBJECTS, YearDurationFilter } from '../types';
-import { downloadMultiExamSqliteBundle, downloadExamSqliteFile } from '../services/sqliteService';
+import { downloadMultiExamSqliteBundle } from '../services/sqliteService';
 import { CURATED_OFFICIAL_EXAMS } from '../services/supabaseService';
+import { addDownloadedExamsToRepository } from '../services/db';
 
 interface DownloadCenterModalProps {
   isOpen: boolean;
@@ -30,6 +32,7 @@ interface DownloadCenterModalProps {
   userUniversity?: string;
   onStartExam?: (exam: Exam) => void;
   onOpenSupabaseConfig?: () => void;
+  onExamsDownloaded?: (downloadedExams: Exam[]) => void;
 }
 
 export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
@@ -40,6 +43,7 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
   userUniversity,
   onStartExam,
   onOpenSupabaseConfig,
+  onExamsDownloaded,
 }) => {
   // Merge prop exams with curated official exams (deduplicated by ID)
   const combinedExams = useMemo(() => {
@@ -67,6 +71,7 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
   const [yearDuration, setYearDuration] = useState<YearDurationFilter>('all');
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [savedExamIds, setSavedExamIds] = useState<Record<string, boolean>>({});
 
   // Compute filtered exams
   const filteredExams = useMemo(() => {
@@ -103,7 +108,7 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
       // 6. Year Duration Filter
       const rawYear = String(exam.examYear || '');
       const yearNum = parseInt(rawYear.replace(/[^0-9]/g, '').slice(0, 4) || '2024', 10);
-      const currentEcyear = 2017; // Current Ethiopian year reference
+      const currentEcyear = 2017;
       const currentGcyear = 2025;
       const isEc = yearNum <= 2020;
       const refYear = isEc ? currentEcyear : currentGcyear;
@@ -124,49 +129,85 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
     return filteredExams.reduce((sum, e) => sum + (e.questions?.length || 0), 0);
   }, [filteredExams]);
 
-  const estimatedBundleSizeKb = useMemo(() => {
-    return Math.max(45, totalQuestionsInFilter * 4.2).toFixed(0);
-  }, [totalQuestionsInFilter]);
-
   if (!isOpen) return null;
 
-  // Handle full bundle download
-  const handleDownloadFilteredBundle = async () => {
+  // Handle in-app repository download (Zero file clutter, zero WASM failure)
+  const handleDownloadQuestionsToRepository = () => {
     if (filteredExams.length === 0) return;
     setIsExporting(true);
     setExportNotice(null);
 
+    try {
+      addDownloadedExamsToRepository(filteredExams);
+
+      const newlySaved: Record<string, boolean> = { ...savedExamIds };
+      filteredExams.forEach((e) => {
+        newlySaved[e.id] = true;
+      });
+      setSavedExamIds(newlySaved);
+
+      setExportNotice(
+        `Downloaded ${filteredExams.length} official exams (${totalQuestionsInFilter} questions with diagrams & tables) directly into your local Exams Repository! Ready for zero-data offline practice.`
+      );
+
+      if (onExamsDownloaded) {
+        onExamsDownloaded(filteredExams);
+      }
+
+      setTimeout(() => setExportNotice(null), 5500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setExportNotice(`Download error: ${msg}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Handle single exam save to local repository
+  const handleSaveSingleExam = (exam: Exam) => {
+    try {
+      addDownloadedExamsToRepository([exam]);
+      setSavedExamIds((prev) => ({ ...prev, [exam.id]: true }));
+      setExportNotice(`Saved "${exam.title || exam.name}" into your Exams Repository for offline practice!`);
+      if (onExamsDownloaded) {
+        onExamsDownloaded([exam]);
+      }
+      setTimeout(() => setExportNotice(null), 4000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Save failed';
+      setExportNotice(`Save error: ${msg}`);
+    }
+  };
+
+  // Practice immediately (auto-caches to local repository on first attempt)
+  const handleStartExamSession = (exam: Exam) => {
+    addDownloadedExamsToRepository([exam]);
+    setSavedExamIds((prev) => ({ ...prev, [exam.id]: true }));
+    if (onExamsDownloaded) {
+      onExamsDownloaded([exam]);
+    }
+    if (onStartExam) {
+      onStartExam(exam);
+    }
+  };
+
+  // Optional manual file export for developers
+  const handleManualSqliteExport = async () => {
+    if (filteredExams.length === 0) return;
+    setIsExporting(true);
     try {
       const durationLabel = yearDuration === '1-3' ? 'Past_1_3_Years' : yearDuration === '1-5' ? 'Past_1_5_Years' : 'All_Years';
       const levelLabel = selectedTier === 'university' ? 'University_Freshman' : 'Secondary_Matric';
       const bundleTitle = `SinaHard_${levelLabel}_${durationLabel}_Bundle`;
 
       const result = await downloadMultiExamSqliteBundle(bundleTitle, filteredExams);
-      setExportNotice(`SQLite Bundle downloaded: ${result.fileName} (${(result.sizeBytes / 1024).toFixed(1)} KB) containing ${result.examCount} exams and ${result.questionCount} questions!`);
+      setExportNotice(`Exported raw file: ${result.fileName} (${(result.sizeBytes / 1024).toFixed(1)} KB)`);
       setTimeout(() => setExportNotice(null), 5000);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Bundle compilation failed';
-      setExportNotice(`Export error: ${msg}`);
+      const msg = err instanceof Error ? err.message : 'Export failed';
+      setExportNotice(`File export error: ${msg}`);
     } finally {
       setIsExporting(false);
-    }
-  };
-
-  // Handle single exam download
-  const handleDownloadSingleExam = async (exam: Exam) => {
-    try {
-      const res = await downloadExamSqliteFile(
-        exam.title || exam.name,
-        exam.subject,
-        String(exam.grade || 'Freshman'),
-        exam.stream || 'Natural Science',
-        exam.questions
-      );
-      setExportNotice(`Exam downloaded: ${res.fileName} (${(res.sizeBytes / 1024).toFixed(1)} KB)`);
-      setTimeout(() => setExportNotice(null), 4000);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to download exam';
-      setExportNotice(`Export error: ${msg}`);
     }
   };
 
@@ -186,11 +227,11 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
                   Exam Repository &amp; Offline Download Center
                 </h3>
                 <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                  SQLite .sqlite Vault
+                  Zero-Data Offline Ready
                 </span>
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Official University &amp; Secondary exams with diagrams, tables, and multi-year bundles
+                Download questions with technical diagrams and tables directly into your in-app Exams Repository
               </p>
             </div>
           </div>
@@ -218,196 +259,189 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
           </div>
         </div>
 
-        {/* Body with Filters and Grid */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+        {/* Scrollable Body */}
+        <div className="overflow-y-auto p-5 sm:p-6 space-y-6 flex-1">
           
-          {/* Level Switcher (University vs Secondary) */}
-          <div className="p-1 rounded-2xl bg-zinc-100 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 grid grid-cols-2 gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTier('university');
-                setSelectedSubject('All');
-              }}
-              className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                selectedTier === 'university'
-                  ? 'bg-white dark:bg-[#0c182b] text-zinc-950 dark:text-white shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-              }`}
-            >
-              <GraduationCap className="w-4 h-4 text-blue-500" />
-              <span>University &amp; Freshman Exams</span>
-            </button>
+          {/* Tier Switcher (University vs Secondary) */}
+          <div className="flex items-center justify-between flex-wrap gap-3 p-1.5 rounded-2xl bg-zinc-100 dark:bg-[#091322] border border-zinc-200/80 dark:border-white/10">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedTier('university');
+                  setSelectedSubject('All');
+                }}
+                className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                  selectedTier === 'university'
+                    ? 'bg-white dark:bg-[#0f1d33] text-zinc-950 dark:text-white shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
+                }`}
+              >
+                <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>University Vault (Freshman &amp; Remedial)</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTier('secondary');
-                setSelectedSubject('All');
-              }}
-              className={`py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                selectedTier === 'secondary'
-                  ? 'bg-white dark:bg-[#0c182b] text-zinc-950 dark:text-white shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-              }`}
-            >
-              <BookOpen className="w-4 h-4 text-emerald-500" />
-              <span>Secondary High School (Grades 7–12 &amp; ESSLCE)</span>
-            </button>
-          </div>
-
-          {/* Filter Toolbar */}
-          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-3">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-white/5 pb-2">
-              <span className="font-bold text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Filter className="w-3.5 h-3.5" />
-                <span>Search &amp; Year Duration Filters</span>
-              </span>
-
-              {/* Year Duration Chips */}
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] font-bold text-zinc-400 mr-1 hidden sm:inline">Duration:</span>
-                {(['all', '1-3', '1-5'] as YearDurationFilter[]).map((dur) => (
-                  <button
-                    key={dur}
-                    type="button"
-                    onClick={() => setYearDuration(dur)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
-                      yearDuration === dur
-                        ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
-                        : 'bg-white dark:bg-[#0c182b] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/5 hover:text-zinc-900'
-                    }`}
-                  >
-                    {dur === 'all' ? 'All Years' : dur === '1-3' ? 'Past 1–3 Yrs' : 'Past 1–5 Yrs'}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedTier('secondary');
+                  setSelectedSubject('All');
+                }}
+                className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+                  selectedTier === 'secondary'
+                    ? 'bg-white dark:bg-[#0f1d33] text-zinc-950 dark:text-white shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                <span>Secondary Vault (Grades 7–12 Matric)</span>
+              </button>
             </div>
 
-            {/* Filter Inputs Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-              
-              {/* University Selector (Only in University Tier) */}
-              {selectedTier === 'university' && (
-                <div>
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                    University / College
-                  </label>
-                  <select
-                    value={selectedUniversity}
-                    onChange={(e) => setSelectedUniversity(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden"
-                  >
-                    <option value="All">All Ethiopian Universities</option>
-                    {ETHIOPIAN_UNIVERSITIES.map((uni) => (
-                      <option key={uni} value={uni}>
-                        {uni}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+            {/* Year Duration Chips */}
+            <div className="flex items-center gap-1 px-2 py-1 w-full sm:w-auto justify-end">
+              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide mr-1 hidden sm:inline">
+                Year Duration:
+              </span>
+              {(['all', '1-3', '1-5'] as YearDurationFilter[]).map((dur) => (
+                <button
+                  key={dur}
+                  type="button"
+                  onClick={() => setYearDuration(dur)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    yearDuration === dur
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/5'
+                  }`}
+                >
+                  {dur === 'all' ? 'All Years' : dur === '1-3' ? 'Past 1–3 Yrs' : 'Past 1–5 Yrs'}
+                </button>
+              ))}
+            </div>
+          </div>
 
-              {/* Subject Selector */}
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                  Subject / Course
+          {/* Filter Bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10">
+            {/* University Selector (if university tier) */}
+            {selectedTier === 'university' && (
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                  <Building2 className="w-3 h-3 text-emerald-500" />
+                  <span>University</span>
                 </label>
                 <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden"
+                  value={selectedUniversity}
+                  onChange={(e) => setSelectedUniversity(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
                 >
-                  <option value="All">All Subjects</option>
-                  {(selectedTier === 'university' ? FRESHMAN_SUBJECTS : SECONDARY_SUBJECTS).map((subj) => (
-                    <option key={subj} value={subj}>
-                      {subj}
-                    </option>
+                  <option value="All">All Ethiopian Universities</option>
+                  {ETHIOPIAN_UNIVERSITIES.map((uni) => (
+                    <option key={uni} value={uni}>{uni}</option>
                   ))}
                 </select>
               </div>
+            )}
 
-              {/* Semester Selector */}
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                  Semester
-                </label>
-                <select
-                  value={selectedSemester}
-                  onChange={(e) => setSelectedSemester(e.target.value as 'All' | 'Semester 1' | 'Semester 2')}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden"
-                >
-                  <option value="All">All Semesters</option>
-                  <option value="Semester 1">Semester 1</option>
-                  <option value="Semester 2">Semester 2</option>
-                </select>
-              </div>
+            {/* Subject Selector */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                <BookOpen className="w-3 h-3 text-emerald-500" />
+                <span>Course / Subject</span>
+              </label>
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
+              >
+                <option value="All">All Subjects ({selectedTier === 'university' ? 'Freshman' : 'Grades 7–12'})</option>
+                {(selectedTier === 'university' ? FRESHMAN_SUBJECTS : SECONDARY_SUBJECTS).map((sub) => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Exam Type (Mid vs Final) */}
-              <div>
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                  Exam Type
-                </label>
-                <select
-                  value={selectedExamType}
-                  onChange={(e) => setSelectedExamType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden"
-                >
-                  <option value="All">All (Mid &amp; Finals)</option>
-                  <option value="Mid">Mid Exam Only</option>
-                  <option value="Final">Final Exam Only</option>
-                  <option value="National">National Matric Only</option>
-                </select>
-              </div>
+            {/* Semester Selector */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-emerald-500" />
+                <span>Semester</span>
+              </label>
+              <select
+                value={selectedSemester}
+                onChange={(e) => setSelectedSemester(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
+              >
+                <option value="All">All Semesters</option>
+                <option value="Semester 1">Semester 1</option>
+                <option value="Semester 2">Semester 2</option>
+              </select>
+            </div>
 
+            {/* Exam Type Selector (Mid vs Final) */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
+                <Filter className="w-3 h-3 text-emerald-500" />
+                <span>Exam Type</span>
+              </label>
+              <select
+                value={selectedExamType}
+                onChange={(e) => setSelectedExamType(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
+              >
+                <option value="All">All Exam Types (Mid &amp; Final)</option>
+                <option value="Mid">Midterm Exam</option>
+                <option value="Final">Final Exam</option>
+              </select>
             </div>
           </div>
 
-          {/* Export Status Notice */}
+          {/* Feedback Alert */}
           {exportNotice && (
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="font-semibold">{exportNotice}</span>
+              <span>{exportNotice}</span>
             </div>
           )}
 
-          {/* Bundle Summary Card & 1-Click SQLite Batch Download */}
-          <div className="p-4 sm:p-5 rounded-[24px] bg-gradient-to-r from-blue-500/10 via-emerald-500/10 to-purple-500/10 border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Download Questions Action Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-zinc-50 dark:from-emerald-500/15 dark:via-[#0c182b] dark:to-[#0c182b] border border-emerald-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-600/20 text-blue-700 dark:text-blue-300 border border-blue-500/30">
-                  Batch Multi-Year Bundler
+                <span className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30">
+                  {selectedTier === 'university' ? 'University Freshman Vault' : 'Secondary Matriculation Vault'}
                 </span>
-                <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
-                  {filteredExams.length} Exams &bull; {totalQuestionsInFilter} Questions &bull; ~{estimatedBundleSizeKb} KB
+                <span className="text-xs text-zinc-500">
+                  {yearDuration === '1-3' ? 'Past 1–3 Years' : yearDuration === '1-5' ? 'Past 1–5 Years' : 'All Historical Years'}
                 </span>
               </div>
-              <h4 className="text-sm font-bold text-zinc-950 dark:text-white font-['Outfit',sans-serif]">
-                Compiled Offline SQLite Binary ({yearDuration === 'all' ? 'All Years' : yearDuration === '1-3' ? 'Past 1–3 Years' : 'Past 1–5 Years'})
+              <h4 className="font-bold text-base font-['Outfit',sans-serif] text-zinc-950 dark:text-white">
+                {filteredExams.length} Exams Ready ({totalQuestionsInFilter} Total Questions)
               </h4>
-              <p className="text-[11.5px] text-zinc-600 dark:text-zinc-400">
-                Packs all matching exams with diagrams, tables, and step-by-step solutions into a single portable <code className="font-mono text-zinc-800 dark:text-zinc-200">.sqlite</code> database file for offline study.
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xl">
+                Download questions with technical diagrams, circuit schematics, and markdown data tables directly into your in-app <strong>Exams Repository</strong> for instant offline practice without downloading raw files.
               </p>
             </div>
 
-            <button
-              type="button"
-              disabled={isExporting || filteredExams.length === 0}
-              onClick={handleDownloadFilteredBundle}
-              className="px-5 py-2.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98 transition disabled:opacity-50 shrink-0"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Compiling SQLite...</span>
-                </>
-              ) : (
-                <>
-                  <Database className="w-4 h-4 text-emerald-500" />
-                  <span>Download SQLite Bundle</span>
-                </>
-              )}
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
+              <button
+                type="button"
+                disabled={isExporting || filteredExams.length === 0}
+                onClick={handleDownloadQuestionsToRepository}
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md disabled:opacity-40 active:scale-98"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving to Repository...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 text-white" />
+                    <span>Download Questions ({filteredExams.length} Exams)</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Exam Cards Grid */}
@@ -433,116 +467,123 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {filteredExams.map((exam) => (
-                  <div
-                    key={exam.id}
-                    className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-3 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-white/20 transition shadow-2xs"
-                  >
-                    <div className="space-y-2">
-                      {/* Top Badges */}
-                      <div className="flex items-center justify-between gap-1 flex-wrap">
-                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                          {exam.examYear || '2016 E.C.'}
-                        </span>
+                {filteredExams.map((exam) => {
+                  const isSaved = Boolean(savedExamIds[exam.id] || exam.isDownloaded);
 
-                        <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold">
-                          {exam.hasImages && (
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400" title="Contains Diagrams & Schematics">
-                              <ImageIcon className="w-3 h-3" />
-                              <span>Diagrams</span>
-                            </span>
-                          )}
-                          {exam.hasTables && (
-                            <span className="flex items-center gap-1 text-sky-600 dark:text-sky-400" title="Contains Markdown Tables">
-                              <TableIcon className="w-3 h-3" />
-                              <span>Tables</span>
-                            </span>
-                          )}
+                  return (
+                    <div
+                      key={exam.id}
+                      className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-3 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-white/20 transition shadow-2xs"
+                    >
+                      <div className="space-y-2">
+                        {/* Top Badges */}
+                        <div className="flex items-center justify-between gap-1 flex-wrap">
+                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                            {exam.examYear || '2016 E.C.'}
+                          </span>
+
+                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold">
+                            {exam.hasImages && (
+                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400" title="Contains Diagrams & Schematics">
+                                <ImageIcon className="w-3 h-3" />
+                                <span>Diagrams</span>
+                              </span>
+                            )}
+                            {exam.hasTables && (
+                              <span className="flex items-center gap-1 text-sky-600 dark:text-sky-400" title="Contains Markdown Tables">
+                                <TableIcon className="w-3 h-3" />
+                                <span>Tables</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Title & Subject */}
-                      <div>
-                        <h4 className="font-bold text-xs text-zinc-900 dark:text-white leading-snug">
-                          {exam.title || exam.name}
-                        </h4>
-                        <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                          {exam.university && (
-                            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                              {exam.university} &bull;
+                        {/* Title & Subject */}
+                        <div>
+                          <h4 className="font-bold text-xs text-zinc-900 dark:text-white leading-snug">
+                            {exam.title || exam.name}
+                          </h4>
+                          <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            {exam.university && (
+                              <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                                {exam.university} &bull;
+                              </span>
+                            )}
+                            <span>{exam.semester || 'Semester 1'} &bull;</span>
+                            <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                              {exam.examType || 'Final'}
                             </span>
-                          )}
-                          <span>{exam.semester || 'Semester 1'} &bull;</span>
-                          <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                            {exam.examType || 'Final'}
+                          </div>
+                        </div>
+
+                        {/* Question Count & Time */}
+                        <div className="flex items-center gap-3 text-[11px] text-zinc-500 dark:text-zinc-400 pt-1">
+                          <span className="flex items-center gap-1">
+                            <Layers className="w-3 h-3" />
+                            <span>{exam.questions?.length || 0} Questions</span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{exam.timeLimit || 60} mins</span>
                           </span>
                         </div>
                       </div>
 
-                      {/* Question Count & Time */}
-                      <div className="flex items-center gap-3 text-[11px] text-zinc-500 dark:text-zinc-400 pt-1">
-                        <span className="flex items-center gap-1">
-                          <Layers className="w-3 h-3" />
-                          <span>{exam.questions?.length || 0} Questions</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{exam.timeLimit || 60} mins</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-200/80 dark:border-white/5">
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadSingleExam(exam)}
-                        className="px-3 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-                        title="Download single exam SQLite file"
-                      >
-                        <Database className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                        <span>.sqlite File</span>
-                      </button>
-
-                      {onStartExam && (
+                      {/* Actions */}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-200/80 dark:border-white/5">
                         <button
                           type="button"
-                          onClick={() => {
-                            onClose();
-                            onStartExam(exam);
-                          }}
-                          className="px-3.5 py-1.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer shadow-2xs active:scale-98"
+                          onClick={() => handleSaveSingleExam(exam)}
+                          className={`px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer shadow-2xs ${
+                            isSaved
+                              ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                              : 'bg-zinc-100 dark:bg-[#0f1d33] hover:bg-zinc-200 dark:hover:bg-[#132238] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10'
+                          }`}
+                          title="Save to local in-app repository"
                         >
-                          <Play className="w-3 h-3 fill-current" />
-                          <span>Practice Now</span>
+                          {isSaved ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>In Repository</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download Questions</span>
+                            </>
+                          )}
                         </button>
-                      )}
+
+                        {onStartExam && (
+                          <button
+                            type="button"
+                            onClick={() => handleStartExamSession(exam)}
+                            className="px-3.5 py-1.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-[11px] flex items-center gap-1 transition cursor-pointer shadow-xs active:scale-98"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>Practice Now</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 sm:px-6 py-3.5 border-t border-zinc-100 dark:border-white/10 bg-zinc-50/80 dark:bg-[#070e1a]/80 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-            <span>
-              WebAssembly SQLite Engine &bull; Zero internet required once downloaded
-            </span>
+          {/* Developer / Offline Lab File Export Toggle */}
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={handleManualSqliteExport}
+              disabled={isExporting || filteredExams.length === 0}
+              className="text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline cursor-pointer transition disabled:opacity-40"
+            >
+              School Lab / USB Transfer: Export as standalone .sqlite binary file
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0c182b] text-zinc-700 dark:text-zinc-300 font-bold text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer shadow-xs transition"
-          >
-            Close
-          </button>
         </div>
-
       </div>
     </div>
   );
