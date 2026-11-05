@@ -48,7 +48,9 @@ import {
   AgentLogEntry,
 } from '../services/langGraphPipeline';
 import { downloadExamSqliteFile } from '../services/sqliteService';
-import { saveExamToFirestore } from '../services/db';
+import { saveExamToFirestore, isUserAdmin } from '../services/db';
+import { useAuth } from '../context/AuthContext';
+import { generateHardCopyExamVisionPrompt } from '../services/aiExamParserService';
 
 interface ProfessorModalProps {
   isOpen: boolean;
@@ -57,10 +59,11 @@ interface ProfessorModalProps {
   onGoToPaste?: () => void;
   onAddGeneratedQuestions?: (questions: Question[], examTitle?: string) => void;
   onStartDirectPractice?: (exam: Exam) => void;
+  onOpenAdminOfficialStudio?: () => void;
 }
 
 type SubjectType = 'calculation' | 'theory';
-type ActiveView = 'prompt' | 'agent' | 'txt_preview';
+type ActiveView = 'prompt' | 'agent' | 'txt_preview' | 'admin_vision';
 type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
 type PromptStyle = 'brief' | 'detailed';
 
@@ -84,7 +87,11 @@ export const ProfessorModal: React.FC<ProfessorModalProps> = ({
   onGoToPaste,
   onAddGeneratedQuestions,
   onStartDirectPractice,
+  onOpenAdminOfficialStudio,
 }) => {
+  const { user } = useAuth();
+  const isAdmin = Boolean(user && !user.isAnonymous && user.uid !== 'guest' && isUserAdmin(user));
+
   // Mobile device detection and Phone LaTeX optimization toggle
   const isMobileDevice = isMobileUserDevice();
   const [optimizeForPhone, setOptimizeForPhone] = useState<boolean>(() => isMobileDevice);
@@ -98,6 +105,17 @@ export const ProfessorModal: React.FC<ProfessorModalProps> = ({
   const [timeLimit, setTimeLimit] = useState<number>(20);
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('Medium');
   const [promptStyle, setPromptStyle] = useState<PromptStyle>('brief');
+
+  // Admin Hard-Copy Vision Prompt States
+  const [visionUniversity, setVisionUniversity] = useState('Addis Ababa University (AAU)');
+  const [visionSubject, setVisionSubject] = useState('Phys 1011 (General Physics)');
+  const [visionTier, setVisionTier] = useState<'university' | 'secondary'>('university');
+  const [visionExamType, setVisionExamType] = useState('Final');
+  const [visionExamYear, setVisionExamYear] = useState('2016 E.C.');
+  const [visionIncludeDiagrams, setVisionIncludeDiagrams] = useState(true);
+  const [visionIncludeChoiceImages, setVisionIncludeChoiceImages] = useState(false);
+  const [visionIncludeTables, setVisionIncludeTables] = useState(true);
+  const [visionCopied, setVisionCopied] = useState(false);
 
   // UI View Tab & Interactive States
   const [activeView, setActiveView] = useState<ActiveView>('prompt');
@@ -1232,6 +1250,21 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                     <FileText className="w-3.5 h-3.5" />
                     <span>Format Preview</span>
                   </button>
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveView('admin_vision')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                        activeView === 'admin_vision'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300'
+                      }`}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Admin Hard-Copy Vision</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Brief vs Detailed Toggle (Only in Prompt view) */}
@@ -1334,6 +1367,156 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 px-1">
                   Format standard: questions, options A–D, Answer letter, and bracket formula display <strong>{'[ a = \\frac{v - u}{t} ]'}</strong>.
                 </p>
+              </div>
+            )}
+
+            {/* TAB CONTENT 2.5: ADMIN HARD-COPY PAST EXAM VISION PROMPT */}
+            {activeView === 'admin_vision' && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      <h4 className="font-bold text-sm text-zinc-950 dark:text-white">
+                        Admin Hard-Copy Past Exam Vision Prompt
+                      </h4>
+                    </div>
+                    {onOpenAdminOfficialStudio && (
+                      <button
+                        type="button"
+                        onClick={onOpenAdminOfficialStudio}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Open Official Exam Studio</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                    Use this prompt with ChatGPT-4o, Claude 3.5 Sonnet, or Gemini 2.0 to transcribe scanned past Ethiopian exam papers. The prompt formats math in KaTeX and flags diagrams with placeholders ready for Supabase upload.
+                  </p>
+                </div>
+
+                {/* Quick Filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">Tier</label>
+                    <select
+                      value={visionTier}
+                      onChange={(e) => setVisionTier(e.target.value as any)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-xs font-semibold"
+                    >
+                      <option value="university">University Tier</option>
+                      <option value="secondary">Secondary Tier</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">
+                      {visionTier === 'university' ? 'University' : 'Grade'}
+                    </label>
+                    <input
+                      type="text"
+                      value={visionUniversity}
+                      onChange={(e) => setVisionUniversity(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">Subject</label>
+                    <input
+                      type="text"
+                      value={visionSubject}
+                      onChange={(e) => setVisionSubject(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 block mb-1">Year / Exam</label>
+                    <input
+                      type="text"
+                      value={`${visionExamType} ${visionExamYear}`}
+                      onChange={(e) => setVisionExamYear(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-xs font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* 3 Toggles */}
+                <div className="flex items-center gap-4 flex-wrap text-xs pt-1">
+                  <label className="flex items-center gap-1.5 cursor-pointer font-semibold text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={visionIncludeDiagrams}
+                      onChange={(e) => setVisionIncludeDiagrams(e.target.checked)}
+                      className="accent-emerald-600 rounded"
+                    />
+                    <span>Detect Question Diagrams</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer font-semibold text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={visionIncludeChoiceImages}
+                      onChange={(e) => setVisionIncludeChoiceImages(e.target.checked)}
+                      className="accent-emerald-600 rounded"
+                    />
+                    <span>Detect Choice Images (A-D)</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer font-semibold text-zinc-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={visionIncludeTables}
+                      onChange={(e) => setVisionIncludeTables(e.target.checked)}
+                      className="accent-emerald-600 rounded"
+                    />
+                    <span>Detect Tables</span>
+                  </label>
+                </div>
+
+                {/* Prompt Textarea */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-zinc-700 dark:text-zinc-300">Generated Master Vision Prompt</span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const txt = generateHardCopyExamVisionPrompt({
+                          universityOrGrade: visionUniversity,
+                          subject: visionSubject,
+                          examType: visionExamType,
+                          examYear: visionExamYear,
+                          includeDiagrams: visionIncludeDiagrams,
+                          includeChoiceImages: visionIncludeChoiceImages,
+                          includeTables: visionIncludeTables,
+                        });
+                        await navigator.clipboard.writeText(txt);
+                        setVisionCopied(true);
+                        setTimeout(() => setVisionCopied(false), 2500);
+                      }}
+                      className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {visionCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{visionCopied ? 'Copied to Clipboard!' : 'Copy Prompt'}</span>
+                    </button>
+                  </div>
+
+                  <textarea
+                    rows={10}
+                    readOnly
+                    value={generateHardCopyExamVisionPrompt({
+                      universityOrGrade: visionUniversity,
+                      subject: visionSubject,
+                      examType: visionExamType,
+                      examYear: visionExamYear,
+                      includeDiagrams: visionIncludeDiagrams,
+                      includeChoiceImages: visionIncludeChoiceImages,
+                      includeTables: visionIncludeTables,
+                    })}
+                    className="w-full p-4 font-mono text-xs leading-relaxed rounded-[22px] bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 select-all focus:outline-hidden shadow-xs"
+                  />
+                </div>
               </div>
             )}
 
@@ -1813,6 +1996,8 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
             <span>
               {activeView === 'agent'
                 ? 'Create with Agent • 3-Node State Graph • KaTeX Certified'
+                : activeView === 'admin_vision'
+                ? 'Admin Past-Exam Vision Pipeline • KaTeX & Diagrams'
                 : 'Ready for ChatGPT, Claude, Gemini & DeepSeek'}
             </span>
           </div>
@@ -1827,7 +2012,16 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
               Close
             </button>
 
-            {activeView === 'agent' && langgraphQuestions.length > 0 ? (
+            {activeView === 'admin_vision' && onOpenAdminOfficialStudio ? (
+              <button
+                type="button"
+                onClick={onOpenAdminOfficialStudio}
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+              >
+                <span>Open in Official Studio</span>
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            ) : activeView === 'agent' && langgraphQuestions.length > 0 ? (
               <div className="flex items-center gap-2">
                 <button
                   type="button"

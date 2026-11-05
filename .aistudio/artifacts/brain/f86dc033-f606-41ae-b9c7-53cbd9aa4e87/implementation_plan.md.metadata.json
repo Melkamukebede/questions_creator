@@ -1,6 +1,6 @@
 {
-  "summary": "Implementation plan for Supabase linking guide, admin-only official exam & diagram uploader, in-app offline question repository storage without file downloads, and fixing the SQLite WASM fetch failure.",
-  "updatedAt": "2026-11-05T11:40:55.098420115Z",
+  "summary": "Architecture and implementation plan for the AI-Assisted Official Exam Studio parser, 3-toggle media detection, inline Supabase image uploaders for questions and choices, and the integrated Admin Hard-Copy Exam Vision Prompt Generator.",
+  "updatedAt": "2026-11-05T13:36:48.506560938Z",
   "requestFeedback": true,
   "userFacing": true
 }

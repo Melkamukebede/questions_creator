@@ -74,10 +74,11 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
       if (!shouldShuffle || q.options.length <= 1) {
         return { ...q };
       }
-      // Pair each option with whether it is the correct answer
+      // Pair each option with whether it is the correct answer and its choice image
       const paired = q.options.map((opt, idx) => ({
         text: opt,
         isCorrect: idx === q.correct,
+        image: q.optionImages?.[idx] || null,
       }));
 
       // Fisher-Yates shuffle
@@ -87,11 +88,13 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
       }
 
       const shuffledOptions = paired.map((p) => p.text);
+      const shuffledOptionImages = paired.map((p) => p.image);
       const newCorrectIndex = paired.findIndex((p) => p.isCorrect);
 
       return {
         ...q,
         options: shuffledOptions,
+        optionImages: shuffledOptionImages,
         correct: newCorrectIndex >= 0 ? newCorrectIndex : 0,
       };
     });
@@ -448,8 +451,26 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
                 >
                   {letter}
                 </div>
-                <div className="flex-1 text-sm sm:text-base leading-relaxed font-normal">
+                <div className="flex-1 text-sm sm:text-base leading-relaxed font-normal space-y-1.5">
                   <MathRenderer content={optText} inline />
+                  {q.optionImages?.[optIdx] && (
+                    <div className="pt-1">
+                      <img
+                        src={q.optionImages[optIdx]!}
+                        alt={`Option ${letter} Diagram`}
+                        className="max-h-24 sm:max-h-28 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0c182b] object-contain p-1 shadow-2xs hover:scale-102 transition cursor-zoom-in"
+                        loading="lazy"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxImage({
+                            url: q.optionImages![optIdx]!,
+                            caption: `Option ${letter} Diagram`,
+                            title: `Question ${qIndex + 1} - Choice ${letter}`,
+                          });
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 {/* Visual Icon Check / Indicator */}
                 {isExplRevealed && isCorrectOption && (

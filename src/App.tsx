@@ -1065,6 +1065,10 @@ function MainApp() {
             onGoToPaste={handleOpenQuestionTextEditor}
             onAddGeneratedQuestions={handleAddQuestionsFromAIGeneration}
             onStartDirectPractice={handleStartAIPractice}
+            onOpenAdminOfficialStudio={() => {
+              setIsProfessorModalOpen(false);
+              setIsAdminOfficialStudioOpen(true);
+            }}
           />
         )}
 
