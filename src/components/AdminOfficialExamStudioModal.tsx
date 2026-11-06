@@ -40,7 +40,7 @@ import {
   ECE_AND_ENGINEERING_SUBJECTS,
   SECONDARY_ACADEMIC_LEVELS,
 } from '../types';
-import { uploadExamMedia, saveOfficialExam, getCloudflareConfig, CloudflareConfig } from '../services/cloudflareService';
+import { uploadExamMedia, saveOfficialExam, getSupabaseConfig, SupabaseConfig } from '../services/supabaseService';
 import { parseAiExamText, generateHardCopyExamVisionPrompt } from '../services/aiExamParserService';
 import { MarkdownTableRenderer } from './MarkdownTableRenderer';
 import { MathRenderer } from './MathRenderer';
@@ -62,11 +62,12 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
   onExamPublished,
   isAdmin,
 }) => {
-  const [cloudflareConfig, setCloudflareConfig] = useState<CloudflareConfig | null>(null);
+  const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      getCloudflareConfig().then(setCloudflareConfig).catch(() => {});
+      const cfg = getSupabaseConfig();
+      setSupabaseConfig(cfg);
     }
   }, [isOpen]);
 
@@ -118,7 +119,7 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <h3 className="font-bold text-lg text-zinc-900 dark:text-white">Admin Privileges Required</h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Only verified administrators (such as <code>melkamukebede11@gmail.com</code>) have permission to upload official exams and diagram media to Cloudflare R2 cloud storage.
+            Only verified administrators (such as <code>melkamukebede11@gmail.com</code>) have permission to upload official exams and diagram media to Supabase cloud storage.
           </p>
           <button
             type="button"
@@ -138,7 +139,7 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
     fileInputRef.current?.click();
   };
 
-  // Handle direct diagram image upload to Cloudflare R2 Storage
+  // Handle direct diagram image upload to Supabase Storage
   const handleImageFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const target = activeUploadRef.current;
@@ -161,11 +162,11 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
       if (target.optIdx !== undefined) {
         // Choice option image
         const optImages = targetQ.optionImages ? [...targetQ.optionImages] : [null, null, null, null];
-        optImages[target.optIdx] = uploadResult.url;
+        optImages[target.optIdx] = uploadResult.publicUrl;
         targetQ.optionImages = optImages;
       } else {
         // Question prompt image
-        targetQ.imageUrl = uploadResult.url;
+        targetQ.imageUrl = uploadResult.publicUrl;
         targetQ.imageCaption = targetQ.imageCaption || `Figure ${target.qIdx + 1}: ${file.name.replace(/\.[^/.]+$/, '')}`;
       }
 
@@ -174,9 +175,9 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
 
       setStatusMsg({
         type: 'success',
-        text: uploadResult.storageSource === 'cloudflare_r2'
-          ? 'Image uploaded to Cloudflare R2 storage bucket!'
-          : 'Image embedded as Base64 fallback (Cloudflare R2 unconfigured).',
+        text: !uploadResult.isBase64Fallback
+          ? 'Image uploaded to Supabase Storage bucket!'
+          : 'Image embedded as local Base64 fallback (Supabase unconfigured or offline).',
       });
       setTimeout(() => setStatusMsg(null), 3500);
     } catch (err) {
@@ -383,7 +384,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
       updatedAt: new Date().toISOString(),
       category: 'official',
       sourceType: 'official',
-      storageSource: 'cloudflare_r2',
+      storageSource: 'supabase',
       hasImages: questions.some((q) => Boolean(q.imageUrl) || Boolean(q.optionImages?.some(Boolean))),
       hasTables: questions.some((q) => Boolean(q.tableMarkdown)),
     };
@@ -400,7 +401,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
 
       setStatusMsg({
         type: 'success',
-        text: `Official Exam "${examData.title}" published successfully to Cloudflare R2 and added to local repository!`,
+        text: `Official Exam "${examData.title}" published successfully to Supabase and added to local repository!`,
       });
 
       setTimeout(() => {
@@ -423,7 +424,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 font-['Plus_Jakarta_Sans',sans-serif]">
-      {/* Hidden File Input for Cloudflare Media Upload */}
+      {/* Hidden File Input for Supabase Media Upload */}
       <input
         type="file"
         ref={fileInputRef}
@@ -445,7 +446,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                   Admin Official Exam Studio
                 </h3>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                  Cloudflare R2
+                  Supabase Cloud
                 </span>
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -455,11 +456,11 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Cloudflare Connection Pill */}
-            {cloudflareConfig?.isConfigured ? (
+            {/* Supabase Connection Pill */}
+            {supabaseConfig?.isConfigured ? (
               <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                 <Database className="w-3.5 h-3.5" />
-                <span>Cloudflare R2 Ready</span>
+                <span>Supabase Ready</span>
               </span>
             ) : (
               <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
@@ -543,7 +544,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
               className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-              <span>Publish to Cloudflare R2</span>
+              <span>Publish to Supabase Cloud</span>
             </button>
           )}
         </div>
@@ -1201,9 +1202,9 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                               ) : (
                                 <Upload className="w-3.5 h-3.5 text-emerald-500" />
                               )}
-                              <span>Replace Image in Cloudflare R2</span>
+                              <span>Replace Image in Supabase Storage</span>
                             </button>
-                            <span className="text-[11px] text-zinc-400">Hosted in Cloudflare R2 bucket</span>
+                            <span className="text-[11px] text-zinc-400">Hosted in Supabase bucket</span>
                           </div>
                         </div>
                       </div>
@@ -1222,7 +1223,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                           </span>
                         </div>
                         <p className="text-xs text-zinc-600 dark:text-zinc-300">
-                          This question was flagged with a diagram placeholder. Click below to select the image file from your device and host it on Cloudflare R2 Storage.
+                          This question was flagged with a diagram placeholder. Click below to select the image file from your device and host it on Supabase Storage.
                         </p>
                         <button
                           type="button"
@@ -1453,7 +1454,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                       className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-md cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      <span>Publish Official Exam to Cloudflare R2</span>
+                      <span>Publish Official Exam to Supabase Cloud</span>
                     </button>
                   </div>
                 </div>
@@ -1476,7 +1477,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                         Pre-Publish Verification &amp; LaTeX Audit
                       </h4>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Review rendered KaTeX formulas, tables, and hosted diagrams before saving to Cloudflare R2
+                        Review rendered KaTeX formulas, tables, and hosted diagrams before saving to Supabase
                       </p>
                     </div>
                   </div>
@@ -1518,7 +1519,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                       <span className="font-bold block text-zinc-900 dark:text-white">
                         {questions.filter((q) => q.imageUrl).length} Hosted Diagrams
                       </span>
-                      <span className="text-[11px] text-zinc-400">Cloudflare R2 Storage</span>
+                      <span className="text-[11px] text-zinc-400">Supabase Storage</span>
                     </div>
                   </div>
 
@@ -1680,7 +1681,7 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-md cursor-pointer disabled:opacity-50"
                   >
                     {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    <span>Confirm &amp; Publish Official Exam to Cloudflare R2</span>
+                    <span>Confirm &amp; Publish Official Exam to Supabase Cloud</span>
                   </button>
                 </div>
               )}

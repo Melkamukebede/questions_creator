@@ -53,7 +53,7 @@ export interface HomeViewProps {
   onOpenNotificationsModal?: () => void;
   onOpenDatabaseUpload?: (exam: Exam) => void;
   onOpenDownloadCenter?: () => void;
-  onOpenCloudflareConfig?: () => void;
+  onOpenSupabaseConfig?: () => void;
   onOpenAdminOfficialStudio?: () => void;
   onEditExam?: (exam: Exam) => void;
   onDeleteExam?: (examId: string) => void;
@@ -95,7 +95,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenNotificationsModal,
   onOpenDatabaseUpload,
   onOpenDownloadCenter,
-  onOpenCloudflareConfig,
+  onOpenSupabaseConfig,
   onOpenAdminOfficialStudio,
   onEditExam,
   onDeleteExam,
@@ -790,15 +790,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                                 <span>Download Questions</span>
                               </button>
                             )}
-                            {isAdmin && onOpenCloudflareConfig && (
+                            {isAdmin && onOpenSupabaseConfig && (
                               <button
                                 type="button"
-                                onClick={onOpenCloudflareConfig}
+                                onClick={onOpenSupabaseConfig}
                                 className="px-3.5 py-2 rounded-full bg-white dark:bg-[#0f1d33] border border-zinc-200/80 dark:border-white/10 text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition cursor-pointer flex items-center gap-1.5 hover:bg-zinc-100 dark:hover:bg-[#132238] active:scale-98"
-                                title="Admin: Configure Cloudflare R2 Storage for diagrams and questions"
+                                title="Admin: Configure Supabase Cloud Storage (No Credit Card)"
                               >
-                                <Cloud className="w-3.5 h-3.5 text-orange-500" />
-                                <span>Cloudflare R2</span>
+                                <Database className="w-3.5 h-3.5 text-emerald-500" />
+                                <span>Supabase Cloud</span>
                               </button>
                             )}
                             {isAdmin && onOpenAdminOfficialStudio && (
@@ -806,7 +806,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                                 type="button"
                                 onClick={onOpenAdminOfficialStudio}
                                 className="px-3.5 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition cursor-pointer flex items-center gap-1.5 hover:bg-emerald-500/20 active:scale-98"
-                                title="Admin: Author and publish official exams with diagrams to Cloudflare R2"
+                                title="Admin: Author and publish official exams with diagrams to Supabase Cloud Storage"
                               >
                                 <Sparkles className="w-3.5 h-3.5" />
                                 <span>Official Studio</span>

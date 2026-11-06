@@ -52,7 +52,7 @@ export interface ExamMetadata {
   examType?: ExamTypeClassification | string;
   hasImages?: boolean;
   hasTables?: boolean;
-  storageSource?: 'cloudflare_r2' | 'firestore' | 'local';
+  storageSource?: 'supabase' | 'firestore' | 'local' | 'cloudflare_r2';
 }
 
 export interface Exam {
@@ -90,9 +90,9 @@ export interface Exam {
   examType?: ExamTypeClassification | string;
   hasImages?: boolean;
   hasTables?: boolean;
-  storageSource?: 'cloudflare_r2' | 'firestore' | 'local';
+  storageSource?: 'supabase' | 'firestore' | 'local' | 'cloudflare_r2';
   // Dual-type exam categorization & curated catalog fields
-  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'cloudflare_r2' | 'official';
+  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'supabase' | 'official' | 'cloudflare_r2';
   isDownloaded?: boolean;
   downloadedAt?: string;
   catalogId?: string;
@@ -103,7 +103,7 @@ export interface Exam {
   downloadCount?: number;
   // Cloud Database Storage tracking
   isUploadedToCloud?: boolean;
-  cloudStorageEngine?: 'firestore' | 'cloudflare_r2';
+  cloudStorageEngine?: 'firestore' | 'supabase' | 'cloudflare_r2';
   cloudUploadedAt?: string;
   authorEmail?: string;
   adminTag?: string;

@@ -1,57 +1,67 @@
-# Cloudflare R2 Migration & Service Worker / KaTeX Offline Resolution
+# Supabase Storage Migration (No Credit Card) & System Color Theme Restoration
 
-A comprehensive plan to resolve the Service Worker network error, bundle KaTeX locally for offline mathematics rendering, clarify PWA install behavior, and replace Supabase with a secure Full-Stack Cloudflare R2 storage architecture.
+A complete plan to transition Sinahard's diagram and exam media storage from Cloudflare R2 to **Supabase Storage** (which requires **no credit card** on its free tier), restore the original **Emerald & Navy** visual system colors, and maintain 100% offline KaTeX and SQLite capabilities.
 
 ---
 
 ### User Review & Critical Decisions
 
 > [!IMPORTANT]
-> The following decisions were confirmed by the user in Phase 1:
-> - **Storage Architecture**: Full-Stack Cloudflare R2 via a secure server proxy route (`/api/storage/*`), eliminating all Supabase code and packages.
-> - **KaTeX Styling & Fonts**: Bundle KaTeX locally inside the application build for 100% offline math rendering, removing external CDN requests to jsDelivr.
-> - **PWA Install Banner**: Retain the custom in-app installation flow (`beforeinstallpromptevent.preventDefault()`), which intentionally suppresses the browser's default automated mini-infobar.
+> **Key Decisions & Rationale:**
+> - **Zero-Cost Storage Without Credit Card**: Cloudflare R2 requires entering a credit card during onboarding even for its free tier. In contrast, **Supabase Storage** provides 1 GB of free storage, 2 GB of bandwidth, and 50,000 monthly active users on its Free tier with **zero credit card required** (sign up with GitHub or email).
+> - **Color Theme Restoration**: All temporary orange Cloudflare accents (`text-orange-500`, `bg-orange-500/10`) will be replaced with Sinahard's cohesive **Emerald & Deep Navy** system colors (`emerald-500/600`, `teal-500`, `#070e1a`, `#0c182b`).
+> - **Strict Admin Access**: Supabase cloud credentials management is strictly restricted to `melkamukebede11@gmail.com`. Non-admins see zero configuration triggers or setup prompts.
+> - **Preserved Offline Engine**: The offline KaTeX math rendering and SQLite multi-year exam downloader will remain 100% intact with automatic Base64 image fallback when offline.
 
 ---
 
 ### 1. Overview & Core Concept
 
 - **What It Delivers**:
-  1. **Fix Service Worker & KaTeX Network Error**: Eliminates the `ERR_FAILED` and `"opaque response used for request whose type is not no-cors"` error by bundling `katex/dist/katex.min.css` directly into Vite's asset pipeline, eliminating external network dependencies for formulas and Greek symbols.
-  2. **Clean PWA Lifecycle**: Clarifies the Chrome DevTools `Update on reload` setting and preserves the custom in-app PWA install trigger without disruptive browser auto-banners.
-  3. **Full Cloudflare R2 Storage Migration**: Replaces Supabase Storage and Postgres client codes with a lightweight, secure Cloudflare R2 integration via Express backend proxy endpoints (`/api/storage/upload`, `/api/storage/config`, `/api/storage/status`), ensuring S3 secret keys never leak to the client browser.
-  4. **Resilient Offline Fallbacks**: Automatically falls back to local data URLs and SQLite bundles if Cloudflare R2 credentials are not yet configured or when the device is completely offline.
+  1. **Credit-Card-Free Media Storage**: Seamless diagram upload to Supabase's `exam-media` bucket using Supabase's public URL and Anonymous Key (safe for frontend use with Row Level Security).
+  2. **Harmonious System Color Palette**: Restores the original Emerald (`#10b981`), Cyan (`#06b6d4`), and Deep Midnight Navy (`#070e1a` / `#0c182b`) design language throughout the navigation bar, drawer, home view, and official exam studio.
+  3. **Multi-Tier Academic Levels**: Full support for Ethiopian Secondary (Grades 9–12, Matric) and University levels (Freshman, Sophomore, Junior, Senior, and Exit Exam) including First Year Electrical and Computer Engineering (ECE).
+  4. **Fail-Safe Offline Mode**: If Supabase is unconfigured or the user is without internet, diagrams automatically save and render as Base64 data URLs in local IndexedDB and SQLite bundles.
 
-- **Target Persona**: Ethiopian students, teachers, and university engineering candidates preparing for national entrance, freshman, and senior engineering exams both online and offline.
+- **Target Persona**: Ethiopian students, teachers, and university engineering candidates who need instant, offline-first exam practice with diagrams, without requiring credit cards or complex cloud billing.
 
 ---
 
 ### 2. User Experience & Visual Design
 
-- **Admin Cloudflare Storage Hub**:
-  - Replaces the previous Supabase configuration modal with a modern **Cloudflare R2 Storage Configuration Modal** accessible only to administrators.
-  - Inputs for: *Cloudflare Account ID*, *R2 Access Key ID*, *R2 Secret Access Key*, *R2 Bucket Name*, and optional *Public R2 Bucket Domain / CDN URL*.
-  - Live connection tester testing read/write bucket permissions with a 1-click test ping.
+- **Admin Supabase Cloud Storage Hub**:
+  - Modal with inputs for:
+    - **Supabase Project URL** (e.g., `https://xyzproject.supabase.co`)
+    - **Supabase Anon / Public Key** (safe public key)
+    - **Storage Bucket Name** (default: `exam-media`)
+  - A friendly "How to get your free credentials without a credit card in 2 minutes" quick guide.
+  - Live **Test Connection** button that validates bucket read/write permissions.
 - **Official Exam Studio**:
-  - Status indicator changes from "Supabase Ready" to "Cloudflare R2 Ready".
-  - Diagram upload buttons directly upload images to Cloudflare R2 via `/api/storage/upload` and immediately insert the public image URL into the exam question.
-  - "Publish to Cloudflare R2" button publishes the verified exam record and saves an offline copy in the local repository.
-- **Design Alignment**:
-  - Consistent deep midnight surfaces (`#070e1a` / `#0c182b`), emerald accents (`emerald-600` / `emerald-500`), clean typography (`Outfit` and `Plus Jakarta Sans`), and zero-pill metadata discipline.
+  - Top indicator displays a clean emerald badge: **"Supabase Ready"** (or **"Local Storage Mode"** when offline).
+  - Pre-Publish Preview displaying full question stems, answer choices ($A, B, C, D$) with interactive radio options, step-by-step explanations, and rendered KaTeX formulas.
+  - "Publish to Supabase" button with progress feedback and automatic local cache synchronization.
+- **Visual Design Restoration**:
+  - Dominant Dark Surface: `#070e1a` (Background) and `#0c182b` / `#0f1d33` (Elevated Cards).
+  - Primary Accent: `emerald-500` / `emerald-600` with subtle `emerald-500/20` border glows.
+  - Secondary Accent: `cyan-400` / `teal-400` for engineering courses and exit exam badges.
+  - Removal of all orange badges and Cloudflare labels in the Navbar, Drawer, Home View, and Download Center.
 
 ---
 
 ### 3. Key Product Decisions & Trade-Offs
 
-- **Decision 1: Bundled KaTeX vs. External CDN**
-  - *Chosen Approach*: Import `katex/dist/katex.min.css` in `src/index.css` and remove the CDN link from `index.html`.
-  - *Why*: The external jsDelivr link caused CORS opaque response failures inside the Service Worker when offline or during DevTools reloads. Bundling KaTeX ensures math renders instantly even in remote regions with zero internet connectivity.
-  - *Alternatives Considered*: Tweaking Workbox runtime caching to ignore CORS. Rejected because external CDNs remain a single point of failure in offline environments.
+- **Decision 1: Supabase Storage vs. Cloudflare R2 vs. Firebase Storage**
+  - *Chosen Approach*: Supabase Storage (Free tier, no credit card required) combined with existing Firebase Firestore auth/metadata sync.
+  - *Why*: Cloudflare R2 mandates credit card verification during account creation. Supabase allows immediate free tier creation with standard email/password or GitHub with zero billing hurdles.
+  - *Alternatives Considered*: Firebase Storage (requires enabling Blaze pay-as-you-go plan for custom bucket rules, which also asks for billing verification).
 
-- **Decision 2: Cloudflare R2 via Server Proxy vs. Direct Browser S3 SDK**
-  - *Chosen Approach*: Host Cloudflare R2 upload and signing logic on the Node/Express backend (`server.ts` / `/api/storage/*`).
-  - *Why*: Cloudflare R2 requires AWS S3 HMAC secret credentials (`SecretAccessKey`). Putting these keys in client React code would expose them in the browser's DevTools Network tab. The server proxy keeps credentials private and secure.
-  - *Alternatives Considered*: Supabase (rejected per user request to eliminate Supabase).
+- **Decision 2: Client-Side Supabase Anon Key vs. Server Proxy**
+  - *Chosen Approach*: Supabase client initialized with Project URL and Anonymous Public Key, supplemented by a lightweight backend proxy endpoint in `server.ts` for credential persistence.
+  - *Why*: Supabase's `anon` key is architected specifically for safe browser usage protected by Row Level Security (RLS) and bucket policies, unlike AWS S3 secret access keys.
+
+- **Decision 3: Retaining Bundled KaTeX & Offline First Design**
+  - *Chosen Approach*: Keep `katex/dist/katex.min.css` bundled in `main.tsx`.
+  - *Why*: Completely resolves the Service Worker CORS/opaque response error and ensures math formulas render instantly offline without external jsDelivr requests.
 
 ---
 
@@ -63,51 +73,57 @@ A comprehensive plan to resolve the Service Worker network error, bundle KaTeX l
 │                                                        │
 │  ┌───────────────────────┐   ┌──────────────────────┐  │
 │  │  Official Exam Studio │   │ Local KaTeX Bundled  │  │
-│  │  (Zero Placeholder)   │   │ (100% Offline Math)  │  │
+│  │  (Emerald & Navy UI)  │   │ (100% Offline Math)  │  │
 │  └───────────┬───────────┘   └──────────────────────┘  │
 └──────────────┼─────────────────────────────────────────┘
-               │ (Admin Diagram Upload / Config)
+               │ (Diagram Upload & Cloud Sync)
                ▼
 ┌────────────────────────────────────────────────────────┐
-│              Express Server Proxy (server.ts)          │
+│             Supabase Service (supabaseService.ts)      │
 │                                                        │
-│  POST /api/storage/upload ──► AWS S3 / R2 SDK Client   │
-│  GET  /api/storage/status ──► Bucket Ping / Verify     │
-│  POST /api/storage/config ──► Store admin credentials  │
-└──────────────────────────────┬─────────────────────────┘
-                               │ (Secure S3 v4 HMAC)
-                               ▼
-┌────────────────────────────────────────────────────────┐
-│             Cloudflare R2 Object Storage               │
-│                                                        │
-│  - Bucket: sinahard-exams                              │
-│  - Zero Egress Fees for Circuit & Diagram Images       │
-│  - Global Cloudflare Edge CDN Delivery                 │
-└────────────────────────────────────────────────────────┘
+│  - uploadExamMedia(file) ──► /storage/v1/object/upload │
+│  - saveOfficialExam(exam)──► Cloud + Local DB sync     │
+│  - testConnection()      ──► Ping storage bucket       │
+└──────────────┬───────────────────────────────┬─────────┘
+               │ (Online with credentials)     │ (Offline / No keys)
+               ▼                               ▼
+┌──────────────────────────────┐ ┌───────────────────────────┐
+│     Supabase Free Cloud      │ │   Local IndexedDB/SQLite  │
+│                              │ │                           │
+│ - Bucket: 'exam-media'       │ │ - Offline Base64 Fallback │
+│ - 1 GB Free (No Credit Card) │ │ - Multi-Year .db Bundles  │
+│ - Public CDN image URLs      │ │ - 100% Zero-Network Ready │
+└──────────────────────────────┘ └───────────────────────────┘
 ```
 
-#### Detailed Execution Steps:
+#### Step-by-Step Implementation Sequence:
 
-1. **KaTeX & Service Worker Fix**:
-   - In `index.html`: Remove line 38 `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">`.
-   - In `src/index.css`: Add `@import "katex/dist/katex.min.css";` to bundle KaTeX CSS directly into the Vite build.
-   - In `vite.config.ts`: Remove the jsDelivr runtime caching block from Workbox, as KaTeX is now locally precached.
+1. **Package Management & Dependencies**:
+   - Re-install `@supabase/supabase-js` and uninstall `@aws-sdk/client-s3`.
+   - Run `npm install` to keep `package.json` and `package-lock.json` in sync, preventing Cloudflare/CI `npm ci` build failures.
 
-2. **Cloudflare R2 Backend Implementation (`server.ts`)**:
-   - Add backend routes:
-     - `POST /api/storage/upload`: Accepts diagram image uploads (multipart/form-data or Base64 payload), uploads to Cloudflare R2 using standard S3 v4 signature protocol, and returns the public CDN URL.
-     - `GET /api/storage/status`: Verifies Cloudflare R2 connection credentials and returns bucket health.
-     - `POST /api/storage/config`: Allows the admin to update Cloudflare credentials securely.
+2. **Supabase Service Implementation (`src/services/supabaseService.ts`)**:
+   - Recreate `supabaseService.ts` with:
+     - `getSupabaseConfig()`, `saveSupabaseConfig(url, anonKey, bucket)`
+     - `testSupabaseConnection()`
+     - `uploadExamMedia()`: Uploads PNG/JPG/WebP diagrams to Supabase Storage; generates public asset URL; falls back to Base64 data URL if unconfigured or offline.
+     - `saveOfficialExam()`, `fetchOfficialExams()`
 
-3. **Frontend Cloudflare Service & Modal**:
-   - Create `src/services/cloudflareService.ts` to replace `src/services/supabaseService.ts`.
-   - Create `src/components/CloudflareConfigModal.tsx` to replace `src/components/SupabaseConfigModal.tsx`.
-   - Cleanly remove `@supabase/supabase-js` references from `AdminOfficialExamStudioModal.tsx`, `AppDrawer.tsx`, `HomeView.tsx`, `DownloadCenterModal.tsx`, and `App.tsx`.
-   - Update `package.json` to uninstall `@supabase/supabase-js`.
+3. **Supabase Admin Configuration Modal (`src/components/SupabaseConfigModal.tsx`)**:
+   - Restore the modal with Emerald system styling (`border-emerald-500/20`, emerald connection badge).
+   - Clear guidance on creating a free Supabase bucket (`exam-media`) with public access.
+   - Restricted strictly to `melkamukebede11@gmail.com`.
 
-4. **PWA Install Prompt Verification**:
-   - Verify that `beforeinstallpromptevent.preventDefault()` in `usePWAInstall.ts` continues to drive the in-app "Install App" button without throwing errors.
+4. **Official Exam Studio & System Colors Restoration**:
+   - In `AdminOfficialExamStudioModal.tsx`:
+     - Update all handlers and state from Cloudflare to Supabase.
+     - Replace orange badges with emerald "Supabase Ready" / "Local Storage Mode" pills.
+   - In `HomeView.tsx`, `Navbar.tsx`, `AppDrawer.tsx`, and `DownloadCenterModal.tsx`:
+     - Replace "Cloudflare R2" button and orange accents with "Supabase Cloud" and the app's native emerald theme colors.
 
-5. **Compilation, Lint & Verification**:
-   - Run `compile_applet` and `lint_applet` concurrently to verify clean TypeScript compilation.
-   - Restart the dev server on port 3000.
+5. **Clean Server Endpoints (`server.ts`)**:
+   - Replace Cloudflare proxy endpoints with `/api/storage/supabase-config` and `/api/storage/test-connection`.
+
+6. **Build & Lint Verification**:
+   - Run `compile_applet` and `lint_applet` together to verify 0 errors.
+   - Verify `npm ci --dry-run` passes cleanly.

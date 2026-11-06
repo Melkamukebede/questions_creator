@@ -44,7 +44,7 @@ interface AppDrawerProps {
   onExportAllData?: () => void;
   onResetDefaultExams?: () => void;
   onOpenDownloadCenter?: () => void;
-  onOpenCloudflareConfig?: () => void;
+  onOpenSupabaseConfig?: () => void;
   onOpenAdminOfficialStudio?: () => void;
   activeSubscription: UserSubscription | null;
 }
@@ -59,7 +59,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenDatabaseUpload,
   onOpenSubscriptionModal,
   onOpenDownloadCenter,
-  onOpenCloudflareConfig,
+  onOpenSupabaseConfig,
   onOpenAdminOfficialStudio,
 }) => {
   const { user, signOut, firstRegisteredEmail } = useAuth();
@@ -308,7 +308,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </button>
               )}
 
-              {/* Official Exam & Media Studio (Admin Only - Cloudflare R2 Cloud) */}
+              {/* Official Exam & Media Studio (Admin Only - Supabase Cloud) */}
               {isUserAdmin(user) && onOpenAdminOfficialStudio && (
                 <button
                   id="drawer-admin-official-studio-btn"
@@ -331,7 +331,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Upload diagrams to Cloudflare R2 &amp; publish official exams
+                        Upload diagrams to Supabase Cloud &amp; publish official exams
                       </div>
                     </div>
                   </div>
@@ -401,30 +401,30 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </button>
               )}
 
-              {/* Cloudflare R2 Cloud Storage Configuration (Admin Only) */}
-              {isAdmin && onOpenCloudflareConfig && (
+              {/* Supabase Cloud Storage Configuration (Admin Only) */}
+              {isAdmin && onOpenSupabaseConfig && (
                 <button
-                  id="drawer-cloudflare-config-btn"
+                  id="drawer-supabase-config-btn"
                   type="button"
                   onClick={() => {
                     onClose();
-                    onOpenCloudflareConfig();
+                    onOpenSupabaseConfig();
                   }}
                   className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center font-bold shadow-2xs">
-                      <Cloud className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shadow-2xs">
+                      <Database className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                        <span>Cloudflare R2 Media Storage</span>
-                        <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-[#0f1d33] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10">
-                          Cloud
+                        <span>Supabase Media &amp; Cloud Storage</span>
+                        <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                          No Card
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Manage Cloudflare R2 credentials for zero-egress diagrams
+                        Manage Supabase URL &amp; anon key for diagram hosting
                       </div>
                     </div>
                   </div>
