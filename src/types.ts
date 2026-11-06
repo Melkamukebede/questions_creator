@@ -52,7 +52,7 @@ export interface ExamMetadata {
   examType?: ExamTypeClassification | string;
   hasImages?: boolean;
   hasTables?: boolean;
-  storageSource?: 'supabase' | 'firestore' | 'local';
+  storageSource?: 'cloudflare_r2' | 'firestore' | 'local';
 }
 
 export interface Exam {
@@ -90,9 +90,9 @@ export interface Exam {
   examType?: ExamTypeClassification | string;
   hasImages?: boolean;
   hasTables?: boolean;
-  storageSource?: 'supabase' | 'firestore' | 'local';
+  storageSource?: 'cloudflare_r2' | 'firestore' | 'local';
   // Dual-type exam categorization & curated catalog fields
-  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'supabase' | 'official';
+  sourceType?: 'user_created' | 'curated_catalog' | 'firestore' | 'cloudflare_r2' | 'official';
   isDownloaded?: boolean;
   downloadedAt?: string;
   catalogId?: string;
@@ -103,7 +103,7 @@ export interface Exam {
   downloadCount?: number;
   // Cloud Database Storage tracking
   isUploadedToCloud?: boolean;
-  cloudStorageEngine?: 'firestore' | 'supabase';
+  cloudStorageEngine?: 'firestore' | 'cloudflare_r2';
   cloudUploadedAt?: string;
   authorEmail?: string;
   adminTag?: string;
@@ -293,4 +293,50 @@ export const ETHIOPIAN_EXAM_YEARS = [
   '2011 E.C. (2019 G.C.)',
   '2010 E.C. (2018 G.C.)',
 ] as const;
+
+export const UNIVERSITY_ACADEMIC_LEVELS = [
+  'Freshman (1st Year)',
+  'Sophomore (2nd Year)',
+  'Junior (3rd Year)',
+  'Senior (4th/5th Year)',
+  'University Exit Exam',
+] as const;
+
+export const UNIVERSITY_DEPARTMENTS = [
+  'Electrical & Computer Engineering (ECE)',
+  'Pre-Engineering / Natural Science',
+  'Computer Science & Software Eng',
+  'Civil & Environmental Engineering',
+  'Mechanical & Thermal Engineering',
+  'Chemical & Bio-Engineering',
+  'Medicine & Health Sciences',
+  'Business & Economics',
+] as const;
+
+export const ECE_AND_ENGINEERING_SUBJECTS = [
+  'Circuit Theory & Network Analysis I & II',
+  'Signals and Systems Analysis',
+  'Digital Logic Design (ECE 2041)',
+  'Electronic Devices and Circuits',
+  'Electromagnetic Fields and Waves',
+  'Computer Programming for Engineers (C++/Python)',
+  'Microprocessors & Microcontrollers',
+  'Data Structures and Algorithms (ECE 3021)',
+  'Linear Control Systems Engineering',
+  'Electrical Machines & Drives',
+  'Power System Analysis & Protection',
+  'Communication Systems & Telecom Networks',
+  'Digital Signal Processing (DSP)',
+  'Computer Architecture & Embedded Systems',
+  'Applied Mathematics I & II (Engineering Math)',
+  'General Physics for Engineers (Phys 1011)',
+] as const;
+
+export const SECONDARY_ACADEMIC_LEVELS = [
+  'Grade 12 (National Matriculation)',
+  'Grade 11',
+  'Grade 10',
+  'Grade 9',
+] as const;
+
 

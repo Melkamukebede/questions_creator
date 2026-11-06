@@ -43,9 +43,8 @@ interface AppDrawerProps {
   onOpenDatabaseUpload?: () => void;
   onExportAllData?: () => void;
   onResetDefaultExams?: () => void;
-  onOpenSubscriptionModal: () => void;
   onOpenDownloadCenter?: () => void;
-  onOpenSupabaseConfig?: () => void;
+  onOpenCloudflareConfig?: () => void;
   onOpenAdminOfficialStudio?: () => void;
   activeSubscription: UserSubscription | null;
 }
@@ -60,10 +59,11 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenDatabaseUpload,
   onOpenSubscriptionModal,
   onOpenDownloadCenter,
-  onOpenSupabaseConfig,
+  onOpenCloudflareConfig,
   onOpenAdminOfficialStudio,
 }) => {
   const { user, signOut, firstRegisteredEmail } = useAuth();
+  const isAdmin = Boolean(user && !user.isAnonymous && user.uid !== 'guest' && isUserAdmin(user));
   const { unreadAlertsCount, completedToday, dailyGoal, studyStreakDays } = useNotifications();
   const { isInstalled, installApp } = usePWAInstall();
   const [copiedPhone, setCopiedPhone] = React.useState(false);
@@ -308,7 +308,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </button>
               )}
 
-              {/* Official Exam & Media Studio (Admin Only - Supabase Cloud) */}
+              {/* Official Exam & Media Studio (Admin Only - Cloudflare R2 Cloud) */}
               {isUserAdmin(user) && onOpenAdminOfficialStudio && (
                 <button
                   id="drawer-admin-official-studio-btn"
@@ -331,7 +331,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Upload diagrams to Supabase &amp; publish official exams
+                        Upload diagrams to Cloudflare R2 &amp; publish official exams
                       </div>
                     </div>
                   </div>
@@ -401,30 +401,30 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </button>
               )}
 
-              {/* Supabase Cloud Storage Configuration */}
-              {onOpenSupabaseConfig && (
+              {/* Cloudflare R2 Cloud Storage Configuration (Admin Only) */}
+              {isAdmin && onOpenCloudflareConfig && (
                 <button
-                  id="drawer-supabase-config-btn"
+                  id="drawer-cloudflare-config-btn"
                   type="button"
                   onClick={() => {
                     onClose();
-                    onOpenSupabaseConfig();
+                    onOpenCloudflareConfig();
                   }}
                   className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shadow-2xs">
-                      <Database className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 flex items-center justify-center font-bold shadow-2xs">
+                      <Cloud className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                        <span>Supabase Media Storage</span>
+                        <span>Cloudflare R2 Media Storage</span>
                         <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-[#0f1d33] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10">
                           Cloud
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Manage Supabase credentials for diagrams &amp; database
+                        Manage Cloudflare R2 credentials for zero-egress diagrams
                       </div>
                     </div>
                   </div>

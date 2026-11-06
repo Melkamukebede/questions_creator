@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
 import { GoogleGenAI, Type } from '@google/genai';
+import { S3Client, PutObjectCommand, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -465,6 +466,206 @@ app.post('/api/notify-admin', async (req, res) => {
     console.error('Error in /api/notify-admin:', err);
     const message = err instanceof Error ? err.message : 'Failed to send notification';
     return res.status(500).json({ status: 'error', message });
+  }
+});
+
+/**
+ * ─────────────────────────────────────────────────────────────
+ * CLOUDFLARE R2 OBJECT STORAGE SYSTEM FOR EXAM DIAGRAMS & PAPERS
+ * Zero egress fees, high-performance edge delivery, and secure S3 API.
+ * ─────────────────────────────────────────────────────────────
+ */
+let cloudflareR2Config = {
+  accountId: process.env.CLOUDFLARE_ACCOUNT_ID || process.env.VITE_CLOUDFLARE_ACCOUNT_ID || '',
+  accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID || '',
+  secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY || '',
+  bucketName: process.env.CLOUDFLARE_R2_BUCKET || process.env.R2_BUCKET || 'sinahard-exams',
+  publicDomain: process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || process.env.R2_PUBLIC_DOMAIN || '',
+};
+
+function getR2S3Client() {
+  if (
+    !cloudflareR2Config.accountId ||
+    !cloudflareR2Config.accessKeyId ||
+    !cloudflareR2Config.secretAccessKey
+  ) {
+    return null;
+  }
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${cloudflareR2Config.accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: cloudflareR2Config.accessKeyId,
+      secretAccessKey: cloudflareR2Config.secretAccessKey,
+    },
+  });
+}
+
+// GET /api/storage/cloudflare-config
+app.get('/api/storage/cloudflare-config', (_req, res) => {
+  const isConfigured = Boolean(
+    cloudflareR2Config.accountId &&
+    cloudflareR2Config.accessKeyId &&
+    cloudflareR2Config.secretAccessKey &&
+    cloudflareR2Config.bucketName
+  );
+  return res.json({
+    status: 'success',
+    isConfigured,
+    accountId: cloudflareR2Config.accountId,
+    bucketName: cloudflareR2Config.bucketName,
+    publicDomain: cloudflareR2Config.publicDomain,
+    hasCredentials: Boolean(cloudflareR2Config.accessKeyId && cloudflareR2Config.secretAccessKey),
+  });
+});
+
+// POST /api/storage/cloudflare-config
+app.post('/api/storage/cloudflare-config', (req, res) => {
+  try {
+    const { accountId, accessKeyId, secretAccessKey, bucketName, publicDomain } = req.body || {};
+    if (accountId !== undefined) cloudflareR2Config.accountId = String(accountId).trim();
+    if (accessKeyId !== undefined) cloudflareR2Config.accessKeyId = String(accessKeyId).trim();
+    if (secretAccessKey !== undefined) cloudflareR2Config.secretAccessKey = String(secretAccessKey).trim();
+    if (bucketName !== undefined) cloudflareR2Config.bucketName = String(bucketName).trim() || 'sinahard-exams';
+    if (publicDomain !== undefined) cloudflareR2Config.publicDomain = String(publicDomain).trim();
+
+    const isConfigured = Boolean(
+      cloudflareR2Config.accountId &&
+      cloudflareR2Config.accessKeyId &&
+      cloudflareR2Config.secretAccessKey &&
+      cloudflareR2Config.bucketName
+    );
+
+    return res.json({
+      status: 'success',
+      message: 'Cloudflare R2 configuration updated successfully',
+      isConfigured,
+      bucketName: cloudflareR2Config.bucketName,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to update config';
+    return res.status(500).json({ status: 'error', message });
+  }
+});
+
+// GET /api/storage/test-connection
+app.get('/api/storage/test-connection', async (_req, res) => {
+  try {
+    const client = getR2S3Client();
+    if (!client) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Cloudflare R2 credentials are incomplete. Please provide Account ID, Access Key ID, and Secret Access Key.',
+      });
+    }
+
+    const command = new ListObjectsV2Command({
+      Bucket: cloudflareR2Config.bucketName,
+      MaxKeys: 1,
+    });
+    await client.send(command);
+
+    return res.json({
+      status: 'success',
+      message: `Successfully connected to Cloudflare R2 bucket "${cloudflareR2Config.bucketName}"!`,
+      bucket: cloudflareR2Config.bucketName,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Connection test failed';
+    return res.status(500).json({
+      status: 'error',
+      message: `Failed to connect to Cloudflare R2: ${message}`,
+    });
+  }
+});
+
+// POST /api/storage/upload
+app.post('/api/storage/upload', async (req, res) => {
+  try {
+    const { fileBase64, fileName = 'diagram.png', contentType = 'image/png', folder = 'exams' } = req.body || {};
+
+    if (!fileBase64 || typeof fileBase64 !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'No file data provided' });
+    }
+
+    const client = getR2S3Client();
+    if (client) {
+      try {
+        const rawBase64 = fileBase64.replace(/^data:[^;]+;base64,/, '');
+        const buffer = Buffer.from(rawBase64, 'base64');
+        const cleanName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase();
+        const objectKey = `${folder}/${Date.now()}_${cleanName}`;
+
+        const uploadCommand = new PutObjectCommand({
+          Bucket: cloudflareR2Config.bucketName,
+          Key: objectKey,
+          Body: buffer,
+          ContentType: contentType,
+        });
+        await client.send(uploadCommand);
+
+        let finalUrl = '';
+        if (cloudflareR2Config.publicDomain) {
+          const cleanDomain = cloudflareR2Config.publicDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+          finalUrl = `https://${cleanDomain}/${objectKey}`;
+        } else {
+          finalUrl = `/api/storage/media/${encodeURIComponent(objectKey)}`;
+        }
+
+        return res.json({
+          status: 'success',
+          url: finalUrl,
+          key: objectKey,
+          storageSource: 'cloudflare_r2',
+        });
+      } catch (uploadErr) {
+        console.warn('Cloudflare R2 S3 upload failed, falling back to data URL:', uploadErr);
+      }
+    }
+
+    // Offline / unconfigured fallback: Return the high-resolution Base64 data URL
+    return res.json({
+      status: 'success',
+      url: fileBase64,
+      storageSource: 'base64',
+      isOfflineFallback: true,
+      message: 'Cloudflare R2 not configured; image saved locally as data URL.',
+    });
+  } catch (err: unknown) {
+    console.error('Error in /api/storage/upload:', err);
+    const message = err instanceof Error ? err.message : 'Upload handler error';
+    return res.status(500).json({ status: 'error', message });
+  }
+});
+
+// GET /api/storage/media/:key (Proxy media streamer when custom domain is not attached)
+app.get('/api/storage/media/:key(*)', async (req, res) => {
+  try {
+    const objectKey = req.params.key;
+    const client = getR2S3Client();
+    if (!client) {
+      return res.status(404).send('Cloudflare R2 not configured');
+    }
+
+    const command = new GetObjectCommand({
+      Bucket: cloudflareR2Config.bucketName,
+      Key: objectKey,
+    });
+    const response = await client.send(command);
+
+    if (response.ContentType) {
+      res.setHeader('Content-Type', response.ContentType);
+    }
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    if (response.Body) {
+      // @ts-ignore
+      response.Body.pipe(res);
+    } else {
+      res.status(404).end();
+    }
+  } catch (err) {
+    return res.status(404).send('Media not found');
   }
 });
 

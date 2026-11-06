@@ -18,10 +18,11 @@ import {
   Clock,
   ChevronDown,
   Check,
+  Cloud,
 } from 'lucide-react';
 import { Exam, ETHIOPIAN_UNIVERSITIES, FRESHMAN_SUBJECTS, SECONDARY_SUBJECTS, YearDurationFilter } from '../types';
 import { downloadMultiExamSqliteBundle } from '../services/sqliteService';
-import { CURATED_OFFICIAL_EXAMS } from '../services/supabaseService';
+import { CURATED_OFFICIAL_EXAMS } from '../services/cloudflareService';
 import { addDownloadedExamsToRepository, isUserAdmin } from '../services/db';
 import { useAuth } from '../context/AuthContext';
 
@@ -32,7 +33,7 @@ interface DownloadCenterModalProps {
   userAcademicYear?: string; // e.g. 'Freshman'
   userUniversity?: string;
   onStartExam?: (exam: Exam) => void;
-  onOpenSupabaseConfig?: () => void;
+  onOpenCloudflareConfig?: () => void;
   onExamsDownloaded?: (downloadedExams: Exam[]) => void;
 }
 
@@ -43,7 +44,7 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
   userAcademicYear = 'Freshman',
   userUniversity,
   onStartExam,
-  onOpenSupabaseConfig,
+  onOpenCloudflareConfig,
   onExamsDownloaded,
 }) => {
   const { user } = useAuth();
@@ -241,15 +242,15 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {isAdmin && onOpenSupabaseConfig && (
+            {isAdmin && onOpenCloudflareConfig && (
               <button
                 type="button"
-                onClick={onOpenSupabaseConfig}
+                onClick={onOpenCloudflareConfig}
                 className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-[#0f1d33] hover:bg-zinc-200 dark:hover:bg-[#132238] text-zinc-700 dark:text-zinc-300 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer border border-zinc-200 dark:border-white/10"
-                title="Admin: Configure Supabase Cloud Media Storage"
+                title="Admin: Configure Cloudflare R2 Media Storage"
               >
-                <Database className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="hidden sm:inline">Cloud Storage</span>
+                <Cloud className="w-3.5 h-3.5 text-orange-500" />
+                <span className="hidden sm:inline">R2 Storage</span>
               </button>
             )}
 

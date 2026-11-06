@@ -2,7 +2,8 @@ import React from 'react';
 import katex from 'katex';
 
 interface MathRendererProps {
-  content: string;
+  content?: string;
+  text?: string;
   className?: string;
   inline?: boolean;
 }
@@ -189,10 +190,12 @@ function processMathContent(content: string, isInlineOnly = false): string {
 
 const MathRendererComponent: React.FC<MathRendererProps> = ({
   content,
+  text,
   className = '',
   inline = false,
 }) => {
-  const renderedHtml = processMathContent(content, inline);
+  const actualContent = content ?? text ?? '';
+  const renderedHtml = processMathContent(actualContent, inline);
 
   if (inline) {
     return (

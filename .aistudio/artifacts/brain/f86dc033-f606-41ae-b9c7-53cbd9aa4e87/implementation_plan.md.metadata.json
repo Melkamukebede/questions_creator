@@ -1,6 +1,6 @@
 {
-  "summary": "Implementation plan for dynamic [IMAGE: label] detection in the Official Exam Studio, dedicated Pre-Publish Preview tab with KaTeX and media verification, and elimination of technical jargon (Supabase, Cloud SQL) from the homepage for non-admin students.",
-  "updatedAt": "2026-11-05T14:38:46.406495398Z",
+  "summary": "Implementation plan to fix the Service Worker KaTeX CDN opaque response error by bundling KaTeX locally for 100% offline rendering, clarify the PWA install prompt behavior, and migrate from Supabase to Full-Stack Cloudflare R2 via a secure server upload proxy route while maintaining offline fallbacks.",
+  "updatedAt": "2026-11-05T20:20:54.437457823Z",
   "requestFeedback": true,
   "userFacing": true
 }

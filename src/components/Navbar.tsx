@@ -44,7 +44,7 @@ interface NavbarProps {
   onOpenDrawer: () => void;
   onOpenSubscriptionModal?: () => void;
   onOpenDownloadCenter?: () => void;
-  onOpenSupabaseConfig?: () => void;
+  onOpenCloudflareConfig?: () => void;
   onOpenAdminOfficialStudio?: () => void;
   activeSubscription: UserSubscription | null;
 }
@@ -56,7 +56,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenDrawer,
   onOpenSubscriptionModal,
   onOpenDownloadCenter,
-  onOpenSupabaseConfig,
+  onOpenCloudflareConfig,
   onOpenAdminOfficialStudio,
   activeSubscription,
 }) => {
@@ -260,7 +260,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   type="button"
                   onClick={onOpenAdminOfficialStudio}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer active:scale-98"
-                  title="Author and publish official exams with diagrams to Supabase"
+                  title="Author and publish official exams with diagrams to Cloudflare R2"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Official Studio</span>

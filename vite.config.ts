@@ -759,20 +759,6 @@ export default defineConfig(({ mode }) => {
                 },
               },
             },
-            {
-              urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/npm\/katex@.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'katex-cdn-cache',
-                expiration: {
-                  maxEntries: 20,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
           ],
         },
         devOptions: {

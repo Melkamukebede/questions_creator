@@ -115,8 +115,8 @@ const UserRegistrationModal = lazyWithRetry(() =>
 const DownloadCenterModal = lazyWithRetry(() =>
   import('./components/DownloadCenterModal').then((m) => ({ default: m.DownloadCenterModal }))
 );
-const SupabaseConfigModal = lazyWithRetry(() =>
-  import('./components/SupabaseConfigModal').then((m) => ({ default: m.SupabaseConfigModal }))
+const CloudflareConfigModal = lazyWithRetry(() =>
+  import('./components/CloudflareConfigModal').then((m) => ({ default: m.CloudflareConfigModal }))
 );
 const AdminOfficialExamStudioModal = lazyWithRetry(() =>
   import('./components/AdminOfficialExamStudioModal').then((m) => ({ default: m.AdminOfficialExamStudioModal }))
@@ -236,7 +236,7 @@ function MainApp() {
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [isCuratedModalOpen, setIsCuratedModalOpen] = useState(false);
   const [isDownloadCenterOpen, setIsDownloadCenterOpen] = useState(false);
-  const [isSupabaseConfigOpen, setIsSupabaseConfigOpen] = useState(false);
+  const [isCloudflareConfigOpen, setIsCloudflareConfigOpen] = useState(false);
   const [isAdminOfficialStudioOpen, setIsAdminOfficialStudioOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [examForDatabaseUpload, setExamForDatabaseUpload] = useState<Exam | null>(null);
@@ -837,7 +837,7 @@ function MainApp() {
         onOpenDrawer={() => setIsDrawerOpen(true)}
         onOpenSubscriptionModal={isTeacher ? undefined : () => setIsSubscriptionModalOpen(true)}
         onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
-        onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
+        onOpenCloudflareConfig={isAdmin ? () => setIsCloudflareConfigOpen(true) : undefined}
         onOpenAdminOfficialStudio={isAdmin ? () => setIsAdminOfficialStudioOpen(true) : undefined}
         activeSubscription={activeSubscription}
       />
@@ -864,7 +864,7 @@ function MainApp() {
             onOpenRegistrationModal={openRegistrationModal}
             onOpenNotificationsModal={() => setIsNotificationsModalOpen(true)}
             onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
-            onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
+            onOpenCloudflareConfig={isAdmin ? () => setIsCloudflareConfigOpen(true) : undefined}
             activeSubscription={activeSubscription}
             userTier={userTier}
             user={user}
@@ -1026,7 +1026,7 @@ function MainApp() {
         onResetDefaultExams={handleResetDefaultExams}
         onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
         onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
-        onOpenSupabaseConfig={() => setIsSupabaseConfigOpen(true)}
+        onOpenCloudflareConfig={isAdmin ? () => setIsCloudflareConfigOpen(true) : undefined}
         onOpenAdminOfficialStudio={isAdmin ? () => setIsAdminOfficialStudioOpen(true) : undefined}
         activeSubscription={activeSubscription}
       />
@@ -1114,16 +1114,18 @@ function MainApp() {
               showToast(`Saved ${downloaded.length} exams into your Exams Repository for offline practice!`);
             }}
             userAcademicYear={user?.grade || 'Freshman'}
+            onOpenCloudflareConfig={isAdmin ? () => setIsCloudflareConfigOpen(true) : undefined}
           />
         )}
 
-        {/* Supabase Storage & Database Configuration Modal */}
-        {isSupabaseConfigOpen && (
-          <SupabaseConfigModal
-            isOpen={isSupabaseConfigOpen}
-            onClose={() => setIsSupabaseConfigOpen(false)}
+        {/* Cloudflare R2 Storage Configuration Modal (Admin Only) */}
+        {isAdmin && isCloudflareConfigOpen && (
+          <CloudflareConfigModal
+            isOpen={isCloudflareConfigOpen}
+            onClose={() => setIsCloudflareConfigOpen(false)}
+            isAdmin={isAdmin}
             onConfigSaved={() => {
-              showToast('Supabase storage credentials verified and connected!');
+              showToast('Cloudflare R2 storage credentials verified and connected!');
             }}
           />
         )}
@@ -1137,7 +1139,7 @@ function MainApp() {
             onExamPublished={(newExam) => {
               setOfficialExams((prev) => [newExam, ...prev]);
               setExams((prev) => [newExam, ...prev]);
-              showToast(`Published "${newExam.title}" to Supabase & local repository!`);
+              showToast(`Published "${newExam.title}" to Cloudflare R2 & local repository!`);
             }}
           />
         )}

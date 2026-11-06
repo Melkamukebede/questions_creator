@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Upload,
@@ -25,6 +25,8 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCheck,
+  Cpu,
+  GraduationCap,
 } from 'lucide-react';
 import {
   Exam,
@@ -33,8 +35,12 @@ import {
   FRESHMAN_SUBJECTS,
   SECONDARY_SUBJECTS,
   ETHIOPIAN_EXAM_YEARS,
+  UNIVERSITY_ACADEMIC_LEVELS,
+  UNIVERSITY_DEPARTMENTS,
+  ECE_AND_ENGINEERING_SUBJECTS,
+  SECONDARY_ACADEMIC_LEVELS,
 } from '../types';
-import { uploadExamMedia, saveOfficialExamToSupabase, getSupabaseConfig } from '../services/supabaseService';
+import { uploadExamMedia, saveOfficialExam, getCloudflareConfig, CloudflareConfig } from '../services/cloudflareService';
 import { parseAiExamText, generateHardCopyExamVisionPrompt } from '../services/aiExamParserService';
 import { MarkdownTableRenderer } from './MarkdownTableRenderer';
 import { MathRenderer } from './MathRenderer';
@@ -56,7 +62,13 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
   onExamPublished,
   isAdmin,
 }) => {
-  const supabaseConfig = getSupabaseConfig();
+  const [cloudflareConfig, setCloudflareConfig] = useState<CloudflareConfig | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      getCloudflareConfig().then(setCloudflareConfig).catch(() => {});
+    }
+  }, [isOpen]);
 
   // Active Workflow Tab
   const [activeTab, setActiveTab] = useState<StudioTab>('paste');
@@ -70,32 +82,22 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
   const [pastedRawText, setPastedRawText] = useState<string>('');
   const [isParsing, setIsParsing] = useState<boolean>(false);
 
-  // Basic Metadata
+  // Basic Classification & Metadata
   const [tier, setTier] = useState<'university' | 'secondary'>('university');
   const [university, setUniversity] = useState<string>('Addis Ababa University (AAU)');
-  const [department, setDepartment] = useState<string>('Pre-Engineering / Natural Science');
-  const [subject, setSubject] = useState<string>('Phys 1011 (General Physics)');
-  const [academicYear, setAcademicYear] = useState<string>('Freshman');
+  const [department, setDepartment] = useState<string>('Electrical & Computer Engineering (ECE)');
+  const [academicYear, setAcademicYear] = useState<string>('Senior (4th/5th Year)');
+  const [subject, setSubject] = useState<string>('Circuit Theory & Network Analysis I & II');
+  const [customSubject, setCustomSubject] = useState<string>('');
   const [semester, setSemester] = useState<'Semester 1' | 'Semester 2'>('Semester 1');
-  const [examType, setExamType] = useState<'Mid' | 'Final' | 'Make-up'>('Final');
+  const [examType, setExamType] = useState<string>('Final');
   const [examYear, setExamYear] = useState<string>('2016 E.C.');
-  const [examName, setExamName] = useState<string>('AAU General Physics (Phys 1011) Final Exam 2016');
+  const [examName, setExamName] = useState<string>('AAU ECE Circuit Theory & Network Analysis Final Exam 2016');
   const [timeLimit, setTimeLimit] = useState<number>(60);
-  const [description, setDescription] = useState<string>('Official Addis Ababa University Freshman Semester 1 final exam with circuit schematic and kinematics parameters table.');
+  const [description, setDescription] = useState<string>('');
 
-  // Questions State
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: 'q_admin_1',
-      text: 'For the DC resistor network shown in the diagram, what is the equivalent resistance between terminals A and B if each branch resistor has \\( R = 12\\,\\Omega \\)?',
-      options: ['\\( 8\\,\\Omega \\)', '\\( 16\\,\\Omega \\)', '\\( 4\\,\\Omega \\)', '\\( 12\\,\\Omega \\)'],
-      correct: 0,
-      explanation: 'Using standard delta-wye transformation: 12 ohms in parallel with 24 ohms gives an equivalent resistance of \\( R_{eq} = 8\\,\\Omega \\).',
-      imageUrl: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=700&q=80',
-      imageCaption: 'Figure 1.1: DC Bridge Resistor Circuit Network with terminals A and B.',
-      tableMarkdown: '| Resistor | Branch | Nominal Resistance (\\(\\Omega\\)) |\n| :--- | :--- | :--- |\n| \\(R_1\\) | Upper Bridge | \\(12\\,\\Omega\\) |\n| \\(R_2\\) | Lower Bridge | \\(12\\,\\Omega\\) |\n| \\(R_3\\) | Cross Shunt | \\(12\\,\\Omega\\) |',
-    },
-  ]);
+  // Questions State: Empty [] by default as requested to eliminate placeholder clutter
+  const [questions, setQuestions] = useState<Question[]>([]);
 
   const [activeQuestionIndex, setActiveQuestionIndex] = useState<number>(0);
   const [uploadingImageTarget, setUploadingImageTarget] = useState<{ qIdx: number; optIdx?: number } | null>(null);
@@ -116,7 +118,7 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <h3 className="font-bold text-lg text-zinc-900 dark:text-white">Admin Privileges Required</h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Only verified administrators (such as <code>melkamukebede11@gmail.com</code>) have permission to upload official exams and diagram media to the Supabase cloud.
+            Only verified administrators (such as <code>melkamukebede11@gmail.com</code>) have permission to upload official exams and diagram media to Cloudflare R2 cloud storage.
           </p>
           <button
             type="button"
@@ -136,7 +138,7 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
     fileInputRef.current?.click();
   };
 
-  // Handle direct diagram image upload to Supabase Storage
+  // Handle direct diagram image upload to Cloudflare R2 Storage
   const handleImageFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const target = activeUploadRef.current;
@@ -172,9 +174,9 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
 
       setStatusMsg({
         type: 'success',
-        text: uploadResult.storageSource === 'supabase'
-          ? 'Image uploaded to Supabase Storage "exam-media" bucket!'
-          : 'Image embedded as Base64 fallback (Supabase credentials unconfigured).',
+        text: uploadResult.storageSource === 'cloudflare_r2'
+          ? 'Image uploaded to Cloudflare R2 storage bucket!'
+          : 'Image embedded as Base64 fallback (Cloudflare R2 unconfigured).',
       });
       setTimeout(() => setStatusMsg(null), 3500);
     } catch (err) {
@@ -216,8 +218,9 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
       setActiveQuestionIndex(0);
 
       // Auto-update exam title if default
-      if (!examName || examName.startsWith('AAU General Physics')) {
-        setExamName(`${university.split(' ')[0]} ${subject} ${examType} Exam ${examYear}`);
+      if (!examName || examName.startsWith('AAU ECE Circuit') || examName.startsWith('AAU General Physics')) {
+        const activeSubj = customSubject.trim() || subject;
+        setExamName(`${university.split(' ')[0]} ${activeSubj} ${examType} Exam ${examYear}`);
       }
 
       setStatusMsg({
@@ -239,44 +242,48 @@ export const AdminOfficialExamStudioModal: React.FC<AdminOfficialExamStudioModal
     }
   };
 
-  // Load Sample AI Exam Text
+  // Load Sample Electrical & Computer Engineering (ECE) Exam
   const handleLoadSampleText = () => {
-    const sample = `1. A projectile is launched from ground level with an initial velocity \\( v_0 = 50\\text{ m/s} \\) at an angle of \\( \\theta = 37^\\circ \\) above the horizontal. Neglecting air resistance, what is the maximum height reached? (Take \\( g = 9.8\\text{ m/s}^2 \\))
-[IMAGE: Kinematic trajectory parabola showing velocity vector at 37 degrees]
-A) 32.4 m
-B) 45.9 m
-C) 61.2 m
-D) 78.5 m
-Answer: B
-Explanation: The vertical component of initial velocity is \\( v_{0y} = v_0 \\sin 37^\\circ = 50(0.6) = 30\\text{ m/s} \\). The maximum height is \\( H = \\frac{v_{0y}^2}{2g} = \\frac{900}{2(9.8)} \\approx 45.92\\text{ m} \\).
-
-2. In an electrical measurement experiment, the voltage drops across four series resistors are recorded in the data table below with a constant current \\( I = 2.0\\text{ A} \\).
-| Resistor | Value (\\(\\Omega\\)) | Measured Drop (V) | Power (W) |
-| :--- | :--- | :--- | :--- |
-| \\(R_1\\) | 5.0 | 10.0 | 20.0 |
-| \\(R_2\\) | 10.0 | 20.0 | 40.0 |
-| \\(R_3\\) | 15.0 | 30.0 | 60.0 |
-What is the total power dissipated by the circuit?
-A) 60 W
-B) 100 W
-C) 120 W
-D) 240 W
-Answer: C
-Explanation: Total power is the sum of individual powers: \\( P_{total} = 20 + 40 + 60 = 120\\text{ W} \\), or \\( P = I^2 R_{eq} = (2^2)(30) = 120\\text{ W} \\).
-
-3. Which of the following thermodynamic state diagrams represents an ideal gas undergoing an isobaric expansion from state 1 to state 2?
-A) [IMAGE_OPT_A: Horizontal line on P-V diagram with arrow pointing right] Horizontal line on P-V diagram
-B) [IMAGE_OPT_B: Vertical line on P-V diagram] Vertical line on P-V diagram
-C) [IMAGE_OPT_C: Hyperbolic curve on P-V diagram] Hyperbolic curve on P-V diagram
-D) [IMAGE_OPT_D: Diagonal line with negative slope] Straight diagonal line with negative slope
+    const sample = `1. In the RLC series circuit shown below, the switch is closed at \\( t = 0 \\). If \\( R = 20\\,\\Omega \\), \\( L = 0.5\\text{ H} \\), and \\( C = 100\\,\\mu\\text{F} \\), with an applied step voltage \\( V_s = 50\\text{ V} \\), determine the damping ratio \\( \\zeta \\) and classify the circuit's transient response.
+[IMAGE: Series RLC Circuit schematic with step DC source switch]
+A) \\( \\zeta = 0.283 \\) (Underdamped response)
+B) \\( \\zeta = 1.000 \\) (Critically damped response)
+C) \\( \\zeta = 1.414 \\) (Overdamped response)
+D) \\( \\zeta = 0.000 \\) (Undamped oscillatory response)
 Answer: A
-Explanation: By definition, an isobaric process occurs at constant pressure (\\( \\Delta P = 0 \\)), which is represented by a horizontal line on a \\( P-V \\) diagram moving to the right as volume expands.`;
+Explanation: The undamped natural frequency is \\( \\omega_0 = \\frac{1}{\\sqrt{LC}} = \\frac{1}{\\sqrt{0.5 \\times 100 \\times 10^{-6}}} = \\frac{1}{\\sqrt{50 \\times 10^{-6}}} \\approx 141.42\\text{ rad/s} \\). The damping coefficient is \\( \\alpha = \\frac{R}{2L} = \\frac{20}{2(0.5)} = 20\\text{ s}^{-1} \\). The damping ratio is \\( \\zeta = \\frac{\\alpha}{\\omega_0} = \\frac{20}{141.42} \\approx 0.141 \\) for series resonance, indicating an underdamped oscillatory decay.
+
+2. In an Operational Amplifier inverting configuration experiment, the input voltage \\( V_{in} \\) and output voltage \\( V_{out} \\) are recorded in the data table below with feedback resistor \\( R_f = 100\\,\\text{k}\\Omega \\) and input resistor \\( R_{in} = 10\\,\\text{k}\\Omega \\).
+| Measurement # | Input Voltage \\(V_{in}\\) (V) | Nominal Gain \\(A_v\\) | Measured Output \\(V_{out}\\) (V) |
+| :--- | :--- | :--- | :--- |
+| Run 1 | 0.20 | -10 | -2.00 |
+| Run 2 | 0.50 | -10 | -5.00 |
+| Run 3 | 1.00 | -10 | -10.00 |
+| Run 4 | 1.80 (Sat) | -10 | -14.20 |
+If the op-amp power supplies are \\( \\pm 15\\text{ V} \\), what causes Run 4 to deviate from theoretical linear amplification?
+A) Slew-rate bandwidth limitation
+B) Output voltage saturation near the negative supply rail (\\( -15\\text{ V} \\))
+C) Thermal noise across the feedback resistor
+D) Common-mode rejection ratio (CMRR) degradation
+Answer: B
+Explanation: An ideal inverting op-amp gives \\( V_{out} = -\\frac{R_f}{R_{in}} V_{in} = -10(1.80) = -18.0\\text{ V} \\). Since the DC power rails are \\( \\pm 15\\text{ V} \\), the output saturates near the rail (at approx \\( -14.2\\text{ V} \\)).
+
+3. For the 4-variable Boolean logic function \\( F(A,B,C,D) = \\sum m(0, 2, 8, 10, 14) + d(5, 7) \\), what is the minimal sum-of-products (SOP) expression derived from Karnaugh Map reduction?
+A) \\( F = \\bar{B}\\bar{D} + A C \\bar{D} \\)
+B) \\( F = \\bar{A}\\bar{C} + B D \\)
+C) \\( F = A B + \\bar{C}\\bar{D} \\)
+D) \\( F = \\bar{B} D + A \\bar{C} \\)
+Answer: A
+Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the product term \\( \\bar{B}\\bar{D} \\). Grouping \\( m(10,14) \\) gives \\( A C \\bar{D} \\). Therefore, the minimal expression is \\( F = \\bar{B}\\bar{D} + A C \\bar{D} \\).`;
 
     setPastedRawText(sample);
+    setDepartment('Electrical & Computer Engineering (ECE)');
+    setAcademicYear('Senior (4th/5th Year)');
+    setSubject('Circuit Theory & Network Analysis I & II');
     setDetectQuestionImages(true);
     setDetectOptionImages(true);
     setDetectTables(true);
-    setStatusMsg({ type: 'success', text: 'Loaded sample exam with diagrams, tables, and choice images!' });
+    setStatusMsg({ type: 'success', text: 'Loaded sample ECE exam with circuits, tables, and logic math!' });
   };
 
   // Add question helper
@@ -293,7 +300,6 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
   };
 
   const handleRemoveQuestion = (idx: number) => {
-    if (questions.length <= 1) return;
     const updated = questions.filter((_, i) => i !== idx);
     setQuestions(updated);
     setActiveQuestionIndex(Math.max(0, idx - 1));
@@ -301,9 +307,10 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
 
   // Copy Master Vision Prompt
   const handleCopyVisionPrompt = async () => {
+    const activeSubj = customSubject.trim() || subject;
     const promptText = generateHardCopyExamVisionPrompt({
-      universityOrGrade: tier === 'university' ? university : 'Secondary National Grade 12',
-      subject,
+      universityOrGrade: tier === 'university' ? `${university} (${academicYear})` : 'Secondary National Grade 12',
+      subject: activeSubj,
       examType,
       examYear,
       includeDiagrams: detectQuestionImages,
@@ -321,8 +328,8 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
     }
   };
 
-  // Publish to Supabase
-  const handlePublishToSupabase = async () => {
+  // Publish Official Exam
+  const handlePublishExam = async () => {
     if (!examName.trim()) {
       setStatusMsg({ type: 'error', text: 'Please specify an Exam Title.' });
       return;
@@ -353,13 +360,15 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
     setIsSubmitting(true);
     setStatusMsg(null);
 
+    const activeSubj = customSubject.trim() || subject;
+
     const examData: Exam = {
       id: `official_${tier}_${Date.now()}`,
       title: examName.trim(),
       name: examName.trim(),
-      subject,
-      topic: `${subject} Official Exam`,
-      grade: tier === 'university' ? 'Freshman' : '12',
+      subject: activeSubj,
+      topic: `${activeSubj} Official Exam`,
+      grade: tier === 'university' ? academicYear : '12',
       tier,
       university: tier === 'university' ? university : undefined,
       department: tier === 'university' ? department : undefined,
@@ -374,13 +383,13 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
       updatedAt: new Date().toISOString(),
       category: 'official',
       sourceType: 'official',
-      storageSource: 'supabase',
+      storageSource: 'cloudflare_r2',
       hasImages: questions.some((q) => Boolean(q.imageUrl) || Boolean(q.optionImages?.some(Boolean))),
       hasTables: questions.some((q) => Boolean(q.tableMarkdown)),
     };
 
     try {
-      await saveOfficialExamToSupabase(examData);
+      await saveOfficialExam(examData);
       
       // Also commit to local repository so it is ready immediately in app
       addDownloadedExamsToRepository([examData]);
@@ -391,7 +400,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
 
       setStatusMsg({
         type: 'success',
-        text: `Official Exam "${examData.title}" published successfully to Supabase and added to local repository!`,
+        text: `Official Exam "${examData.title}" published successfully to Cloudflare R2 and added to local repository!`,
       });
 
       setTimeout(() => {
@@ -414,7 +423,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 font-['Plus_Jakarta_Sans',sans-serif]">
-      {/* Hidden File Input for Supabase Media Upload */}
+      {/* Hidden File Input for Cloudflare Media Upload */}
       <input
         type="file"
         ref={fileInputRef}
@@ -423,7 +432,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
         className="hidden"
       />
 
-      <div className="relative w-full max-w-5xl rounded-[32px] bg-white dark:bg-[#0c182b] text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-5xl rounded-[32px] bg-white dark:bg-[#0c182b] text-zinc-900 dark:text-white border border-zinc-200/80 dark:border-white/10 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-zinc-100 dark:border-white/10 flex items-center justify-between bg-zinc-50/70 dark:bg-[#070e1a]/70 shrink-0">
           <div className="flex items-center gap-3">
@@ -436,26 +445,26 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                   Admin Official Exam Studio
                 </h3>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                  Supabase Cloud
+                  Cloudflare R2
                 </span>
               </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                [IMAGE: label] auto-detection, pre-upload LaTeX preview &amp; vision prompt generator
+                Author &amp; publish verified Ethiopian university (Senior/ECE) and secondary exams
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Supabase Connection Pill */}
-            {supabaseConfig ? (
+            {/* Cloudflare Connection Pill */}
+            {cloudflareConfig?.isConfigured ? (
               <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                 <Database className="w-3.5 h-3.5" />
-                <span>Supabase Ready</span>
+                <span>Cloudflare R2 Ready</span>
               </span>
             ) : (
               <span className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
                 <AlertCircle className="w-3.5 h-3.5" />
-                <span>Local Storage Fallback</span>
+                <span>Local Storage Mode</span>
               </span>
             )}
 
@@ -469,7 +478,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
           </div>
         </div>
 
-        {/* 4 Main Workflow Tabs: Paste, Editor, Pre-Publish Preview, Hard-Copy Prompt */}
+        {/* 4 Main Workflow Tabs: Paste, Questions Editor, Pre-Publish Preview, Hard-Copy Prompt */}
         <div className="px-6 pt-3 pb-2 border-b border-zinc-100 dark:border-white/10 bg-white dark:bg-[#0c182b] flex items-center justify-between flex-wrap gap-2 shrink-0">
           <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-100 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10">
             <button
@@ -508,7 +517,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
               }`}
             >
               <Eye className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Pre-Publish Preview</span>
+              <span>Pre-Publish Preview ({questions.length})</span>
             </button>
 
             <button
@@ -526,15 +535,15 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
           </div>
 
           {/* Quick Publish CTA button in top bar if on Editor or Preview */}
-          {(activeTab === 'editor' || activeTab === 'preview') && (
+          {(activeTab === 'editor' || activeTab === 'preview') && questions.length > 0 && (
             <button
               type="button"
-              onClick={handlePublishToSupabase}
+              onClick={handlePublishExam}
               disabled={isSubmitting}
               className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-              <span>Publish to Supabase</span>
+              <span>Publish to Cloudflare R2</span>
             </button>
           )}
         </div>
@@ -572,7 +581,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
           {activeTab === 'paste' && (
             <div className="space-y-5">
               {/* Top 3 Media Feature Toggles */}
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-3">
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <Sliders className="w-3.5 h-3.5 text-emerald-500" />
@@ -583,8 +592,8 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                     onClick={handleLoadSampleText}
                     className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Load Sample Exam with Diagrams &amp; Tables</span>
+                    <Cpu className="w-3.5 h-3.5" />
+                    <span>Load Sample Senior ECE / Circuit Exam</span>
                   </button>
                 </div>
 
@@ -688,7 +697,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                   value={pastedRawText}
                   onChange={(e) => setPastedRawText(e.target.value)}
                   placeholder={`1. Question prompt with LaTeX \\( x^2 \\)...\n[IMAGE: Figure caption or circuit diagram]\nA) Choice A\nB) Choice B\nC) Choice C\nD) Choice D\nAnswer: B\nExplanation: Step by step solution...\n\n2. Next question...`}
-                  className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
 
@@ -726,11 +735,11 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
             </div>
           )}
 
-          {/* TAB 2: QUESTIONS EDITOR WITH DYNAMIC [IMAGE: label] UPLOADER */}
+          {/* TAB 2: QUESTIONS EDITOR */}
           {activeTab === 'editor' && (
             <div className="space-y-6">
-              {/* Classification & Metadata Card */}
-              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-4">
+              {/* Classification & Metadata Card (University Senior / ECE / Secondary) */}
+              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-zinc-200/80 dark:border-white/10">
                   <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     Official Exam Classification
@@ -738,25 +747,34 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setTier('university')}
+                      onClick={() => {
+                        setTier('university');
+                        setDepartment('Electrical & Computer Engineering (ECE)');
+                        setAcademicYear('Senior (4th/5th Year)');
+                        setSubject('Circuit Theory & Network Analysis I & II');
+                      }}
                       className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                         tier === 'university'
                           ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-2xs'
                           : 'bg-zinc-200/60 dark:bg-white/10 text-zinc-600 dark:text-zinc-400'
                       }`}
                     >
-                      University Tier
+                      University &amp; Senior ECE Tier
                     </button>
                     <button
                       type="button"
-                      onClick={() => setTier('secondary')}
+                      onClick={() => {
+                        setTier('secondary');
+                        setAcademicYear('Grade 12 (National Matriculation)');
+                        setSubject('Physics');
+                      }}
                       className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
                         tier === 'secondary'
                           ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-2xs'
                           : 'bg-zinc-200/60 dark:bg-white/10 text-zinc-600 dark:text-zinc-400'
                       }`}
                     >
-                      Secondary Tier
+                      Secondary Matriculation Tier
                     </button>
                   </div>
                 </div>
@@ -778,15 +796,60 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Subject / Course</label>
+                        <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Academic Level</label>
                         <select
-                          value={subject}
-                          onChange={(e) => setSubject(e.target.value)}
+                          value={academicYear}
+                          onChange={(e) => setAcademicYear(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold cursor-pointer"
                         >
-                          {FRESHMAN_SUBJECTS.map((s) => (
-                            <option key={s} value={s}>{s}</option>
+                          {UNIVERSITY_ACADEMIC_LEVELS.map((lvl) => (
+                            <option key={lvl} value={lvl}>{lvl}</option>
                           ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Department</label>
+                        <select
+                          value={department}
+                          onChange={(e) => setDepartment(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold cursor-pointer"
+                        >
+                          {UNIVERSITY_DEPARTMENTS.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Course / Subject</label>
+                        <select
+                          value={subject}
+                          onChange={(e) => {
+                            setSubject(e.target.value);
+                            setCustomSubject('');
+                          }}
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold cursor-pointer"
+                        >
+                          {department === 'Electrical & Computer Engineering (ECE)' ? (
+                            ECE_AND_ENGINEERING_SUBJECTS.map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))
+                          ) : department === 'Pre-Engineering / Natural Science' ? (
+                            FRESHMAN_SUBJECTS.map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))
+                          ) : (
+                            <>
+                              {ECE_AND_ENGINEERING_SUBJECTS.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                              {FRESHMAN_SUBJECTS.map((s) => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </>
+                          )}
+                          <option value="Custom">Custom Course...</option>
                         </select>
                       </div>
                     </>
@@ -799,10 +862,9 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                           onChange={(e) => setAcademicYear(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold cursor-pointer"
                         >
-                          <option value="Grade 12">Grade 12 (National Matriculation)</option>
-                          <option value="Grade 11">Grade 11</option>
-                          <option value="Grade 10">Grade 10</option>
-                          <option value="Grade 9">Grade 9</option>
+                          {SECONDARY_ACADEMIC_LEVELS.map((lvl) => (
+                            <option key={lvl} value={lvl}>{lvl}</option>
+                          ))}
                         </select>
                       </div>
 
@@ -810,7 +872,10 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                         <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Secondary Subject</label>
                         <select
                           value={subject}
-                          onChange={(e) => setSubject(e.target.value)}
+                          onChange={(e) => {
+                            setSubject(e.target.value);
+                            setCustomSubject('');
+                          }}
                           className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold cursor-pointer"
                         >
                           {SECONDARY_SUBJECTS.map((s) => (
@@ -834,11 +899,12 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                       </select>
                       <select
                         value={examType}
-                        onChange={(e) => setExamType(e.target.value as any)}
+                        onChange={(e) => setExamType(e.target.value)}
                         className="w-full px-2 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold cursor-pointer"
                       >
                         <option value="Final">Final</option>
                         <option value="Mid">Mid</option>
+                        <option value="Exit Exam">Exit Exam</option>
                         <option value="Make-up">Make-up</option>
                       </select>
                     </div>
@@ -858,6 +924,19 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                   </div>
                 </div>
 
+                {subject === 'Custom' && (
+                  <div className="space-y-1 pt-1">
+                    <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Enter Custom Course Title</label>
+                    <input
+                      type="text"
+                      value={customSubject}
+                      onChange={(e) => setCustomSubject(e.target.value)}
+                      placeholder="e.g. Embedded Systems &amp; Robotics (ECE 4121)"
+                      className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold"
+                    />
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2 space-y-1">
                     <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">Exam Title</label>
@@ -865,7 +944,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                       type="text"
                       value={examName}
                       onChange={(e) => setExamName(e.target.value)}
-                      placeholder="e.g. AAU General Physics (Phys 1011) Final Exam 2016"
+                      placeholder="e.g. AAU ECE Circuit Theory &amp; Network Analysis Final Exam 2016"
                       className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold"
                     />
                   </div>
@@ -885,15 +964,17 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
               </div>
 
               {/* Question Navigator Bar */}
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-3">
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-3">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                       Questions ({questions.length})
                     </span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      Question {activeQuestionIndex + 1}
-                    </span>
+                    {questions.length > 0 && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        Question {activeQuestionIndex + 1}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -903,17 +984,19 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                       className="px-3 py-1.5 rounded-xl bg-zinc-200/60 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/15 text-zinc-700 dark:text-zinc-300 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Paste More</span>
+                      <span>Paste AI Text</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('preview')}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Pre-Publish Preview</span>
-                    </button>
+                    {questions.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('preview')}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Pre-Publish Preview</span>
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -927,39 +1010,85 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                 </div>
 
                 {/* Horizontal Question Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                  {questions.map((q, idx) => {
-                    const hasDiag = !!q.imageUrl;
-                    const hasChoiceImg = q.optionImages?.some(Boolean);
-                    const hasTbl = !!q.tableMarkdown;
+                {questions.length > 0 ? (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    {questions.map((q, idx) => {
+                      const hasDiag = !!q.imageUrl;
+                      const hasChoiceImg = q.optionImages?.some(Boolean);
+                      const hasTbl = !!q.tableMarkdown;
 
-                    return (
-                      <button
-                        key={q.id || idx}
-                        type="button"
-                        onClick={() => setActiveQuestionIndex(idx)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 ${
-                          activeQuestionIndex === idx
-                            ? 'bg-emerald-600 text-white shadow-xs'
-                            : 'bg-white dark:bg-[#0c182b] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10 hover:border-zinc-300'
-                        }`}
-                      >
-                        <span>{idx + 1}</span>
-                        {(hasDiag || hasChoiceImg) && (
-                          <span className={`w-1.5 h-1.5 rounded-full ${activeQuestionIndex === idx ? 'bg-white' : 'bg-emerald-500'}`} />
-                        )}
-                        {hasTbl && (
-                          <span className={`w-1.5 h-1.5 rounded-full ${activeQuestionIndex === idx ? 'bg-amber-300' : 'bg-amber-500'}`} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                      return (
+                        <button
+                          key={q.id || idx}
+                          type="button"
+                          onClick={() => setActiveQuestionIndex(idx)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 cursor-pointer flex items-center gap-1 ${
+                            activeQuestionIndex === idx
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : 'bg-white dark:bg-[#0c182b] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10 hover:border-zinc-300'
+                          }`}
+                        >
+                          <span>{idx + 1}</span>
+                          {(hasDiag || hasChoiceImg) && (
+                            <span className={`w-1.5 h-1.5 rounded-full ${activeQuestionIndex === idx ? 'bg-white' : 'bg-emerald-500'}`} />
+                          )}
+                          {hasTbl && (
+                            <span className={`w-1.5 h-1.5 rounded-full ${activeQuestionIndex === idx ? 'bg-amber-300' : 'bg-amber-500'}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
 
-              {/* ACTIVE QUESTION EDITOR */}
-              {currentQ && (
-                <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-5">
+              {/* ZERO QUESTIONS EMPTY STATE */}
+              {questions.length === 0 ? (
+                <div className="p-8 rounded-3xl bg-zinc-50 dark:bg-[#070e1a] border border-dashed border-zinc-300 dark:border-zinc-700 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-xs">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-base text-zinc-950 dark:text-white font-['Outfit',sans-serif]">
+                      No Questions in Studio Yet
+                    </h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
+                      Start authoring questions or paste exam text produced by any AI. The studio will automatically extract numbered questions, KaTeX formulas, and diagrams.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('paste')}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Paste AI Exam Text</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleAddQuestion}
+                      className="px-5 py-2.5 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-bold text-zinc-800 dark:text-zinc-200 transition hover:bg-zinc-100 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Question Manually</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleLoadSampleText}
+                      className="px-4 py-2.5 rounded-xl bg-zinc-200/60 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 text-xs font-bold transition flex items-center gap-2 cursor-pointer hover:bg-zinc-200"
+                    >
+                      <Cpu className="w-4 h-4 text-emerald-500" />
+                      <span>Load Sample ECE Exam</span>
+                    </button>
+                  </div>
+                </div>
+              ) : currentQ && (
+                /* ACTIVE QUESTION EDITOR */
+                <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-5">
                   {/* Question Header & Delete */}
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-extrabold uppercase text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
@@ -967,7 +1096,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                       <span className="text-zinc-400">· KaTeX LaTeX math supported: \( x^2 \) or \[ \frac{'{a}{b}'} \]</span>
                     </span>
 
-                    {questions.length > 1 && (
+                    {questions.length > 0 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveQuestion(activeQuestionIndex)}
@@ -997,7 +1126,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                         <span className="text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 block mb-1">
                           KaTeX Live Math Preview
                         </span>
-                        <MathRenderer text={currentQ.text} />
+                        <MathRenderer content={currentQ.text} />
                       </div>
                     )}
                   </div>
@@ -1072,9 +1201,9 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                               ) : (
                                 <Upload className="w-3.5 h-3.5 text-emerald-500" />
                               )}
-                              <span>Replace Image in Supabase</span>
+                              <span>Replace Image in Cloudflare R2</span>
                             </button>
-                            <span className="text-[11px] text-zinc-400">Hosted in "exam-media" bucket</span>
+                            <span className="text-[11px] text-zinc-400">Hosted in Cloudflare R2 bucket</span>
                           </div>
                         </div>
                       </div>
@@ -1093,7 +1222,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                           </span>
                         </div>
                         <p className="text-xs text-zinc-600 dark:text-zinc-300">
-                          This question was flagged with a diagram placeholder. Click below to select the image file from your device and host it on Supabase Storage.
+                          This question was flagged with a diagram placeholder. Click below to select the image file from your device and host it on Cloudflare R2 Storage.
                         </p>
                         <button
                           type="button"
@@ -1299,38 +1428,40 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
               )}
 
               {/* Bottom Action Bar */}
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
-                <div className="text-xs text-zinc-500">
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200">{questions.length} Questions</span> ready ·{' '}
-                  <span>{questions.filter((q) => q.imageUrl).length} diagrams</span> ·{' '}
-                  <span>{questions.filter((q) => q.tableMarkdown).length} tables</span>
-                </div>
+              {questions.length > 0 && (
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                  <div className="text-xs text-zinc-500">
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200">{questions.length} Questions</span> ready ·{' '}
+                    <span>{questions.filter((q) => q.imageUrl).length} diagrams</span> ·{' '}
+                    <span>{questions.filter((q) => q.tableMarkdown).length} tables</span>
+                  </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('preview')}
-                    className="px-4 py-2 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Go to Pre-Publish Preview</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('preview')}
+                      className="px-4 py-2 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Go to Pre-Publish Preview</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={handlePublishToSupabase}
-                    disabled={isSubmitting}
-                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-md cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    <span>Publish Official Exam to Supabase</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={handlePublishExam}
+                      disabled={isSubmitting}
+                      className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-md cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      <span>Publish Official Exam to Cloudflare R2</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
-          {/* TAB 3: PRE-PUBLISH PREVIEW (FULL LATEX, TABLES & MEDIA AUDIT) */}
+          {/* TAB 3: PRE-PUBLISH PREVIEW (FULL LATEX, QUESTIONS, CHOICES & MEDIA AUDIT) */}
           {activeTab === 'preview' && (
             <div className="space-y-6 animate-in fade-in duration-150">
               {/* Pre-Flight Checklist Banner */}
@@ -1345,20 +1476,22 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                         Pre-Publish Verification &amp; LaTeX Audit
                       </h4>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        Review rendered KaTeX formulas, tables, and hosted diagrams before saving to Supabase
+                        Review rendered KaTeX formulas, tables, and hosted diagrams before saving to Cloudflare R2
                       </p>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handlePublishToSupabase}
-                    disabled={isSubmitting}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-sm cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                    <span>Confirm &amp; Publish Official Exam</span>
-                  </button>
+                  {questions.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handlePublishExam}
+                      disabled={isSubmitting}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      <span>Confirm &amp; Publish Official Exam</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Audit Badges */}
@@ -1385,7 +1518,7 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                       <span className="font-bold block text-zinc-900 dark:text-white">
                         {questions.filter((q) => q.imageUrl).length} Hosted Diagrams
                       </span>
-                      <span className="text-[11px] text-zinc-400">Supabase Storage</span>
+                      <span className="text-[11px] text-zinc-400">Cloudflare R2 Storage</span>
                     </div>
                   </div>
 
@@ -1401,147 +1534,163 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                 </div>
               </div>
 
-              {/* Rendered Questions List (Exactly as students will see) */}
-              <div className="space-y-4">
-                {questions.map((q, idx) => (
-                  <div
-                    key={q.id || idx}
-                    className="p-5 rounded-2xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 space-y-4 shadow-2xs"
+              {/* Questions List or Empty State */}
+              {questions.length === 0 ? (
+                <div className="p-8 rounded-3xl bg-zinc-50 dark:bg-[#070e1a] border border-dashed border-zinc-300 dark:border-zinc-700 text-center space-y-3">
+                  <p className="text-xs text-zinc-500">No questions to preview. Please paste or author questions in the Questions Editor first.</p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('editor')}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs cursor-pointer shadow-xs"
                   >
-                    {/* Question Header & Prompt */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs font-bold text-zinc-500">
-                        <span className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-[#070e1a] text-zinc-800 dark:text-zinc-200">
-                          Question {idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveQuestionIndex(idx);
-                            setActiveTab('editor');
-                          }}
-                          className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <span>Edit</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-relaxed">
-                        <MathRenderer text={q.text} />
-                      </div>
-                    </div>
-
-                    {/* Question Diagram Preview if present */}
-                    {q.imageUrl && (
-                      <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 flex flex-col items-center justify-center space-y-2">
-                        <img
-                          src={q.imageUrl}
-                          alt={q.imageCaption || `Question ${idx + 1} Diagram`}
-                          className="max-h-48 object-contain rounded-lg cursor-zoom-in"
-                          onClick={() => setLightboxImage({ url: q.imageUrl!, caption: q.imageCaption, title: `Question ${idx + 1} Diagram` })}
-                        />
-                        {q.imageCaption && (
-                          <p className="text-[11px] text-zinc-500 font-medium italic">
-                            {q.imageCaption}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Markdown Table if present */}
-                    {q.tableMarkdown && (
-                      <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10">
-                        <MarkdownTableRenderer markdown={q.tableMarkdown} />
-                      </div>
-                    )}
-
-                    {/* Choices (A, B, C, D) with Correct Answer Marked */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                      {q.options.map((opt, optIdx) => {
-                        const letter = String.fromCharCode(65 + optIdx);
-                        const isCorrect = q.correct === optIdx;
-                        const choiceImg = q.optionImages?.[optIdx];
-
-                        return (
-                          <div
-                            key={optIdx}
-                            className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
-                              isCorrect
-                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-950 dark:text-emerald-200 font-semibold shadow-2xs'
-                                : 'bg-zinc-50/70 dark:bg-[#070e1a]/70 border-zinc-200/80 dark:border-white/10 text-zinc-700 dark:text-zinc-300'
-                            }`}
+                    Go to Questions Editor
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {questions.map((q, idx) => (
+                    <div
+                      key={q.id || idx}
+                      className="p-5 rounded-2xl bg-white dark:bg-[#0c182b] border border-zinc-200/80 dark:border-white/10 space-y-4 shadow-2xs"
+                    >
+                      {/* Question Header & Prompt */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs font-bold text-zinc-500">
+                          <span className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-[#070e1a] text-zinc-800 dark:text-zinc-200">
+                            Question {idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveQuestionIndex(idx);
+                              setActiveTab('editor');
+                            }}
+                            className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                           >
-                            <span
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 ${
-                                isCorrect
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300'
-                              }`}
-                            >
-                              {letter}
-                            </span>
-                            <div className="flex-1 space-y-1">
-                              <MathRenderer text={opt} inline />
-                              {choiceImg && (
-                                <img
-                                  src={choiceImg}
-                                  alt={`Choice ${letter}`}
-                                  className="max-h-20 object-contain rounded border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0c182b] p-1 mt-1"
-                                />
-                              )}
-                            </div>
-                            {isCorrect && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                            <span>Edit</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
 
-                    {/* Explanation if present */}
-                    {q.explanation && (
-                      <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 text-xs space-y-1">
-                        <span className="font-extrabold text-emerald-700 dark:text-emerald-400 block text-[10px] uppercase">
-                          Solution Explanation:
-                        </span>
-                        <div className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                          <MathRenderer text={q.explanation} />
+                        {/* Question Prompt with KaTeX Math Rendering */}
+                        <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-relaxed">
+                          <MathRenderer content={q.text || `Question ${idx + 1}`} />
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+
+                      {/* Question Diagram Preview if present */}
+                      {q.imageUrl && (
+                        <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 flex flex-col items-center justify-center space-y-2">
+                          <img
+                            src={q.imageUrl}
+                            alt={q.imageCaption || `Question ${idx + 1} Diagram`}
+                            className="max-h-48 object-contain rounded-lg cursor-zoom-in"
+                            onClick={() => setLightboxImage({ url: q.imageUrl!, caption: q.imageCaption, title: `Question ${idx + 1} Diagram` })}
+                          />
+                          {q.imageCaption && (
+                            <p className="text-[11px] text-zinc-500 font-medium italic">
+                              {q.imageCaption}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Markdown Table if present */}
+                      {q.tableMarkdown && (
+                        <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10">
+                          <MarkdownTableRenderer markdown={q.tableMarkdown} />
+                        </div>
+                      )}
+
+                      {/* Choices (A, B, C, D) with Correct Answer Marked */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                        {q.options.map((opt, optIdx) => {
+                          const letter = String.fromCharCode(65 + optIdx);
+                          const isCorrect = q.correct === optIdx;
+                          const choiceImg = q.optionImages?.[optIdx];
+
+                          return (
+                            <div
+                              key={optIdx}
+                              className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
+                                isCorrect
+                                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-950 dark:text-emerald-200 font-semibold shadow-2xs'
+                                  : 'bg-zinc-50/70 dark:bg-[#070e1a]/70 border-zinc-200/80 dark:border-white/10 text-zinc-700 dark:text-zinc-300'
+                              }`}
+                            >
+                              <span
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0 ${
+                                  isCorrect
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300'
+                                }`}
+                              >
+                                {letter}
+                              </span>
+                              <div className="flex-1 space-y-1">
+                                <MathRenderer content={opt || `Option ${letter}`} inline />
+                                {choiceImg && (
+                                  <img
+                                    src={choiceImg}
+                                    alt={`Choice ${letter}`}
+                                    className="max-h-20 object-contain rounded border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0c182b] p-1 mt-1"
+                                  />
+                                )}
+                              </div>
+                              {isCorrect && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Explanation if present */}
+                      {q.explanation && (
+                        <div className="p-3 rounded-xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 text-xs space-y-1">
+                          <span className="font-extrabold text-emerald-700 dark:text-emerald-400 block text-[10px] uppercase">
+                            Solution Explanation:
+                          </span>
+                          <div className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                            <MathRenderer content={q.explanation} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Bottom Navigation & Confirm Button */}
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('editor')}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back to Editor</span>
-                </button>
+              {questions.length > 0 && (
+                <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 flex items-center justify-between flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('editor')}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back to Editor</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={handlePublishToSupabase}
-                  disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-md cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  <span>Confirm &amp; Publish Official Exam to Supabase</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={handlePublishExam}
+                    disabled={isSubmitting}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-md cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    <span>Confirm &amp; Publish Official Exam to Cloudflare R2</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
           {/* TAB 4: HARD-COPY PAST EXAM AI VISION PROMPT GENERATOR */}
           {activeTab === 'prompt' && (
             <div className="space-y-6">
-              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-4">
+              <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-zinc-200/80 dark:border-white/10">
                   <div>
                     <h4 className="font-bold text-sm text-zinc-950 dark:text-white flex items-center gap-2">
@@ -1591,8 +1740,8 @@ Explanation: By definition, an isobaric process occurs at constant pressure (\\(
                     rows={12}
                     readOnly
                     value={generateHardCopyExamVisionPrompt({
-                      universityOrGrade: tier === 'university' ? university : 'Secondary National Grade 12',
-                      subject,
+                      universityOrGrade: tier === 'university' ? `${university} (${academicYear} - ${department})` : 'Secondary National Grade 12',
+                      subject: customSubject.trim() || subject,
                       examType,
                       examYear,
                       includeDiagrams: detectQuestionImages,

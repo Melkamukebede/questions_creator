@@ -1393,7 +1393,7 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                     )}
                   </div>
                   <p className="text-xs text-zinc-600 dark:text-zinc-300">
-                    Use this prompt with ChatGPT-4o, Claude 3.5 Sonnet, or Gemini 2.0 to transcribe scanned past Ethiopian exam papers. The prompt formats math in KaTeX and flags diagrams with placeholders ready for Supabase upload.
+                    Use this prompt with ChatGPT-4o, Claude 3.5 Sonnet, or Gemini 2.0 to transcribe scanned past Ethiopian exam papers. The prompt formats math in KaTeX and flags diagrams with placeholders ready for Official Studio upload.
                   </p>
                 </div>
 
