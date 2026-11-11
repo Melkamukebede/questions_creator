@@ -128,17 +128,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-2xl bg-white/70 dark:bg-[#070e1a]/85 border-b border-white/60 dark:border-white/10 transition-colors shadow-2xs font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+    <header className="sticky top-2 sm:top-3.5 z-40 w-full px-2 sm:px-4 lg:px-6 pointer-events-none transition-all duration-300 font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="pointer-events-auto max-w-7xl mx-auto rounded-full floating-glass-bar px-3 sm:px-4 lg:px-5 h-15 sm:h-16 flex items-center justify-between gap-2 shadow-[0_12px_36px_rgba(0,0,0,0.18)] dark:shadow-[0_16px_45px_rgba(0,0,0,0.55)]">
         {/* Brand with Dynamic Guest / Free / Pro Badge */}
         <div
           onClick={() => onTabChange('home')}
-          className="flex items-center gap-2.5 cursor-pointer select-none group"
+          className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
         >
-          <SinahardLogo size="md" idSuffix="navbar" />
+          <div className="w-8 h-8 rounded-xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.25)] transition group-hover:scale-105">
+            <SinahardLogo size="sm" idSuffix="navbar" />
+          </div>
           <div className="flex flex-col">
-            <span className="font-['Outfit',sans-serif] font-bold text-lg tracking-tight text-zinc-900 dark:text-white flex items-center">
-              Sinahard
+            <span className="font-['Outfit',sans-serif] font-black text-base sm:text-lg tracking-tight text-zinc-900 dark:text-white flex items-center">
+              SinaHard
               {isGuest ? (
                 <span
                   onClick={(e) => {
@@ -178,108 +180,100 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Center Nav Tabs */}
-        <nav className="hidden md:flex items-center p-1 rounded-full bg-white/70 dark:bg-[#0c182b] backdrop-blur-md border border-white/80 dark:border-white/10 text-xs sm:text-sm shadow-xs">
+        {/* Center Floating Glass Segmented Navigation */}
+        <nav className="hidden md:flex items-center gap-1 p-1 rounded-full bg-slate-200/45 dark:bg-white/[0.06] backdrop-blur-md border border-white/75 dark:border-white/10 text-xs shadow-2xs">
+          {/* 1. Home Tab */}
           <button
             id="nav-tab-home"
             type="button"
             onClick={() => onTabChange('home')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-semibold transition cursor-pointer active:scale-98 ${
+            className={`glass-pill-btn cursor-pointer ${
               activeTab === 'home'
-                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 border border-white/95 shadow-xs font-bold'
+                : 'text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
-            Home
+            <span>Home</span>
           </button>
+
+          {/* 2. Exams / Library Tab */}
           <button
             id="nav-tab-files"
             type="button"
             onClick={() => onTabChange('files')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-semibold transition cursor-pointer active:scale-98 ${
+            className={`glass-pill-btn cursor-pointer ${
               activeTab === 'files'
-                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 border border-white/95 shadow-xs font-bold'
+                : 'text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            {isTeacher ? 'My School Exams' : 'Exams'}
+            <span>{isTeacher ? 'My School Exams' : 'Exams'}</span>
           </button>
-          {!isTeacher && (
-            <button
-              id="nav-tab-results"
-              type="button"
-              onClick={() => onTabChange('results')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-semibold transition cursor-pointer active:scale-98 ${
-                activeTab === 'results'
-                  ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-              }`}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              Recent Activity
-            </button>
-          )}
+
+          {/* 3. Create Exam Tab */}
           <button
             id="nav-tab-create"
             type="button"
             onMouseEnter={prefetchCreateWizard}
             onTouchStart={prefetchCreateWizard}
             onClick={() => onTabChange('create')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-semibold transition cursor-pointer active:scale-98 ${
+            className={`glass-pill-btn cursor-pointer ${
               activeTab === 'create'
-                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 border border-white/95 shadow-xs font-bold'
+                : 'text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent'
             }`}
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            {isTeacher ? 'Create Class Exam' : 'Create'}
+            <span>{isTeacher ? 'Create Class Exam' : 'Create'}</span>
           </button>
 
-          {/* Admin Verification Panel Link (Melkamu / Admin) */}
-          {isAdmin && (
-            <>
-              <button
-                id="nav-tab-admin-subs"
-                type="button"
-                onClick={() => onTabChange('admin-subs')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-semibold transition cursor-pointer text-xs active:scale-98 ${
-                  activeTab === 'admin-subs'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin Hub</span>
-              </button>
-
-              {onOpenAdminOfficialStudio && (
-                <button
-                  id="nav-tab-admin-official-studio"
-                  type="button"
-                  onClick={onOpenAdminOfficialStudio}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20 transition cursor-pointer active:scale-98"
-                  title="Author and publish official exams with diagrams to Supabase Cloud Storage"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Official Studio</span>
-                </button>
-              )}
-            </>
+          {/* 4. Recent Activity Tab */}
+          {!isTeacher && (
+            <button
+              id="nav-tab-results"
+              type="button"
+              onClick={() => onTabChange('results')}
+              className={`glass-pill-btn cursor-pointer ${
+                activeTab === 'results'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 border border-white/95 shadow-xs font-bold'
+                  : 'text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Activity</span>
+            </button>
           )}
 
-          {/* Download Center Button (Offline Multi-Year SQLite Bundles) */}
+          {/* 5. Admin Hub */}
+          {isAdmin && (
+            <button
+              id="nav-tab-admin-subs"
+              type="button"
+              onClick={() => onTabChange('admin-subs')}
+              className={`glass-pill-btn cursor-pointer ${
+                activeTab === 'admin-subs'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 border border-white/95 shadow-xs font-bold'
+                  : 'text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin Hub</span>
+            </button>
+          )}
+
+          {/* Offline Bundles / Download Center Button */}
           {onOpenDownloadCenter && (
             <button
               id="nav-tab-download-center"
               type="button"
               onClick={onOpenDownloadCenter}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-semibold transition cursor-pointer text-xs active:scale-98 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5"
+              className="glass-pill-btn cursor-pointer text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent"
               title="Download University and Secondary exams in offline SQLite database bundles"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Download Center</span>
+              <Download className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+              <span>Offline Library</span>
             </button>
           )}
         </nav>
@@ -587,52 +581,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           setManualNoticeOpen(false);
         }}
       />
-
-      {/* Mobile Tab Navigation */}
-      <div className="md:hidden flex items-center justify-around px-2 py-1.5 border-t border-white/60 dark:border-white/10 bg-white/85 dark:bg-[#070e1a]/95 backdrop-blur-xl text-xs">
-        <button
-          type="button"
-          onClick={() => onTabChange('home')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition ${
-            activeTab === 'home' ? 'text-zinc-950 dark:text-white font-bold' : 'text-zinc-500'
-          }`}
-        >
-          <LayoutDashboard className="w-4 h-4" />
-          <span>Home</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => onTabChange('files')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition ${
-            activeTab === 'files' ? 'text-zinc-950 dark:text-white font-bold' : 'text-zinc-500'
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          <span>{isTeacher ? 'School' : 'Exams'}</span>
-        </button>
-        {!isTeacher && (
-          <button
-            type="button"
-            onClick={() => onTabChange('results')}
-            className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition ${
-              activeTab === 'results' ? 'text-zinc-950 dark:text-white font-bold' : 'text-zinc-500'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Activity</span>
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onTabChange('create')}
-          className={`flex flex-col items-center py-1 px-2.5 rounded-xl transition ${
-            activeTab === 'create' ? 'text-zinc-950 dark:text-white font-bold' : 'text-zinc-500'
-          }`}
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Create</span>
-        </button>
-      </div>
     </header>
   );
 };
+

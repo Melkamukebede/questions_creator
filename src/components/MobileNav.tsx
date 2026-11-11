@@ -35,23 +35,23 @@ export const MobileNav: React.FC<MobileNavProps> = ({
     <nav
       id="mobile-bottom-nav"
       aria-label="Mobile Navigation Bar"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#070e1a]/95 backdrop-blur-2xl border-t border-zinc-200/80 dark:border-white/10 px-3 pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-2xl transition-colors select-none"
+      className="md:hidden fixed bottom-3 left-0 right-0 z-40 px-3 pointer-events-none select-none transition-all duration-300 font-['Plus_Jakarta_Sans',sans-serif]"
     >
-      <div className="flex items-center justify-between max-w-md mx-auto">
+      <div className="pointer-events-auto max-w-md mx-auto rounded-full floating-glass-bar px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-[0_12px_36px_rgba(0,0,0,0.22)]">
         {/* 1. Home */}
         <button
           type="button"
           onClick={() => onTabChange('home')}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 touch-manipulation ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
             activeTab === 'home'
-              ? 'text-zinc-950 dark:text-white font-bold'
-              : 'text-zinc-500 dark:text-zinc-400 font-medium hover:text-zinc-900 dark:hover:text-white'
+              ? 'text-slate-950 dark:text-white font-bold'
+              : 'text-slate-600 dark:text-zinc-400 font-medium'
           }`}
         >
           <div
-            className={`p-1.5 rounded-xl transition-colors ${
+            className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
               activeTab === 'home'
-                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
                 : 'bg-transparent'
             }`}
           >
@@ -64,22 +64,22 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         <button
           type="button"
           onClick={() => onTabChange('files')}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 touch-manipulation relative ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
             activeTab === 'files'
-              ? 'text-zinc-950 dark:text-white font-bold'
-              : 'text-zinc-500 dark:text-zinc-400 font-medium hover:text-zinc-900 dark:hover:text-white'
+              ? 'text-slate-950 dark:text-white font-bold'
+              : 'text-slate-600 dark:text-zinc-400 font-medium'
           }`}
         >
           <div
-            className={`p-1.5 rounded-xl transition-colors relative ${
+            className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
               activeTab === 'files'
-                ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
                 : 'bg-transparent'
             }`}
           >
             <BookOpen className="w-4 h-4" />
             {examsCount > 0 && activeTab !== 'files' && (
-              <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-[9px] font-bold flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 rounded-full bg-sky-500 text-white text-[9px] font-bold tabular-nums flex items-center justify-center shadow-xs">
                 {examsCount > 99 ? '99+' : examsCount}
               </span>
             )}
@@ -87,19 +87,19 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           <span className="text-[10px] tracking-tight">{isTeacher ? 'School' : 'Exams'}</span>
         </button>
 
-        {/* 3. Center Create Action (Prominent) */}
+        {/* 3. Center Create Action */}
         <button
           type="button"
           onMouseEnter={prefetchCreateWizard}
           onTouchStart={prefetchCreateWizard}
           onClick={() => onTabChange('create')}
-          className="flex flex-col items-center justify-center gap-1 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-90 touch-manipulation group"
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 py-0.5 px-1 rounded-2xl transition-all cursor-pointer active:scale-90 group"
         >
           <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md ${
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-sm relative ${
               activeTab === 'create'
-                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 ring-2 ring-zinc-900/20 dark:ring-white/20'
-                : 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:scale-105'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 ring-2 ring-sky-400/50'
+                : 'bg-white dark:bg-[#0f1d33] text-slate-900 dark:text-white border border-white/90 dark:border-white/15'
             }`}
           >
             <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -107,8 +107,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           <span
             className={`text-[10px] tracking-tight ${
               activeTab === 'create'
-                ? 'font-bold text-zinc-950 dark:text-white'
-                : 'font-medium text-zinc-600 dark:text-zinc-300'
+                ? 'font-bold text-slate-950 dark:text-white'
+                : 'font-medium text-slate-700 dark:text-zinc-300'
             }`}
           >
             Create
@@ -120,20 +120,20 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('admin-subs')}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 touch-manipulation ${
+            className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
               activeTab === 'admin-subs'
-                ? 'text-zinc-950 dark:text-white font-bold'
-                : 'text-zinc-500 dark:text-zinc-400 font-medium hover:text-zinc-900 dark:hover:text-white'
+                ? 'text-slate-950 dark:text-white font-bold'
+                : 'text-slate-600 dark:text-zinc-400 font-medium'
             }`}
           >
             <div
-              className={`p-1.5 rounded-xl transition-colors ${
+              className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
                 activeTab === 'admin-subs'
-                  ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
                   : 'bg-transparent'
               }`}
             >
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <ShieldCheck className="w-4 h-4" />
             </div>
             <span className="text-[10px] tracking-tight">Admin</span>
           </button>
@@ -141,16 +141,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           <button
             type="button"
             onClick={() => onTabChange('results')}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 touch-manipulation ${
+            className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
               activeTab === 'results'
-                ? 'text-zinc-950 dark:text-white font-bold'
-                : 'text-zinc-500 dark:text-zinc-400 font-medium hover:text-zinc-900 dark:hover:text-white'
+                ? 'text-slate-950 dark:text-white font-bold'
+                : 'text-slate-600 dark:text-zinc-400 font-medium'
             }`}
           >
             <div
-              className={`p-1.5 rounded-xl transition-colors ${
+              className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
                 activeTab === 'results'
-                  ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-xs'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
                   : 'bg-transparent'
               }`}
             >
@@ -164,12 +164,12 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         <button
           type="button"
           onClick={onOpenDrawer}
-          className="flex flex-col items-center justify-center gap-1 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 touch-manipulation text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+          className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
         >
           <div className="p-1.5 rounded-xl relative">
             <Menu className="w-4 h-4" />
             {unreadAlertsCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-zinc-950 dark:bg-white animate-pulse" />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500" />
             )}
           </div>
           <span className="text-[10px] tracking-tight">Menu</span>
@@ -178,3 +178,4 @@ export const MobileNav: React.FC<MobileNavProps> = ({
     </nav>
   );
 };
+

@@ -125,25 +125,20 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   return (
     <div className="space-y-5 pb-20 max-w-4xl mx-auto font-['Plus_Jakarta_Sans',sans-serif]">
       {/* ─────────────────────────────────────────────────────────────
-          ANALYTICS SUMMARY HEADER
+          ANALYTICS SUMMARY HEADER (3-Layer Fluid Glass)
       ───────────────────────────────────────────────────────────── */}
-      <div className="p-5 sm:p-6 rounded-[32px] sm:rounded-[36px] bg-white/70 dark:bg-[#070e1a]/95 backdrop-blur-2xl border border-white/80 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] space-y-5">
+      <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] liquid-glass space-y-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-[#0f1d33] text-zinc-800 dark:text-zinc-200 flex items-center justify-center shrink-0 border border-zinc-200/60 dark:border-white/10 shadow-xs">
-              <BarChart3 className="w-5 h-5 text-zinc-900 dark:text-white" />
+            <div className="w-10 h-10 rounded-2xl liquid-glass-subtle flex items-center justify-center shrink-0">
+              <BarChart3 className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold font-['Outfit',sans-serif] tracking-tight text-zinc-900 dark:text-white">
-                  Recent Activity & Performance
-                </h1>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
-                  Live Sync
-                </span>
-              </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Your recent practice test attempts, score progression, and question reviews
+              <h1 className="text-xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-950 dark:text-white">
+                Recent Activity &amp; Performance
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                Your recent practice test attempts, score progression, and step-by-step question reviews
               </p>
             </div>
           </div>
@@ -152,7 +147,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
             <button
               type="button"
               onClick={() => setShowClearAllConfirm(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-zinc-200 dark:border-white/10 bg-white/60 dark:bg-[#0c182b] text-zinc-600 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-semibold transition cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full liquid-glass-subtle text-slate-600 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 text-xs font-semibold transition cursor-pointer whitespace-nowrap"
               title="Clear all records"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -162,16 +157,16 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         </div>
 
         {totalExams === 0 ? (
-          <div className="text-center py-10 px-4 rounded-2xl bg-zinc-50/60 dark:bg-[#0c182b]/60 border border-dashed border-zinc-200 dark:border-white/10">
-            <Award className="w-9 h-9 text-zinc-400 dark:text-zinc-500 mx-auto mb-2 opacity-60" />
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-white">No attempts recorded yet</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto mt-1">
+          <div className="text-center py-10 px-4 rounded-2xl liquid-glass-subtle">
+            <Award className="w-9 h-9 text-slate-400 dark:text-zinc-500 mx-auto mb-2 opacity-60" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">No attempts recorded yet</h3>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto mt-1">
               Take a practice exam to measure your test readiness and review detailed step-by-step solutions.
             </p>
             <button
               type="button"
               onClick={onNavigateToFiles}
-              className="mt-4 px-4 py-2 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+              className="mt-4 px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-semibold text-xs inline-flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
             >
               <BookOpen className="w-3.5 h-3.5" />
               Start an Exam
@@ -179,43 +174,43 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           </div>
         ) : (
           /* Streamlined 4-Metric Grid */
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-[#0c182b] border border-zinc-200/60 dark:border-white/10 shadow-2xs">
-              <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-400 text-[11px] font-medium mb-1">
-                <Target className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-medium mb-1">
+                <Target className="w-3.5 h-3.5" />
                 <span>Attempts</span>
               </div>
-              <div className="text-xl font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
+              <div className="text-xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
                 {totalExams}
               </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-[#0c182b] border border-zinc-200/60 dark:border-white/10 shadow-2xs">
-              <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-400 text-[11px] font-medium mb-1">
-                <TrendingUp className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+            <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-medium mb-1">
+                <TrendingUp className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
                 <span>Average</span>
               </div>
-              <div className="text-xl font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
+              <div className="text-xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
                 {avgScore}%
               </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-[#0c182b] border border-zinc-200/60 dark:border-white/10 shadow-2xs">
-              <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-400 text-[11px] font-medium mb-1">
+            <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-medium mb-1">
                 <Award className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span>Best Score</span>
               </div>
-              <div className="text-xl font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
+              <div className="text-xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
                 {bestScore}%
               </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-[#0c182b] border border-zinc-200/60 dark:border-white/10 shadow-2xs">
-              <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-400 text-[11px] font-medium mb-1">
+            <div className="p-3.5 rounded-2xl liquid-glass-subtle">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 text-[11px] font-medium mb-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                 <span>Pass Rate</span>
               </div>
-              <div className="text-xl font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
+              <div className="text-xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
                 {passRate}%
               </div>
             </div>
@@ -231,50 +226,50 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           {/* Filter Bar */}
           <div className="flex items-center justify-between px-1 flex-wrap gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <Filter className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-400" />
-              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Filter:</span>
+              <Filter className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
+              <span className="text-xs font-semibold text-slate-600 dark:text-zinc-400">Filter:</span>
               <button
                 type="button"
                 onClick={() => setFilterMode('recent')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   filterMode === 'recent'
-                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
-                    : 'bg-white dark:bg-[#0c182b] border border-zinc-200/80 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:dark:bg-[#0f1d33]'
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
+                    : 'liquid-glass-subtle text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white'
                 }`}
               >
                 <Clock className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
-                <span>Recent Activity ({recentCount})</span>
+                <span>Recent ({recentCount})</span>
               </button>
               {(['all', 'passed', 'review'] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setFilterMode(mode)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
                     filterMode === mode
-                      ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
-                      : 'bg-white dark:bg-[#0c182b] border border-zinc-200/80 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:dark:bg-[#0f1d33]'
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
+                      : 'liquid-glass-subtle text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white'
                   }`}
                 >
-                  {mode === 'all' && `All History (${totalExams})`}
+                  {mode === 'all' && `All (${totalExams})`}
                   {mode === 'passed' && `Passed (${passCount})`}
                   {mode === 'review' && `Needs Review (${totalExams - passCount})`}
                 </button>
               ))}
             </div>
 
-            <span className="text-[11px] text-zinc-400 dark:text-zinc-400">
-              Showing {filteredResults.length} of {totalExams} {filterMode === 'recent' ? '(Recent)' : ''}
+            <span className="text-[11px] text-slate-500 dark:text-zinc-400 tabular-nums">
+              Showing {filteredResults.length} of {totalExams}
             </span>
           </div>
 
           {filterMode === 'recent' && totalExams > RECENT_LIMIT && (
-            <div className="px-4 py-2 rounded-xl bg-zinc-100/70 dark:bg-[#0c182b] border border-zinc-200/60 dark:border-white/10 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400">
+            <div className="px-4 py-2 rounded-xl liquid-glass-subtle flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400">
               <span>Showing your {recentCount} most recent practice sessions.</span>
               <button
                 type="button"
                 onClick={() => setFilterMode('all')}
-                className="font-bold text-zinc-900 dark:text-white hover:underline cursor-pointer ml-2"
+                className="font-bold text-slate-900 dark:text-white hover:underline cursor-pointer ml-2"
               >
                 View All {totalExams} Records
               </button>
@@ -299,69 +294,61 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
               return (
                 <div
                   key={result.id || originalIdx}
-                  className="rounded-2xl bg-white dark:bg-[#0c182b] border border-zinc-200/80 dark:border-white/10 shadow-2xs overflow-hidden transition-all hover:border-zinc-300 dark:hover:border-white/20"
+                  className="rounded-2xl liquid-glass overflow-hidden transition-all"
                 >
                   {/* Card Row */}
                   <div className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
                       {/* Score Badge */}
                       <div
-                        className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center font-['Outfit',sans-serif] font-bold text-sm shrink-0 border ${
+                        className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center font-['Outfit',sans-serif] font-bold text-sm tabular-nums shrink-0 border ${
                           isPassed
-                            ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/30'
+                            ? 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25'
                             : 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20'
                         }`}
                       >
                         {result.percentage}%
                       </div>
 
-                      {/* Info & Meta */}
+                      {/* Info & Unboxed Metadata */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-sm font-['Outfit',sans-serif] text-zinc-900 dark:text-white truncate">
+                          <h3 className="font-bold text-sm font-['Outfit',sans-serif] text-slate-950 dark:text-white truncate">
                             {result.examTitle}
                           </h3>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            className={`text-[10px] font-bold ${
                               isPassed
-                                ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
-                                : 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-rose-600 dark:text-rose-400'
                             }`}
                           >
-                            {isPassed ? 'Passed' : 'Needs Practice'}
+                            · {isPassed ? 'Passed' : 'Needs Review'}
                           </span>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
-                          <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                            <Clock className="w-3 h-3" />
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-zinc-400 mt-1 tabular-nums">
+                          <span className="font-semibold text-slate-700 dark:text-zinc-300">
                             {formatRelativeTime(result.date)}
                           </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-zinc-400" />
-                            {new Date(result.date).toLocaleDateString()}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-zinc-400" />
-                            {formatTime(result.timeSpent || 0)}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Target className="w-3 h-3 text-zinc-400" />
-                            <strong className="text-zinc-800 dark:text-zinc-200">{result.score}</strong> / {result.total} correct
+                          <span>·</span>
+                          <span>{new Date(result.date).toLocaleDateString()}</span>
+                          <span>·</span>
+                          <span>{formatTime(result.timeSpent || 0)}</span>
+                          <span>·</span>
+                          <span>
+                            <strong className="text-slate-900 dark:text-white">{result.score}</strong>/{result.total} correct
                           </span>
                         </div>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-white/10">
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-white/10">
                       <button
                         type="button"
                         onClick={() => toggleExpand(originalIdx)}
-                        className="px-3.5 py-1.5 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-[#0f1d33] dark:hover:bg-[#132238] border border-transparent dark:border-white/10 text-zinc-800 dark:text-zinc-200 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                        className="px-3.5 py-1.5 rounded-full liquid-glass-subtle text-slate-800 dark:text-zinc-200 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>{isExpanded ? 'Hide' : 'Review'}</span>
@@ -371,7 +358,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setResultToDelete(result.id || originalIdx)}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                         title="Delete Result"
                       >
                         <Trash2 className="w-4 h-4" />

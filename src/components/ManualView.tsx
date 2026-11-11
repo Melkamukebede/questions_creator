@@ -162,114 +162,105 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
   };
 
   return (
-    <div className="space-y-6 pb-16 max-w-4xl mx-auto font-['Plus_Jakarta_Sans',sans-serif] text-zinc-900 dark:text-zinc-100">
+    <div className="space-y-6 pb-16 max-w-4xl mx-auto font-['Plus_Jakarta_Sans',sans-serif] text-slate-900 dark:text-zinc-100">
       {/* ─────────────────────────────────────────────────────────────
-          LAYER 1: TRANSLUCENT CONTAINER (Guide Header Banner)
+          LAYER 2: FLUID GLASS CONTAINER (Guide Header Banner)
       ───────────────────────────────────────────────────────────── */}
-      <div className="relative p-6 sm:p-7 rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] overflow-hidden">
-        {/* Subtle Atmospheric Ambient Glow */}
-        <div className="absolute -top-24 -right-24 w-80 h-80 bg-zinc-500/5 dark:bg-white/5 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="relative p-6 sm:p-7 rounded-[28px] sm:rounded-[32px] liquid-glass overflow-hidden">
         <div className="space-y-3 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 text-zinc-700 dark:text-zinc-300 text-xs font-semibold shadow-xs">
-            <BookOpen className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-            <span>Quick & Clear Guide</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full liquid-glass-subtle text-slate-700 dark:text-zinc-300 text-xs font-semibold">
+            <BookOpen className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+            <span>Quick &amp; Clear Guide</span>
           </div>
 
-          <p className="text-base sm:text-lg lg:text-xl font-normal font-['Outfit',sans-serif] text-zinc-800 dark:text-zinc-200 leading-relaxed">
-            <span className="font-semibold text-zinc-900 dark:text-white">Sinahard</span> is comprehensive — you can create any question and practice prepared exams in an interactive app, for all grade level students.
+          <p className="text-base sm:text-lg lg:text-xl font-normal font-['Outfit',sans-serif] text-slate-800 dark:text-zinc-200 leading-relaxed">
+            <span className="font-semibold text-slate-950 dark:text-white">Sinahard</span> is comprehensive — you can create any question and practice prepared exams in an interactive app, for all grade level students.
           </p>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          LAYER 1: TRANSLUCENT CONTAINER (3 Ways to Add Questions)
-          LAYER 2: PORCELAIN CARDS
+          LAYER 2: FLUID GLASS CONTAINER (3 Ways to Add Questions)
       ───────────────────────────────────────────────────────────── */}
-      <div className="relative p-5 sm:p-7 rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] space-y-4 overflow-hidden">
-        {/* Subtle Atmospheric Ambient Glow */}
-        <div className="absolute -top-24 -left-24 w-80 h-80 bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="relative p-5 sm:p-7 rounded-[28px] sm:rounded-[32px] liquid-glass space-y-4 overflow-hidden">
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-wider">
-            <Edit3 className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+          <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-wider">
+            <Edit3 className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             <span>Adding Questions</span>
           </div>
-          <h2 className="text-base sm:text-lg font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white mt-1">
+          <h2 className="text-base sm:text-lg font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white mt-1">
             Exam Question Creation &amp; AI Pipelines
           </h2>
         </div>
 
-        {/* Featured: Create with Agent - 3-Node Autonomous Loop */}
-        <div className="relative z-10 p-5 rounded-[26px] bg-zinc-100/90 dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+        {/* Featured: Create with Agent */}
+        <div className="relative z-10 p-5 rounded-2xl liquid-glass-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+            <div className="flex items-center gap-2 flex-wrap text-xs font-semibold text-slate-600 dark:text-zinc-400">
+              <span className="text-emerald-700 dark:text-emerald-300 font-bold">
                 Create with Agent
               </span>
-              <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
-                LangGraph Multi-Agent Loop &bull; KaTeX STEM &bull; SQLite Export
-              </span>
+              <span>·</span>
+              <span>Multi-Agent Loop · KaTeX STEM · SQLite Export</span>
             </div>
-            <h3 className="text-base font-bold text-zinc-950 dark:text-white font-['Outfit',sans-serif]">
+            <h3 className="text-base font-bold text-slate-950 dark:text-white font-['Outfit',sans-serif]">
               Autonomous 3-Agent AI Pipeline (Curator &rarr; Author &rarr; Adversarial Critic)
             </h3>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-              Agent A reads curriculum syllabus &bull; Agent B drafts KaTeX-formatted STEM problems &bull; Agent C audits zero hallucinations before saving to Cloud Firestore and exporting portable offline SQLite database files.
+            <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
+              Agent A reads curriculum syllabus · Agent B drafts KaTeX-formatted STEM problems · Agent C audits zero hallucinations before saving to Cloud Firestore and exporting portable offline SQLite database files.
             </p>
           </div>
           <button
             type="button"
             onClick={onOpenProfessorModal}
-            className="px-5 py-2.5 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98 transition shrink-0"
+            className="px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98 transition shrink-0 whitespace-nowrap"
           >
-            <Sparkles className="w-4 h-4 text-emerald-500" />
+            <Sparkles className="w-4 h-4 text-amber-500" />
             <span>Create with Agent</span>
           </button>
         </div>
 
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-3.5">
           {/* Way 1: Manually */}
-          <div className="p-4 sm:p-5 rounded-[24px] bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 flex flex-col justify-between space-y-3 shadow-xs">
+          <div className="p-4 sm:p-5 rounded-2xl liquid-glass-subtle flex flex-col justify-between space-y-3">
             <div className="space-y-2">
-              <div className="w-7 h-7 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs">
                 1
               </div>
-              <h3 className="font-bold text-sm text-zinc-900 dark:text-white">
+              <h3 className="font-bold text-sm text-slate-950 dark:text-white">
                 Manually Question by Question
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
                 Add each question manually while reading your textbooks or right after study sessions.
               </p>
             </div>
             <button
               type="button"
               onClick={() => onNavigate('create')}
-              className="w-full py-2 px-3 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 border border-white/80 dark:border-white/10 text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+              className="w-full py-2 px-3 rounded-full liquid-glass-btn text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <PlusCircle className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+              <PlusCircle className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
               <span>Create Manually</span>
             </button>
           </div>
 
           {/* Way 2: Copy & Paste from AI */}
-          <div className="p-4 sm:p-5 rounded-[24px] bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 flex flex-col justify-between space-y-3 shadow-xs">
+          <div className="p-4 sm:p-5 rounded-2xl liquid-glass-subtle flex flex-col justify-between space-y-3">
             <div className="space-y-2">
-              <div className="w-7 h-7 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs">
                 2
               </div>
-              <h3 className="font-bold text-sm text-zinc-900 dark:text-white">
-                Copy & Paste from Any AI
+              <h3 className="font-bold text-sm text-slate-950 dark:text-white">
+                Copy &amp; Paste from Any AI
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
                 Copy questions created by any AI like <strong>Claude</strong>, <strong>Gemini</strong>, <strong>ChatGPT</strong>, or <strong>DeepSeek</strong>.
               </p>
             </div>
             <button
               type="button"
               onClick={onOpenPasteModal}
-              className="w-full py-2 px-3 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+              className="w-full py-2 px-3 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
             >
               <FileCode className="w-3.5 h-3.5" />
               <span>Paste AI Questions</span>
@@ -277,24 +268,24 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
           </div>
 
           {/* Way 3: Import from Files */}
-          <div className="p-4 sm:p-5 rounded-[24px] bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 flex flex-col justify-between space-y-3 shadow-xs">
+          <div className="p-4 sm:p-5 rounded-2xl liquid-glass-subtle flex flex-col justify-between space-y-3">
             <div className="space-y-2">
-              <div className="w-7 h-7 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs">
                 3
               </div>
-              <h3 className="font-bold text-sm text-zinc-900 dark:text-white">
+              <h3 className="font-bold text-sm text-slate-950 dark:text-white">
                 Import from Telegram or Files
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Import questions downloaded from Telegram channels or shared by friends (<code className="font-mono text-zinc-700 dark:text-zinc-300">.txt</code> file).
+              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+                Import questions downloaded from Telegram channels or shared by friends (<code className="font-mono text-slate-700 dark:text-zinc-300">.txt</code> file).
               </p>
             </div>
             <button
               type="button"
               onClick={onOpenPasteModal}
-              className="w-full py-2 px-3 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 border border-white/80 dark:border-white/10 text-xs font-semibold text-zinc-800 dark:text-zinc-200 flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+              className="w-full py-2 px-3 rounded-full liquid-glass-btn text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+              <Download className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
               <span>Import .txt File</span>
             </button>
           </div>
@@ -302,16 +293,16 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
       </div>
 
       {/* Share Exams with Friends */}
-      <div className="relative p-5 sm:p-6 rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden">
+      <div className="relative p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] liquid-glass flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden">
         <div className="flex items-start gap-3.5 relative z-10">
-          <div className="w-10 h-10 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-bold shadow-xs shrink-0 mt-0.5">
-            <Share2 className="w-5 h-5 text-white dark:text-zinc-950" />
+          <div className="w-10 h-10 rounded-2xl liquid-glass-subtle flex items-center justify-center font-bold shrink-0 mt-0.5">
+            <Share2 className="w-5 h-5 text-sky-600 dark:text-sky-400" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
+            <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white">
               Share Created Questions with Friends
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xl">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed max-w-xl">
               You can share your created questions to your friends to take one exam at a time by clicking the <strong>Export</strong> button on your exam card in the Library!
             </p>
           </div>
@@ -320,7 +311,7 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
         <button
           type="button"
           onClick={() => onNavigate('files')}
-          className="relative z-10 self-start sm:self-auto px-5 py-2.5 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-98 transition shrink-0"
+          className="relative z-10 self-start sm:self-auto px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-98 transition shrink-0 whitespace-nowrap"
         >
           <span>View Library</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -328,17 +319,17 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
       </div>
 
       {/* Ready-to-Use AI Prompt */}
-      <div className="relative p-5 sm:p-6 rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] space-y-3 overflow-hidden">
+      <div className="relative p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] liquid-glass space-y-3 overflow-hidden">
         <div className="relative z-10 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-wider">
-              <Bot className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
+            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-wider">
+              <Bot className="w-4 h-4 text-sky-600 dark:text-sky-400" />
               <span>Ready-To-Use AI Prompt</span>
             </div>
-            <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white mt-1">
+            <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white mt-1">
               Ask Claude, Gemini, ChatGPT, or DeepSeek
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
               Copy prompts to AI to create your questions, then paste them back here.
             </p>
           </div>
@@ -350,42 +341,39 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
               setCopiedPrompt(true);
               setTimeout(() => setCopiedPrompt(false), 2000);
             }}
-            className="px-3.5 py-1.5 rounded-full bg-white dark:bg-[000000] hover:bg-zinc-50 dark:hover:bg-[18181b] text-zinc-800 dark:text-zinc-200 border border-white/80 dark:border-white/10 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+            className="px-3.5 py-1.5 rounded-full liquid-glass-btn text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
           >
             {copiedPrompt ? (
               <>
-                <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-white" />
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>Prompt Copied!</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-zinc-500" />
+                <Copy className="w-3.5 h-3.5 text-slate-500" />
                 <span>Copy Prompt</span>
               </>
             )}
           </button>
         </div>
 
-        <div className="relative z-10 p-4 rounded-[22px] bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 font-mono text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed shadow-xs">
+        <div className="relative z-10 p-4 rounded-2xl liquid-glass-subtle font-mono text-xs text-slate-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
           {samplePrompt}
         </div>
       </div>
 
       {/* Video Ad Prompts for Google Vids & AI Generators (Student & Gorilla) */}
-      <div className="relative p-5 sm:p-6 rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] space-y-4 overflow-hidden">
+      <div className="relative p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] liquid-glass space-y-4 overflow-hidden">
         <div className="relative z-10 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-wider">
               <Clapperboard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Video Ad Generator Prompts</span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                Google Vids Ready
-              </span>
+              <span>Video Ad Generator Prompts · Google Vids Ready</span>
             </div>
-            <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white mt-1">
-              Ethiopian Student & Professor Gorilla Commercial
+            <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white mt-1">
+              Ethiopian Student &amp; Professor Gorilla Commercial
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
               Paste these prompts directly into Google Vids, Veo, or AI video creators to generate an Amharic promo video.
             </p>
           </div>
@@ -398,7 +386,7 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
                 setCopiedShortVideoPrompt(true);
                 setTimeout(() => setCopiedShortVideoPrompt(false), 2000);
               }}
-              className="px-3.5 py-1.5 rounded-full bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-white/80 dark:border-white/10 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+              className="px-3.5 py-1.5 rounded-full liquid-glass-btn text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               title="Copy short prompt for Google Vids prompt bar"
             >
               {copiedShortVideoPrompt ? (
@@ -421,12 +409,12 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
                 setCopiedVideoPrompt(true);
                 setTimeout(() => setCopiedVideoPrompt(false), 2000);
               }}
-              className="px-3.5 py-1.5 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
+              className="px-3.5 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-98"
               title="Copy complete scene-by-scene storyboard"
             >
               {copiedVideoPrompt ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-white dark:text-zinc-950" />
+                  <Check className="w-3.5 h-3.5" />
                   <span>Full Script Copied!</span>
                 </>
               ) : (
@@ -441,27 +429,27 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
 
         {/* Amharic Dialogue Highlights */}
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="p-3.5 rounded-[20px] bg-amber-500/10 border border-amber-500/20 text-xs space-y-1.5">
-            <div className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-              <span>🇪🇹 ተማሪው ዳዊት (The Student):</span>
+          <div className="p-3.5 rounded-2xl liquid-glass-subtle text-xs space-y-1.5">
+            <div className="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+              <span>ተማሪው ዳዊት (The Student):</span>
             </div>
-            <p className="font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed font-sans">
+            <p className="font-medium text-slate-800 dark:text-zinc-200 leading-relaxed font-sans">
               "እባክህ AI ጥያቄዎችን የሚፈጥር አፕ ንገረኝ! የፈተና ጊዜ ደረሰ፤ እንዴት ተዘጋጅቼ ከፍተኛ ውጤት ላምጣ?"
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 italic">
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 italic">
               "Please tell me an AI app that creates exam questions! Exam season is here—how can I score top marks?"
             </p>
           </div>
 
-          <div className="p-3.5 rounded-[20px] bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5">
-            <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-              <span>🦍 ፕሮፌሰር ጎሪላ (The Wise Gorilla):</span>
+          <div className="p-3.5 rounded-2xl liquid-glass-subtle text-xs space-y-1.5">
+            <div className="font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+              <span>ፕሮፌሰር ጎሪላ (The Wise Gorilla):</span>
             </div>
-            <p className="font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed font-sans">
+            <p className="font-medium text-slate-800 dark:text-zinc-200 leading-relaxed font-sans">
               "አትጨነቅ! መፍትሄው ሲናሃርድ (Sinahard) ነው! በAI አማካኝነት ብሔራዊ እና የትምህርት ቤት ፈተናዎችን በሰከንዶች ውስጥ የሚያዘጋጅልህ፣ ደረጃ-በደረጃ ማብራሪያና የሂሳብ ቀመሮችን የሚሰጥህ ምርጥ አፕ ነው!"
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 italic">
-              "Don't stress! The answer is Sinahard! It generates national & school exams with step-by-step math formulas in seconds!"
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 italic">
+              "Don't stress! The answer is Sinahard! It generates national &amp; school exams with step-by-step math formulas in seconds!"
             </p>
           </div>
         </div>
@@ -471,7 +459,7 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
           <button
             type="button"
             onClick={() => setIsVideoPromptExpanded((prev) => !prev)}
-            className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white transition cursor-pointer"
+            className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white transition cursor-pointer"
           >
             <span>{isVideoPromptExpanded ? 'Hide' : 'View'} Full Google Vids Storyboard Script</span>
             {isVideoPromptExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -479,40 +467,40 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
         </div>
 
         {isVideoPromptExpanded && (
-          <div className="relative z-10 p-4 rounded-[22px] bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 font-mono text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed shadow-xs max-h-96 overflow-y-auto">
+          <div className="relative z-10 p-4 rounded-2xl liquid-glass-subtle font-mono text-xs text-slate-700 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed max-h-96 overflow-y-auto">
             {googleVidsStoryboardPrompt}
           </div>
         )}
       </div>
 
       {/* Expandable Math & Science Formulas Area */}
-      <div className="relative rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] overflow-hidden">
+      <div className="relative rounded-[28px] sm:rounded-[32px] liquid-glass overflow-hidden">
         <button
           type="button"
           onClick={() => setIsMathExpanded((prev) => !prev)}
-          className="w-full p-5 sm:p-6 flex items-center justify-between gap-4 text-left hover:bg-white/60 dark:hover:bg-white/[0.02] transition cursor-pointer"
+          className="w-full p-5 sm:p-6 flex items-center justify-between gap-4 text-left hover:bg-white/40 dark:hover:bg-white/[0.02] transition cursor-pointer"
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-white/80 dark:border-white/10 flex items-center justify-center shrink-0 shadow-xs">
-              <Calculator className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+            <div className="w-9 h-9 rounded-2xl liquid-glass-subtle flex items-center justify-center shrink-0">
+              <Calculator className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
-                  Math & Science Formulas Manual
+                <h2 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white">
+                  Math &amp; Science Formulas Manual
                 </h2>
-                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
-                  Optional
+                <span className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
+                  · Optional
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <span>Hint: This type of formula code helps just for creating manual questions.</span>
               </p>
             </div>
           </div>
 
-          <div className="p-2 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 bg-white dark:bg-zinc-800 border border-white/80 dark:border-white/10 shadow-xs shrink-0">
+          <div className="p-2 rounded-full liquid-glass-subtle text-slate-500 dark:text-zinc-300 shrink-0">
             {isMathExpanded ? (
               <ChevronUp className="w-4 h-4" />
             ) : (
@@ -528,12 +516,11 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="px-5 pb-6 sm:px-6 border-t border-zinc-100 dark:border-white/10 space-y-4 pt-4"
+              className="px-5 pb-6 sm:px-6 border-t border-slate-200/70 dark:border-white/10 space-y-4 pt-4"
             >
-              {/* Formula Test Box */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 mb-1.5">
                     Type formula code:
                   </label>
                   <input
@@ -541,23 +528,22 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
                     value={formulaInput}
                     onChange={(e) => setFormulaInput(e.target.value)}
                     placeholder="e.g. \frac{a}{b} or x^2"
-                    className="w-full px-3.5 py-2.5 rounded-full bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 font-mono text-xs text-zinc-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-zinc-950/10 dark:focus:ring-white/10 shadow-xs"
+                    className="w-full px-3.5 py-2.5 rounded-full bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 font-mono text-xs text-slate-900 dark:text-white focus:outline-hidden shadow-2xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-zinc-400 mb-1.5">
                     Instant math appearance:
                   </label>
-                  <div className="min-h-[42px] px-4 py-2.5 rounded-full bg-white dark:bg-[000000] border border-white/80 dark:border-white/10 flex items-center text-sm text-zinc-900 dark:text-white overflow-x-auto shadow-xs">
+                  <div className="min-h-[42px] px-4 py-2.5 rounded-full bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 flex items-center text-sm text-slate-900 dark:text-white overflow-x-auto shadow-2xs">
                     <MathRenderer content={`\\[ ${formulaInput} \\]`} />
                   </div>
                 </div>
               </div>
 
-              {/* Clickable Math Symbols */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-semibold text-zinc-500 block">
+                <span className="text-[11px] font-semibold text-slate-500 block">
                   Click any symbol to copy or test it:
                 </span>
                 <div className="flex flex-wrap gap-2">
@@ -569,12 +555,12 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
                         setFormulaInput(item.code);
                         handleCopy(item.code);
                       }}
-                      className="px-3 py-1.5 rounded-full text-xs bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 border border-white/80 dark:border-white/10 text-zinc-700 dark:text-zinc-300 font-mono flex items-center gap-1.5 cursor-pointer transition shadow-xs active:scale-98"
+                      className="px-3 py-1.5 rounded-full text-xs liquid-glass-subtle text-slate-700 dark:text-zinc-300 font-mono flex items-center gap-1.5 cursor-pointer transition active:scale-98"
                     >
                       {copiedSymbol === item.code ? (
-                        <Check className="w-3 h-3 text-zinc-900 dark:text-white" />
+                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                       ) : (
-                        <Copy className="w-3 h-3 text-zinc-400" />
+                        <Copy className="w-3 h-3 text-slate-400" />
                       )}
                       <span>{item.label}</span>
                     </button>
@@ -587,12 +573,12 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
       </div>
 
       {/* Bottom Practice Action Banner */}
-      <div className="relative p-5 sm:p-6 rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[000000]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden">
+      <div className="relative p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] liquid-glass flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden">
         <div className="relative z-10">
-          <h3 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-zinc-900 dark:text-white">
+          <h3 className="text-sm sm:text-base font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white">
             Ready to start practicing?
           </h3>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             Choose an exam from your library or create new questions right now.
           </p>
         </div>
@@ -601,14 +587,14 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
           <button
             type="button"
             onClick={() => onNavigate('create')}
-            className="px-4 py-2 rounded-full border border-white/80 dark:border-white/10 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 transition cursor-pointer shadow-xs active:scale-98"
+            className="px-4 py-2 rounded-full liquid-glass-btn text-xs font-semibold cursor-pointer whitespace-nowrap"
           >
             Create Exam
           </button>
           <button
             type="button"
             onClick={() => onNavigate('files')}
-            className="px-5 py-2.5 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-98 transition"
+            className="px-5 py-2.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-98 transition whitespace-nowrap"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Browse Library</span>
@@ -618,3 +604,4 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
     </div>
   );
 };
+

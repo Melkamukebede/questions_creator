@@ -11,16 +11,25 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+function getSystemTheme(): ThemeMode {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'light';
+}
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('exam_theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    // Default to dark mode as the classic Sinahard Pro aesthetic, but fully supports white mode
-    return 'dark';
+    try {
+      const saved = localStorage.getItem('exam_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {
+      // ignore storage errors
+    }
+    return getSystemTheme();
   });
 
   useEffect(() => {
-    localStorage.setItem('exam_theme', theme);
     const root = document.documentElement;
     const body = document.body;
 
@@ -45,12 +54,47 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [theme]);
 
+  // Follow OS system color changes dynamically unless the user explicitly toggled a preference
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      const hasManualOverride = localStorage.getItem('exam_theme_manual') === 'true';
+      if (!hasManualOverride) {
+        const nextTheme: ThemeMode = e.matches ? 'dark' : 'light';
+        setThemeState(nextTheme);
+        try {
+          localStorage.setItem('exam_theme', nextTheme);
+        } catch {
+          // ignore
+        }
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   const setTheme = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
+    try {
+      localStorage.setItem('exam_theme', newTheme);
+      localStorage.setItem('exam_theme_manual', 'true');
+    } catch {
+      // ignore
+    }
   };
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setThemeState((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('exam_theme', next);
+        localStorage.setItem('exam_theme_manual', 'true');
+      } catch {
+        // ignore
+      }
+      return next;
+    });
   };
 
   return (
@@ -74,3 +118,4 @@ export const useTheme = (): ThemeContextType => {
   }
   return context;
 };
+

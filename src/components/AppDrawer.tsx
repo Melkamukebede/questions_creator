@@ -105,7 +105,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div
           id="app-drawer-panel"
-          className="relative w-screen max-w-sm bg-white/95 dark:bg-[#070e1a]/95 backdrop-blur-2xl border-l border-white/60 dark:border-white/10 shadow-2xl flex flex-col transition-transform animate-in slide-in-from-right duration-300 ease-out overflow-hidden"
+          className="relative w-screen max-w-sm liquid-glass !rounded-none !border-y-0 !border-r-0 border-l border-white/70 dark:border-white/15 shadow-2xl flex flex-col transition-transform animate-in slide-in-from-right duration-300 ease-out overflow-hidden"
         >
           {/* Subtle Atmospheric Ambient Glow */}
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-zinc-400/5 dark:bg-zinc-700/10 rounded-full blur-3xl pointer-events-none" />

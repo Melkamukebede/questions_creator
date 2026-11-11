@@ -278,11 +278,11 @@ export const CuratedExamsModal: React.FC<CuratedExamsModalProps> = ({
               onClick={() => setOnlyShowRegisteredGrade(!onlyShowRegisteredGrade)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs border ${
                 onlyShowRegisteredGrade
-                  ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 border-zinc-950 dark:border-white shadow-xs'
-                  : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'
+                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 border border-white/90 shadow-sm font-bold'
+                  : 'bg-white/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'
               }`}
             >
-              <Filter className="w-3 h-3 text-zinc-900 dark:text-white stroke-[2.2]" />
+              <Filter className="w-3 h-3 text-blue-600 dark:text-zinc-950 stroke-[2.2]" />
               <span>{onlyShowRegisteredGrade ? `Grade ${registeredGrade} Only` : 'All Grades View'}</span>
             </button>
 
@@ -580,16 +580,16 @@ export const CuratedExamsModal: React.FC<CuratedExamsModalProps> = ({
                           type="button"
                           disabled={isDownloading}
                           onClick={() => handleDownloadClick(exam)}
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 text-xs font-bold transition cursor-pointer active:scale-98 disabled:opacity-50 shadow-xs"
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-white text-slate-900 dark:text-zinc-950 hover:bg-white/90 font-bold text-xs transition cursor-pointer active:scale-98 disabled:opacity-50 shadow-sm border border-white/90"
                         >
                           {isDownloading ? (
                             <>
-                              <Loader2 className="w-3.5 h-3.5 text-white dark:text-zinc-950 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 text-blue-600 dark:text-zinc-950 animate-spin" />
                               <span>Saving...</span>
                             </>
                           ) : (
                             <>
-                              <CloudDownload className="w-3.5 h-3.5 text-white dark:text-zinc-950 stroke-[2.2]" />
+                              <CloudDownload className="w-3.5 h-3.5 text-blue-600 dark:text-zinc-950 stroke-[2.2]" />
                               <span>Download</span>
                             </>
                           )}

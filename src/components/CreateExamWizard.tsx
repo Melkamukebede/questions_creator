@@ -29,6 +29,7 @@ import {
   Maximize2,
   Minimize2,
   Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Exam, Question, AppUser } from '../types';
@@ -37,6 +38,7 @@ import { UserTierStatus } from '../services/subscriptionLimits';
 import { SinahardLogo } from './SinahardLogo';
 import { isAppOffline, subscribeToNetworkState, OFFLINE_FREE_GUEST_LIMITS } from '../firebase';
 import { prefetchProfessorModal } from '../services/prefetch';
+import { uploadExamMedia } from '../services/supabaseService';
 
 interface CreateExamWizardProps {
   initialExam?: Exam | null;
@@ -799,6 +801,37 @@ Time Limit: 25 minutes
     setQuestions(updated);
   };
 
+  const updateQuestionImage = (idx: number, imageUrl: string) => {
+    const updated = [...questions];
+    updated[idx].imageUrl = imageUrl.trim() || undefined;
+    setQuestions(updated);
+  };
+
+  const updateQuestionCaption = (idx: number, caption: string) => {
+    const updated = [...questions];
+    updated[idx].imageCaption = caption || undefined;
+    setQuestions(updated);
+  };
+
+  const handleQuestionImageUpload = async (idx: number, file: File) => {
+    if (!file) return;
+    try {
+      setSuccessMsg(`Uploading figure "${file.name}"...`);
+      const res = await uploadExamMedia(file, subject || 'general');
+      const updated = [...questions];
+      updated[idx].imageUrl = res.publicUrl;
+      setQuestions(updated);
+      setSuccessMsg(
+        !res.isBase64Fallback
+          ? `Uploaded figure to Supabase Storage (${res.publicUrl.slice(0, 36)}...)!`
+          : `Attached figure "${file.name}" to Question ${idx + 1}!`
+      );
+      setTimeout(() => setSuccessMsg(null), 3500);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to upload question image.');
+    }
+  };
+
   const insertFormulaToQuestion = (qIdx: number, formula: string, targetField: 'text' | 'explanation') => {
     const updated = [...questions];
     if (targetField === 'text') {
@@ -919,35 +952,33 @@ Time Limit: 25 minutes
   return (
     <div className="max-w-5xl mx-auto space-y-6 font-['Plus_Jakarta_Sans',sans-serif] pb-24">
       {/* ─────────────────────────────────────────────────────────────
-          HERO CONTAINER: MATCHING SINAHARD APP COLOR DESIGN
+          HERO CONTAINER: MATCHING SINAHARD 3-LAYER FLUID GLASS DESIGN
       ───────────────────────────────────────────────────────────── */}
-      <div className="relative rounded-[32px] sm:rounded-[38px] bg-white/70 dark:bg-[#070e1a]/95 backdrop-blur-2xl border border-white/70 dark:border-white/10 p-5 sm:p-8 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] space-y-6 overflow-hidden">
+      <div className="relative rounded-3xl liquid-glass p-5 sm:p-8 space-y-6 overflow-hidden">
         {/* Top Header Row with Sinahard Pro Brand & 2-Step Pill Bar */}
-        <div className="relative z-10 border-b border-zinc-200/80 dark:border-white/10 pb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="relative z-10 border-b border-slate-200/80 dark:border-white/10 pb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3 sm:gap-4">
             <SinahardLogo size="lg" idSuffix="create-hero" className="shrink-0" />
             <div>
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/20 text-[11px] font-semibold text-sky-800 dark:text-sky-300">
-                  <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                    <Sparkles className="w-3 h-3 text-black stroke-[2.5]" />
-                  </span>
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+                  <Sparkles className="w-3.5 h-3.5 text-sky-500 stroke-[2.2]" />
                   <span>Sinahard Exam Studio</span>
-                  <span className="text-sky-400">•</span>
-                  <span className="font-normal text-zinc-600 dark:text-zinc-400">
+                  <span className="text-slate-400">·</span>
+                  <span className="font-semibold text-slate-600 dark:text-slate-400">
                     {currentStep === 1 ? 'Step 1: Info & Smart Paste' : 'Step 2: Verify & KaTeX Math'}
                   </span>
                 </div>
                 {isPrivilegedCreator && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20">
                     Unlimited Creation &amp; Cloud Sharing
                   </span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] tracking-tight text-zinc-950 dark:text-white">
+              <h1 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-900 dark:text-white">
                 {currentStep === 1 ? 'Create & Import Exam' : 'Verify Questions & KaTeX Formulas'}
               </h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 {currentStep === 1
                   ? 'Paste, type, or import exam questions with KaTeX math and instant auto-parsing.'
                   : 'Review rendered math expressions, verify answers, and save to your repository.'}
@@ -956,15 +987,15 @@ Time Limit: 25 minutes
           </div>
 
           {/* 2-Step Navigation Switcher */}
-          <div className="flex items-center p-1 rounded-full bg-white/80 dark:bg-[#0c182b] border border-white/80 dark:border-white/10 text-xs shadow-xs self-start sm:self-center">
+          <div className="flex items-center p-1 rounded-2xl liquid-glass-subtle text-xs self-start sm:self-center">
             <button
               id="step-tab-1"
               type="button"
               onClick={() => setCurrentStep(1)}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-bold transition cursor-pointer active:scale-98 ${
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-98 ${
                 currentStep === 1
-                  ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <span>1. Info & Paste</span>
@@ -979,17 +1010,17 @@ Time Limit: 25 minutes
                 }
               }}
               disabled={previewQuestions.length === 0 && questions.length === 0}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-bold transition cursor-pointer active:scale-98 ${
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-xl font-bold transition cursor-pointer active:scale-98 ${
                 currentStep === 2
-                  ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                  : previewQuestions.length > 0 || questions.length > 0
-                  ? 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                  : 'opacity-40 cursor-not-allowed text-zinc-400'
+                  ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
+                  : previewQuestions.length > 0 || questions.length === 0
+                  ? 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  : 'opacity-40 cursor-not-allowed text-slate-400'
               }`}
             >
               <span>2. Verify & Save</span>
               {(previewQuestions.length > 0 || questions.length > 0) && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-700 dark:text-sky-300 font-bold">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-sky-500/20 text-sky-700 dark:text-sky-300 font-bold tabular-nums">
                   {previewQuestions.length || questions.length}
                 </span>
               )}
@@ -1007,17 +1038,15 @@ Time Limit: 25 minutes
               className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center justify-between gap-3 shadow-xs"
             >
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-white border border-black flex items-center justify-center shrink-0">
-                  <AlertCircle className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                </span>
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 stroke-[2.2]" />
                 <span className="font-semibold">{errorMsg}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setErrorMsg(null)}
-                className="w-6 h-6 rounded-lg bg-white border border-black flex items-center justify-center hover:bg-zinc-200 transition cursor-pointer"
+                className="w-6 h-6 rounded-lg liquid-glass-btn flex items-center justify-center transition cursor-pointer"
               >
-                <X className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                <X className="w-3.5 h-3.5 stroke-[2.2]" />
               </button>
             </motion.div>
           )}
@@ -1030,17 +1059,15 @@ Time Limit: 25 minutes
               className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs flex items-center justify-between gap-3 shadow-xs"
             >
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-white border border-black flex items-center justify-center shrink-0">
-                  <Check className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                </span>
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 stroke-[2.2]" />
                 <span className="font-semibold">{successMsg}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setSuccessMsg(null)}
-                className="w-6 h-6 rounded-lg bg-white border border-black flex items-center justify-center hover:bg-zinc-200 transition cursor-pointer"
+                className="w-6 h-6 rounded-lg liquid-glass-btn flex items-center justify-center transition cursor-pointer"
               >
-                <X className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                <X className="w-3.5 h-3.5 stroke-[2.2]" />
               </button>
             </motion.div>
           )}
@@ -1052,19 +1079,19 @@ Time Limit: 25 minutes
         {currentStep === 1 && (
           <div className="space-y-5 relative z-10">
             {/* 1. AI Prompts Studio Banner */}
-            <div className="p-4 sm:p-5 rounded-3xl bg-white/85 dark:bg-[#0c182b]/95 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgba(25,50,80,0.06)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="p-4 sm:p-5 rounded-2xl liquid-glass-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-400 to-cyan-500 text-white flex items-center justify-center shrink-0 shadow-sm border border-sky-300/40">
-                  <Sparkles className="w-5 h-5 text-black stroke-[2.5]" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Sparkles className="w-5 h-5 text-white stroke-[2.2]" />
                 </div>
                 <div>
-                  <div className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                  <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>AI Exam Prompts Studio</span>
-                    <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[10px] font-bold border border-sky-500/20">
+                    <span className="px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[10px] font-bold border border-sky-500/20">
                       Prompts Page
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     Create prompts for ChatGPT, Claude, DeepSeek & generate directly with Gemini
                   </p>
                 </div>
@@ -1074,38 +1101,35 @@ Time Limit: 25 minutes
                 onMouseEnter={prefetchProfessorModal}
                 onTouchStart={prefetchProfessorModal}
                 onClick={onOpenProfessorModal}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0 shadow-xs active:scale-98"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-zinc-950 hover:bg-slate-800 dark:hover:bg-slate-100 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shrink-0 shadow-xs active:scale-98"
               >
-                <Sparkles className="w-4 h-4 stroke-[2.5]" />
+                <Sparkles className="w-4 h-4 stroke-[2.2]" />
                 <span>Prompts Page</span>
               </button>
             </div>
 
-            {/* 2. 3D SMART PASTE AREA (Positioned between Prompts button and Exam Specification) */}
-            <div className="relative rounded-3xl bg-gradient-to-b from-white via-sky-50/40 to-white dark:from-[#0c182b] dark:via-[#091524] dark:to-[#0c182b] border-t-2 border-t-sky-400/70 border-x border-x-sky-200/50 dark:border-x-sky-900/40 border-b-4 border-b-sky-600/40 dark:border-b-sky-800/80 shadow-[0_16px_36px_-8px_rgba(14,165,233,0.18)] dark:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] p-5 sm:p-6 space-y-4 overflow-hidden">
-              {/* 3D App Color Accent Ridge */}
-              <div className="h-1.5 w-full bg-gradient-to-r from-sky-400 via-cyan-400 to-indigo-500 rounded-full shadow-[0_2px_10px_rgba(56,189,248,0.5)] -mt-1" />
-
-              {/* Header with 3D Embossed Icon & Action Toolbar */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-sky-100 dark:border-white/10 pb-3">
+            {/* 2. SMART PASTE AREA */}
+            <div className="relative rounded-2xl liquid-glass-subtle p-5 sm:p-6 space-y-4 overflow-hidden">
+              {/* Header with Icon & Action Toolbar */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200/70 dark:border-white/10 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 p-0.5 shadow-md flex items-center justify-center shrink-0 border border-sky-300">
-                    <ClipboardPaste className="w-5 h-5 text-black stroke-[2.5]" />
+                  <div className="w-9 h-9 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/25">
+                    <ClipboardPaste className="w-4.5 h-4.5 stroke-[2.2]" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span>Smart Paste</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
                         KaTeX Ready
                       </span>
                     </h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       Paste questions or drag-and-drop a .txt exam file
                     </p>
                   </div>
                 </div>
 
-                {/* 3D Action Buttons with tactile surfaces & black icons */}
+                {/* 3-Layer Fluid Glass Action Buttons */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <input
                     type="file"
@@ -1118,10 +1142,10 @@ Time Limit: 25 minutes
                   <button
                     type="button"
                     onClick={() => txtFileInputRef.current?.click()}
-                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-sky-50 text-black font-extrabold text-xs transition cursor-pointer flex items-center gap-1.5 border border-black shadow-[0_3px_0_#000000] hover:shadow-[0_4px_0_#000000] active:translate-y-[2px] active:shadow-none"
+                    className="px-3.5 py-1.5 rounded-xl liquid-glass-btn font-bold text-xs transition cursor-pointer flex items-center gap-1.5 active:scale-98"
                     title="Import .txt exam file"
                   >
-                    <FileUp className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                    <FileUp className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>Import .txt</span>
                   </button>
 
@@ -1129,10 +1153,10 @@ Time Limit: 25 minutes
                   <button
                     type="button"
                     onClick={handleExportTxt}
-                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-sky-50 text-black font-extrabold text-xs transition cursor-pointer flex items-center gap-1.5 border border-black shadow-[0_3px_0_#000000] active:translate-y-[2px] active:shadow-none"
+                    className="px-3.5 py-1.5 rounded-xl liquid-glass-btn font-bold text-xs transition cursor-pointer flex items-center gap-1.5 active:scale-98"
                     title="Export exam questions to a .txt file"
                   >
-                    <Download className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                    <Download className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>Export (.txt)</span>
                   </button>
 
@@ -1140,9 +1164,9 @@ Time Limit: 25 minutes
                   <button
                     type="button"
                     onClick={handlePasteClipboard}
-                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-sky-50 text-black font-extrabold text-xs transition cursor-pointer flex items-center gap-1.5 border border-black shadow-[0_3px_0_#000000] hover:shadow-[0_4px_0_#000000] active:translate-y-[2px] active:shadow-none"
+                    className="px-3.5 py-1.5 rounded-xl liquid-glass-btn font-bold text-xs transition cursor-pointer flex items-center gap-1.5 active:scale-98"
                   >
-                    <ClipboardPaste className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                    <ClipboardPaste className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>Paste</span>
                   </button>
 
@@ -1150,9 +1174,9 @@ Time Limit: 25 minutes
                   <button
                     type="button"
                     onClick={handleInsertSample}
-                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-sky-50 text-black font-extrabold text-xs transition cursor-pointer flex items-center gap-1.5 border border-black shadow-[0_3px_0_#000000] hover:shadow-[0_4px_0_#000000] active:translate-y-[2px] active:shadow-none"
+                    className="px-3.5 py-1.5 rounded-xl liquid-glass-btn font-bold text-xs transition cursor-pointer flex items-center gap-1.5 active:scale-98"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                    <Sparkles className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>Sample</span>
                   </button>
 
@@ -1164,10 +1188,10 @@ Time Limit: 25 minutes
                         setPreviewQuestions([]);
                         setImportedFileName(null);
                       }}
-                      className="p-1.5 rounded-xl bg-white hover:bg-rose-50 text-black border border-black transition cursor-pointer shadow-[0_2px_0_#000000] active:translate-y-[1px] active:shadow-none"
+                      className="p-1.5 rounded-xl liquid-glass-btn hover:text-rose-600 dark:hover:text-rose-400 transition cursor-pointer active:scale-98"
                       title="Clear editor text"
                     >
-                      <Trash2 className="w-4 h-4 text-black stroke-[2.5]" />
+                      <Trash2 className="w-4 h-4 stroke-[2.2]" />
                     </button>
                   )}
                 </div>
@@ -1177,14 +1201,12 @@ Time Limit: 25 minutes
               {importedFileName && (
                 <div className="flex items-center justify-between p-2.5 px-3.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-xs text-sky-900 dark:text-sky-300 shadow-2xs">
                   <div className="flex items-center gap-2 truncate">
-                    <span className="p-1 rounded bg-white text-black shrink-0 flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-black stroke-[2.5]" />
-                    </span>
+                    <FileText className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 stroke-[2.2]" />
                     <span className="truncate">
                       <strong>Imported:</strong> {importedFileName}
                     </span>
-                    <span className="text-sky-600 dark:text-sky-400 font-bold shrink-0">
-                      • {previewQuestions.length} Questions detected
+                    <span className="text-sky-600 dark:text-sky-400 font-bold shrink-0 tabular-nums">
+                      · {previewQuestions.length} Questions detected
                     </span>
                   </div>
                   <button
@@ -1197,12 +1219,12 @@ Time Limit: 25 minutes
                 </div>
               )}
 
-              {/* 3D Sunken Textarea with Inset Depth */}
+              {/* Textarea with Inset Depth */}
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className="relative rounded-2xl p-[2px] bg-gradient-to-b from-sky-200 to-sky-300/40 dark:from-sky-900/40 dark:to-[#070e1a] shadow-[0_4px_16px_rgba(14,165,233,0.12)]"
+                className="relative rounded-2xl"
               >
                 <textarea
                   ref={textareaRef}
@@ -1210,14 +1232,14 @@ Time Limit: 25 minutes
                   value={pasteRawText}
                   onChange={(e) => setPasteRawText(e.target.value)}
                   placeholder={`Paste questions or drag-and-drop a .txt exam file:\n\n1. What is the SI unit of electric force?\n   A) Newton*\n   B) Joule\n   C) Watt\n   D) Pascal\n   Answer: A\n   Explanation: Force is measured in Newtons (N).`}
-                  className="w-full p-4 text-xs sm:text-sm font-mono rounded-[14px] bg-white/95 dark:bg-[#070e1a]/95 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden leading-relaxed resize-y border border-sky-100 dark:border-white/10 shadow-[inset_0_3px_8px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_3px_8px_rgba(0,0,0,0.7)]"
+                  className="w-full p-4 text-xs sm:text-sm font-mono rounded-2xl bg-white/95 dark:bg-[#070e1a]/95 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-sky-500 leading-relaxed resize-y border border-slate-200/80 dark:border-white/10 shadow-[inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)]"
                 />
 
                 {/* Drag-and-drop Active Indicator */}
                 {isDraggingFile && (
-                  <div className="absolute inset-0 rounded-[14px] border-2 border-dashed border-sky-400 bg-sky-500/10 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-20 pointer-events-none">
-                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-lg border border-black">
-                      <FileUp className="w-6 h-6 text-black animate-bounce stroke-[2.5]" />
+                  <div className="absolute inset-0 rounded-2xl border-2 border-dashed border-sky-400 bg-sky-500/10 backdrop-blur-xs flex flex-col items-center justify-center gap-2 z-20 pointer-events-none">
+                    <div className="w-12 h-12 rounded-2xl liquid-glass-btn flex items-center justify-center shadow-lg">
+                      <FileUp className="w-6 h-6 text-sky-500 animate-bounce stroke-[2.2]" />
                     </div>
                     <span className="text-sm font-bold text-sky-700 dark:text-sky-300">
                       Drop your .txt file here to import!
@@ -1225,16 +1247,16 @@ Time Limit: 25 minutes
                   </div>
                 )}
 
-                {/* 3D Status Chip in Corner */}
+                {/* Status Chip in Corner */}
                 <div className="absolute bottom-3 right-3 flex items-center gap-2 pointer-events-none z-10">
                   {previewQuestions.length > 0 ? (
-                    <span className="px-3 py-1.5 rounded-xl bg-white text-black font-extrabold text-xs flex items-center gap-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.15),0_2px_0_#000000] border border-black">
-                      <FileCheck2 className="w-4 h-4 text-black stroke-[2.5]" />
+                    <span className="px-3 py-1.5 rounded-xl liquid-glass-btn font-bold text-xs flex items-center gap-1.5 shadow-sm tabular-nums">
+                      <FileCheck2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 stroke-[2.2]" />
                       <span>{previewQuestions.length} Questions Ready</span>
                     </span>
                   ) : pasteRawText.trim() ? (
-                    <span className="px-3 py-1 rounded-xl bg-white text-black font-bold text-xs flex items-center gap-1.5 shadow-sm border border-black">
-                      <Sparkles className="w-3.5 h-3.5 text-black animate-spin stroke-[2.5]" />
+                    <span className="px-3 py-1 rounded-xl liquid-glass-btn font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                      <Sparkles className="w-3.5 h-3.5 text-sky-500 animate-spin stroke-[2.2]" />
                       <span>Parsing...</span>
                     </span>
                   ) : null}
@@ -1243,38 +1265,36 @@ Time Limit: 25 minutes
 
               {parsingError && (
                 <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1.5 bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20 font-medium">
-                  <span className="p-0.5 rounded bg-white text-black shrink-0 flex items-center justify-center">
-                    <HelpCircle className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                  </span>
+                  <HelpCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 stroke-[2.2]" />
                   <span>{parsingError}</span>
                 </p>
               )}
             </div>
 
             {/* 3. EXAM SPECIFICATION & GRADE LEVEL (Collapsible & Compact) */}
-            <div className="p-4 sm:p-6 rounded-3xl bg-white/85 dark:bg-[#0c182b]/95 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_8px_30px_rgba(25,50,80,0.06)] space-y-3.5">
-              <div className="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+            <div className="p-4 sm:p-6 rounded-2xl liquid-glass-subtle space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-3 flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setIsSpecExpanded((prev) => !prev)}
-                  className="flex items-center gap-2 text-left cursor-pointer group select-none"
+                  className="flex items-center gap-2.5 text-left cursor-pointer group select-none"
                   title={isSpecExpanded ? 'Collapse exam specifications' : 'Expand exam specifications'}
                 >
-                  <div className="w-8 h-8 rounded-xl bg-white text-black border border-black flex items-center justify-center shrink-0 shadow-xs">
-                    <BookOpen className="w-4 h-4 text-black stroke-[2.5]" />
+                  <div className="w-8 h-8 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/25 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-4 h-4 stroke-[2.2]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-white">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                         Exam Specification & Grade Level
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-zinc-900 text-zinc-300 border border-zinc-700">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md font-semibold bg-slate-200/70 dark:bg-white/10 text-slate-700 dark:text-slate-300">
                         {isSpecExpanded ? 'Expanded' : 'Compact'}
                       </span>
                     </div>
                     {!isSpecExpanded && (
-                      <p className="text-[11px] text-zinc-400 font-medium truncate max-w-[200px] xs:max-w-xs sm:max-w-md">
-                        {name.trim() || 'Untitled Exam'} • {grade === 'Senior University' ? 'Univ Senior' : grade === 'Freshman' ? 'Univ Freshman' : `Grade ${grade}`} • {subject.trim() || 'General'}
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-[200px] xs:max-w-xs sm:max-w-md">
+                        {name.trim() || 'Untitled Exam'} · {grade === 'Senior University' ? 'Univ Senior' : grade === 'Freshman' ? 'Univ Freshman' : `Grade ${grade}`} · {subject.trim() || 'General'}
                       </p>
                     )}
                   </div>
@@ -1282,18 +1302,14 @@ Time Limit: 25 minutes
 
                 <div className="flex items-center gap-2 ml-auto">
                   {detectedGradeFromText && (
-                    <span className="text-[11px] text-white font-semibold flex items-center gap-1 bg-zinc-900 px-2.5 py-0.5 rounded-full border border-zinc-700 hidden xs:inline-flex">
-                      <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                        <Sparkles className="w-3 h-3 text-black stroke-[2.5]" />
-                      </span>
+                    <span className="text-[11px] text-sky-700 dark:text-sky-300 font-semibold items-center gap-1 bg-sky-500/10 px-2.5 py-0.5 rounded-lg border border-sky-500/20 hidden xs:inline-flex">
+                      <Sparkles className="w-3 h-3 text-sky-500 stroke-[2.2]" />
                       <span>{detectedGradeFromText === 'Senior University' ? 'Univ Senior' : detectedGradeFromText === 'Freshman' ? 'Univ Freshman' : `Grade ${detectedGradeFromText}`}</span>
                     </span>
                   )}
                   {detectedSubjectFromText && (
-                    <span className="text-[11px] text-white font-semibold flex items-center gap-1 bg-zinc-900 px-2.5 py-0.5 rounded-full border border-zinc-700 hidden sm:inline-flex">
-                      <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                        <BookOpen className="w-3 h-3 text-black stroke-[2.5]" />
-                      </span>
+                    <span className="text-[11px] text-sky-700 dark:text-sky-300 font-semibold items-center gap-1 bg-sky-500/10 px-2.5 py-0.5 rounded-lg border border-sky-500/20 hidden sm:inline-flex">
+                      <BookOpen className="w-3 h-3 text-sky-500 stroke-[2.2]" />
                       <span>{detectedSubjectFromText}</span>
                     </span>
                   )}
@@ -1301,14 +1317,14 @@ Time Limit: 25 minutes
                   <button
                     type="button"
                     onClick={() => setIsSpecExpanded((prev) => !prev)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white text-black hover:bg-zinc-100 transition cursor-pointer border border-black shadow-xs active:scale-95"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold liquid-glass-btn transition cursor-pointer active:scale-95"
                     title={isSpecExpanded ? 'Collapse exam specifications' : 'Expand exam specifications'}
                   >
                     <span>{isSpecExpanded ? 'Collapse' : 'Edit Specs'}</span>
                     {isSpecExpanded ? (
-                      <ChevronUp className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                      <ChevronUp className="w-3.5 h-3.5 stroke-[2.2]" />
                     ) : (
-                      <ChevronDown className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                      <ChevronDown className="w-3.5 h-3.5 stroke-[2.2]" />
                     )}
                   </button>
                 </div>
@@ -1318,39 +1334,37 @@ Time Limit: 25 minutes
               {!isSpecExpanded && (
                 <div
                   onClick={() => setIsSpecExpanded(true)}
-                  className="p-3 rounded-2xl bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/15 flex flex-wrap items-center justify-between gap-2 text-xs cursor-pointer hover:bg-sky-500/10 transition select-none"
+                  className="p-3 rounded-xl bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/15 flex flex-wrap items-center justify-between gap-2 text-xs cursor-pointer hover:bg-sky-500/10 transition select-none"
                   title="Click to expand specification fields"
                 >
                   <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="font-bold text-zinc-900 dark:text-white">
+                    <span className="font-bold text-slate-900 dark:text-white">
                       {name.trim() || 'Untitled Exam'}
                     </span>
-                    <span className="text-zinc-400">•</span>
-                    <span className="px-2 py-0.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 font-bold text-zinc-700 dark:text-zinc-300 text-[11px]">
+                    <span className="text-slate-400">·</span>
+                    <span className="font-semibold text-sky-700 dark:text-sky-300">
                       {grade === 'Senior University' ? 'University Senior' : grade === 'Freshman' ? 'University Freshman' : `Grade ${grade}`}
                     </span>
-                    <span className="text-zinc-400">•</span>
-                    <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                    <span className="text-slate-400">·</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
                       {subject.trim() || 'General Subject'}
                     </span>
                     {topic.trim() && (
                       <>
-                        <span className="text-zinc-400">•</span>
-                        <span className="text-zinc-500 dark:text-zinc-400 truncate max-w-[150px]">{topic}</span>
+                        <span className="text-slate-400">·</span>
+                        <span className="text-slate-600 dark:text-slate-400 truncate max-w-[150px]">{topic}</span>
                       </>
                     )}
-                    <span className="text-zinc-400">•</span>
-                    <span className="text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium">
-                      <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                        <Clock className="w-3 h-3 text-black stroke-[2.5]" />
-                      </span>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1 font-medium tabular-nums">
+                      <Clock className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 stroke-[2.2]" />
                       {timeLimit}m
                     </span>
                   </div>
 
                   <span className="text-[11px] font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1">
                     <span>Edit details</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                    <ChevronRight className="w-3.5 h-3.5 stroke-[2.2]" />
                   </span>
                 </div>
               )}
@@ -1368,10 +1382,8 @@ Time Limit: 25 minutes
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 pt-1">
                       {/* Title */}
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
-                          <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                            <FileText className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                          </span>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 stroke-[2.2]" />
                           <span>Exam Title <span className="text-rose-500">*</span></span>
                         </label>
                         <input
@@ -1379,21 +1391,19 @@ Time Limit: 25 minutes
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="e.g. Grade 12 Physics: Mechanics"
-                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:border-sky-500 shadow-2xs"
+                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-sky-500 shadow-2xs"
                         />
                       </div>
 
                       {/* Grade / Level */}
                       <div>
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
-                            <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                              <GraduationCap className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                            </span>
+                            <GraduationCap className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 stroke-[2.2]" />
                             <span>Grade / Level</span>
                           </span>
                           {detectedGradeFromText && (
-                            <span className="text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md">
                               Found: {detectedGradeFromText === 'Senior University' ? 'Univ Senior' : detectedGradeFromText === 'Freshman' ? 'Univ Freshman' : `Gr ${detectedGradeFromText}`}
                             </span>
                           )}
@@ -1404,15 +1414,15 @@ Time Limit: 25 minutes
                             setUserManuallySelectedGrade(true);
                             setGrade(e.target.value);
                           }}
-                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white cursor-pointer focus:outline-hidden focus:border-sky-500 shadow-2xs"
+                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white cursor-pointer focus:outline-hidden focus:border-sky-500 shadow-2xs"
                         >
                           {GRADE_OPTIONS.map((g) => (
-                            <option key={g} value={g} className="bg-white dark:bg-[#070e1a] text-zinc-900 dark:text-white">
+                            <option key={g} value={g} className="bg-white dark:bg-[#070e1a] text-slate-900 dark:text-white">
                               {g === 'Freshman' ? 'University Freshman' : g === 'Senior University' ? 'University Senior' : g === 'All' ? 'All Grades' : `Grade ${g}`}
                             </option>
                           ))}
                           {!GRADE_OPTIONS.includes(String(grade)) && (
-                            <option value={String(grade)} className="bg-white dark:bg-[#070e1a] text-zinc-900 dark:text-white">
+                            <option value={String(grade)} className="bg-white dark:bg-[#070e1a] text-slate-900 dark:text-white">
                               {String(grade).toLowerCase().startsWith('grade') ? grade : `Grade ${grade}`}
                             </option>
                           )}
@@ -1421,9 +1431,7 @@ Time Limit: 25 minutes
                         {/* Feedback indicator for auto-extracted grade */}
                         {detectedGradeFromText && detectedGradeFromText === String(grade) ? (
                           <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-                            <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                              <Check className="w-3 h-3 text-black stroke-[2.5]" />
-                            </span>
+                            <Check className="w-3 h-3 stroke-[2.2]" />
                             <span>Auto-synced: {grade === 'Senior University' ? 'Univ Senior' : grade === 'Freshman' ? 'Univ Freshman' : `Grade ${grade}`}</span>
                           </div>
                         ) : detectedGradeFromText ? (
@@ -1435,9 +1443,7 @@ Time Limit: 25 minutes
                             }}
                             className="flex items-center gap-1 text-[11px] text-sky-600 dark:text-sky-400 font-semibold mt-1 hover:underline cursor-pointer"
                           >
-                            <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                              <Sparkles className="w-3 h-3 text-black stroke-[2.5]" />
-                            </span>
+                            <Sparkles className="w-3 h-3 stroke-[2.2]" />
                             <span>Use detected {detectedGradeFromText === 'Senior University' ? 'Univ Senior' : detectedGradeFromText === 'Freshman' ? 'Univ Freshman' : `Grade ${detectedGradeFromText}`}</span>
                           </button>
                         ) : null}
@@ -1445,10 +1451,8 @@ Time Limit: 25 minutes
 
                       {/* Duration */}
                       <div>
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
-                          <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                            <Clock className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                          </span>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 stroke-[2.2]" />
                           <span>Time Limit (min)</span>
                         </label>
                         <input
@@ -1457,21 +1461,19 @@ Time Limit: 25 minutes
                           onChange={(e) => setTimeLimit(Math.max(1, parseInt(e.target.value, 10) || 20))}
                           min={1}
                           max={240}
-                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white focus:outline-hidden focus:border-sky-500 shadow-2xs"
+                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:outline-hidden focus:border-sky-500 shadow-2xs tabular-nums"
                         />
                       </div>
 
                       {/* Subject */}
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
                           <span className="flex items-center gap-1.5">
-                            <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                              <BookOpen className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                            </span>
+                            <BookOpen className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 stroke-[2.2]" />
                             <span>Subject</span>
                           </span>
                           {detectedSubjectFromText && (
-                            <span className="text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] text-sky-700 dark:text-sky-300 font-bold bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md">
                               Found: {detectedSubjectFromText}
                             </span>
                           )}
@@ -1484,15 +1486,13 @@ Time Limit: 25 minutes
                             setUserManuallySelectedSubject(true);
                           }}
                           placeholder="e.g. Physics, Mathematics, Biology..."
-                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:border-sky-500 shadow-2xs"
+                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-sky-500 shadow-2xs"
                         />
 
                         {/* Feedback indicator for auto-extracted subject */}
                         {detectedSubjectFromText && detectedSubjectFromText.toLowerCase() === subject.trim().toLowerCase() ? (
                           <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
-                            <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                              <Check className="w-3 h-3 text-black stroke-[2.5]" />
-                            </span>
+                            <Check className="w-3 h-3 stroke-[2.2]" />
                             <span>Auto-synced: {subject}</span>
                           </div>
                         ) : detectedSubjectFromText ? (
@@ -1504,9 +1504,7 @@ Time Limit: 25 minutes
                             }}
                             className="flex items-center gap-1 text-[11px] text-sky-600 dark:text-sky-400 font-semibold mt-1 hover:underline cursor-pointer"
                           >
-                            <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                              <Sparkles className="w-3 h-3 text-black stroke-[2.5]" />
-                            </span>
+                            <Sparkles className="w-3 h-3 stroke-[2.2]" />
                             <span>Use detected: {detectedSubjectFromText}</span>
                           </button>
                         ) : null}
@@ -1514,10 +1512,8 @@ Time Limit: 25 minutes
 
                       {/* Topic */}
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
-                          <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                            <Target className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                          </span>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                          <Target className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 stroke-[2.2]" />
                           <span>Topic / Chapter (Optional)</span>
                         </label>
                         <input
@@ -1525,7 +1521,7 @@ Time Limit: 25 minutes
                           value={topic}
                           onChange={(e) => setTopic(e.target.value)}
                           placeholder="e.g. Mechanics, Calculus..."
-                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:border-sky-500 shadow-2xs"
+                          className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-sky-500 shadow-2xs"
                         />
                       </div>
                     </div>
@@ -1535,9 +1531,9 @@ Time Limit: 25 minutes
                       <button
                         type="button"
                         onClick={() => setIsSpecExpanded(false)}
-                        className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition py-1 px-2.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition py-1 px-2.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-white/10"
                       >
-                        <ChevronUp className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                        <ChevronUp className="w-3.5 h-3.5 stroke-[2.2]" />
                         <span>Done (Collapse)</span>
                       </button>
                     </div>
@@ -1547,11 +1543,11 @@ Time Limit: 25 minutes
             </div>
 
             {/* Bottom Controls */}
-            <div className="p-4 rounded-2xl bg-white/85 dark:bg-[#0c182b]/95 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-xs flex items-center justify-between gap-3">
+            <div className="p-4 rounded-2xl liquid-glass-subtle flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 rounded-full border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-xs font-semibold transition cursor-pointer active:scale-98"
+                className="px-4 py-2 rounded-xl liquid-glass-btn text-xs font-semibold transition cursor-pointer active:scale-98"
               >
                 Cancel
               </button>
@@ -1560,7 +1556,7 @@ Time Limit: 25 minutes
                 <button
                   type="button"
                   onClick={handleStartBlank}
-                  className="px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition cursor-pointer shadow-xs active:scale-98"
+                  className="px-4 py-2 rounded-xl liquid-glass-btn text-xs font-semibold transition cursor-pointer active:scale-98"
                 >
                   Or Start Blank
                 </button>
@@ -1576,9 +1572,7 @@ Time Limit: 25 minutes
                   }`}
                 >
                   <span>Next: Verify & Save ({previewQuestions.length || questions.length} Qs)</span>
-                  <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                    <ChevronRight className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                  </span>
+                  <ChevronRight className="w-4 h-4 stroke-[2.5]" />
                 </button>
               </div>
             </div>
@@ -1922,6 +1916,71 @@ Time Limit: 25 minutes
                                 );
                               })}
                             </div>
+                          </div>
+
+                          {/* Diagram / Figure Attachment (Supabase Storage + URL) */}
+                          <div className="p-3 rounded-2xl bg-white dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-2.5">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5 text-sky-500" />
+                                <span>Question Diagram / Figure (Optional)</span>
+                              </label>
+                              <label className="px-3 py-1 rounded-full bg-sky-500/15 hover:bg-sky-500/25 text-sky-700 dark:text-sky-300 border border-sky-500/30 text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition">
+                                <Upload className="w-3 h-3" />
+                                <span>Upload Figure</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      handleQuestionImageUpload(originalIndex, file);
+                                    }
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <input
+                                type="url"
+                                value={q.imageUrl || ''}
+                                onChange={(e) => updateQuestionImage(originalIndex, e.target.value)}
+                                placeholder="Paste image URL or click Upload Figure..."
+                                className="w-full px-3 py-1.5 text-xs rounded-xl bg-zinc-50 dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:border-sky-500"
+                              />
+                              <input
+                                type="text"
+                                value={q.imageCaption || ''}
+                                onChange={(e) => updateQuestionCaption(originalIndex, e.target.value)}
+                                placeholder="Figure caption (e.g. Fig 1.2 Circuit Diagram)"
+                                className="w-full px-3 py-1.5 text-xs rounded-xl bg-zinc-50 dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-hidden focus:border-sky-500"
+                              />
+                            </div>
+
+                            {q.imageUrl && (
+                              <div className="flex items-center justify-between gap-3 pt-1">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <img
+                                    src={q.imageUrl}
+                                    alt={q.imageCaption || `Question ${originalIndex + 1} figure`}
+                                    className="h-14 w-auto rounded-lg border border-zinc-200 dark:border-white/15 bg-white p-1 object-contain shrink-0"
+                                  />
+                                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                                    {q.imageCaption || 'Figure attached'}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuestionImage(originalIndex, '')}
+                                  className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-[11px] font-bold cursor-pointer transition shrink-0"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            )}
                           </div>
 
                           {/* Solution */}

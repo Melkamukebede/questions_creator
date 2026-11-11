@@ -69,6 +69,10 @@
         "options": { "type": "array" },
         "correct": { "type": "number" },
         "explanation": { "type": "string", "maxLength": 4000 },
+        "imageUrl": { "type": "string", "maxLength": 2048 },
+        "imageCaption": { "type": "string", "maxLength": 512 },
+        "optionImages": { "type": "array" },
+        "tableMarkdown": { "type": "string", "maxLength": 4000 },
         "grade": { "type": "string", "maxLength": 32 },
         "stream": { "type": "string", "maxLength": 64 },
         "isPublic": { "type": "boolean" },
@@ -171,15 +175,20 @@
     },
     "AdminSettings": {
       "title": "AdminSettings",
-      "description": "Administrator alert email destination and notification preferences",
+      "description": "Administrator alert email destination, notification preferences, and one-time Supabase link settings",
       "type": "object",
       "properties": {
         "recipientEmail": { "type": "string", "maxLength": 256 },
         "notifyOnStudentPayment": { "type": "boolean" },
         "notifyOnTeacherRegistration": { "type": "boolean" },
+        "supabaseUrl": { "type": "string", "maxLength": 512 },
+        "supabaseAnonKey": { "type": "string", "maxLength": 1024 },
+        "bucketName": { "type": "string", "maxLength": 128 },
+        "isConfigured": { "type": "boolean" },
+        "linkedBy": { "type": "string", "maxLength": 256 },
+        "linkedAt": { "type": "string", "maxLength": 64 },
         "updatedAt": { "type": "string", "maxLength": 64 }
-      },
-      "required": ["recipientEmail"]
+      }
     }
   },
   "firestore": {

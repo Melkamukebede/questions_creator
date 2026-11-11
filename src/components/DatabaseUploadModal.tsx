@@ -149,18 +149,22 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
 
   const diagnostics = useMemo(() => {
     if (!exam || !exam.questions) {
-      return { total: 0, hasMath: false, mathCount: 0, withExplanation: 0, isValid: false };
+      return { total: 0, hasMath: false, mathCount: 0, withExplanation: 0, withImages: 0, isValid: false };
     }
     const total = exam.questions.length;
     let mathCount = 0;
     let withExplanation = 0;
+    let withImages = 0;
     exam.questions.forEach((q) => {
-      const text = `${q.question} ${q.options?.join(' ') || ''}`;
+      const text = `${q.text || (q as any).question || ''} ${q.options?.join(' ') || ''}`;
       if (text.includes('$') || text.includes('\\') || text.includes('^') || text.includes('_')) {
         mathCount++;
       }
       if (q.explanation && q.explanation.trim().length > 5) {
         withExplanation++;
+      }
+      if (q.imageUrl || (Array.isArray(q.optionImages) && q.optionImages.some(Boolean))) {
+        withImages++;
       }
     });
     return {
@@ -168,6 +172,7 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
       hasMath: mathCount > 0,
       mathCount,
       withExplanation,
+      withImages,
       isValid: total > 0,
     };
   }, [exam]);
@@ -190,9 +195,10 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
       examYear: !isTeacherExam ? targetExamYear.trim() : undefined,
       timeLimit,
       totalQuestions: exam.questions?.length || 0,
+      questionsWithImages: diagnostics.withImages,
       isPublic: true,
     };
-  }, [exam, uploadCategory, schoolName, teacherName, selectedGrade, selectedStream, topic, timeLimit, targetExamYear]);
+  }, [exam, uploadCategory, schoolName, teacherName, selectedGrade, selectedStream, topic, timeLimit, targetExamYear, diagnostics.withImages]);
 
   if (!isOpen || !exam) return null;
 
@@ -229,7 +235,7 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
     setErrorMessage(null);
     setStatusMessage(null);
     setUploadProgress(15);
-    setProgressStatusText('Connecting to Firestore...');
+    setProgressStatusText('Connecting to Cloud Question & Media Bank...');
 
     try {
       const isOfficial = uploadCategory === 'official';
@@ -276,7 +282,7 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
         );
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to upload exam to Cloud Firestore.');
+      setErrorMessage(err.message || 'Failed to upload exam to Cloud Database.');
     } finally {
       setIsLoading(false);
     }
@@ -290,25 +296,25 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.97, y: 10 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-2xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 rounded-[28px] shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]"
+          className="w-full max-w-2xl liquid-glass border border-white/70 dark:border-white/15 rounded-[28px] shadow-2xl overflow-hidden my-auto flex flex-col max-h-[90vh]"
         >
-          {/* Header - Clean, Spacious, Black Icons */}
-          <div className="px-6 py-5 border-b border-zinc-100 dark:border-white/10 flex items-center justify-between bg-zinc-50/70 dark:bg-white/[0.02]">
+          {/* Header */}
+          <div className="px-6 py-5 border-b border-white/60 dark:border-white/10 flex items-center justify-between bg-white/40 dark:bg-white/[0.02]">
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-black dark:text-white flex items-center justify-center shrink-0">
-                <Database className="w-5 h-5 text-black dark:text-white" />
+              <div className="w-10 h-10 rounded-xl liquid-glass-subtle text-zinc-900 dark:text-white flex items-center justify-center shrink-0">
+                <Database className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-white font-['Outfit',sans-serif]">
-                    Upload to Cloud Firestore
+                    Upload Questions &amp; Exam to Cloud
                   </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
                     {userIsAdmin ? 'Admin' : userIsTeacher ? 'Teacher' : 'Cloud'}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Publish exams to the Cloud database.
+                  Syncs exam package, individual questions, and diagram images to Firestore &amp; linked Supabase.
                 </p>
               </div>
             </div>
@@ -316,15 +322,15 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-zinc-500 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer shrink-0"
+              className="p-2 rounded-full liquid-glass-btn text-zinc-500 hover:text-black dark:hover:text-white transition cursor-pointer shrink-0"
               aria-label="Close"
             >
-              <X className="w-5 h-5 text-black dark:text-white" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Sub-header View Switcher */}
-          <div className="px-6 py-2.5 flex items-center justify-between border-b border-zinc-100 dark:border-white/10 bg-white dark:bg-[#070e1a] text-xs">
+          <div className="px-6 py-2.5 flex items-center justify-between border-b border-white/60 dark:border-white/10 bg-white/30 dark:bg-black/20 text-xs">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -354,15 +360,15 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
             </div>
 
             <div className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
-              Firestore: <span className="font-mono text-zinc-800 dark:text-zinc-200">/exams</span>
+              Sync: <span className="font-mono text-zinc-800 dark:text-zinc-200">/exams + /questions + Supabase</span>
             </div>
           </div>
 
           {/* Content Area */}
           <div className="p-6 space-y-4 overflow-y-auto flex-1">
-            {/* Student Permission Banner (Short & Punchy) */}
+            {/* Student Permission Banner */}
             {!canUpload && (
-              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl liquid-glass-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 min-w-0">
                   <Lock className="w-4 h-4 text-black dark:text-white shrink-0" />
                   <span className="text-zinc-700 dark:text-zinc-300">
@@ -395,7 +401,7 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
             )}
 
             {/* Exam Quick Summary Badge */}
-            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between gap-3">
+            <div className="p-4 rounded-2xl liquid-glass-subtle flex items-center justify-between gap-3 flex-wrap">
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                   {exam.subject}
@@ -404,10 +410,15 @@ export const DatabaseUploadModal: React.FC<DatabaseUploadModalProps> = ({
                   {exam.name}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0 text-xs">
+              <div className="flex items-center gap-2 shrink-0 text-xs flex-wrap">
                 <span className="px-2.5 py-1 rounded-full bg-zinc-200/70 dark:bg-zinc-800 font-bold text-zinc-800 dark:text-zinc-200">
                   {diagnostics.total} Questions
                 </span>
+                {diagnostics.withImages > 0 && (
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold">
+                    {diagnostics.withImages} Figures
+                  </span>
+                )}
                 {diagnostics.hasMath && (
                   <span className="px-2.5 py-1 rounded-full bg-zinc-200/70 dark:bg-zinc-800 font-medium text-zinc-700 dark:text-zinc-300">
                     Math/LaTeX

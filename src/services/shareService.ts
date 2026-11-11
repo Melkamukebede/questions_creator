@@ -298,10 +298,10 @@ export async function publishExamForCloudSharing(exam: Exam, user?: AppUser | nu
       }
     }
 
-    // Sanitize questions array to guarantee complete fields
+    // Sanitize questions array to guarantee complete fields including diagrams, option images, and tables
     const sanitizedQuestions: Question[] = (exam.questions || []).map((q, idx) => ({
       id: q.id || `q_${examId}_${idx + 1}`,
-      text: String(q.text || ''),
+      text: String(q.text || (q as any).question || ''),
       options:
         Array.isArray(q.options) && q.options.length > 0
           ? q.options.map((o) => String(o ?? ''))
@@ -311,13 +311,26 @@ export async function publishExamForCloudSharing(exam: Exam, user?: AppUser | nu
           ? Math.max(0, Math.min(3, q.correct))
           : 0,
       explanation: q.explanation ? String(q.explanation) : '',
+      ...(q.imageUrl ? { imageUrl: String(q.imageUrl) } : {}),
+      ...(q.imageCaption ? { imageCaption: String(q.imageCaption) } : {}),
+      ...(Array.isArray(q.optionImages) && q.optionImages.some(Boolean)
+        ? { optionImages: q.optionImages.map((img) => (img ? String(img) : null)) }
+        : {}),
+      ...(q.tableMarkdown ? { tableMarkdown: String(q.tableMarkdown) } : {}),
     }));
+
+    const hasImages = sanitizedQuestions.some(
+      (q) => Boolean(q.imageUrl) || (Array.isArray(q.optionImages) && q.optionImages.some(Boolean))
+    );
+    const hasTables = sanitizedQuestions.some((q) => Boolean(q.tableMarkdown));
 
     const title = (exam.title || exam.name || 'Practice Exam').trim();
     const examMetadata = {
       subject: (exam.subject || 'General').trim(),
       grade: String(exam.grade || '12'),
       timeLimit: Number(exam.timeLimit) || 20,
+      hasImages,
+      hasTables,
       ...(exam.topic?.trim() ? { topic: exam.topic.trim() } : {}),
       ...(exam.stream ? { stream: exam.stream } : {}),
       ...(exam.targetExamYear ? { targetExamYear: exam.targetExamYear } : {}),
@@ -332,6 +345,8 @@ export async function publishExamForCloudSharing(exam: Exam, user?: AppUser | nu
       grade: String(exam.grade || '12'),
       subject: (exam.subject || 'General').trim(),
       timeLimit: Number(exam.timeLimit) || 20,
+      hasImages,
+      hasTables,
       metadata: examMetadata,
       questions: sanitizedQuestions,
       questionCount: sanitizedQuestions.length,

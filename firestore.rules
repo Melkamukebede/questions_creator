@@ -127,6 +127,13 @@ service cloud.firestore {
       allow get, list, update, delete: if isAdmin();
     }
 
+    // One-Time Linked Supabase Configuration (Public read so all devices auto-connect; Admin-only write)
+    match /admin_settings/supabase_config {
+      allow get: if true;
+      allow list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
     // Admin Settings (e.g. notifications recipient & alert toggles)
     match /admin_settings/{settingId} {
       allow get, list: if isSignedIn();

@@ -44,6 +44,7 @@ import {
   subscribeToOfficialExams,
   getCachedOfficialExams,
 } from './services/officialExams';
+import { initSupabaseFromCloud } from './services/supabaseService';
 import {
   isAppOffline,
   subscribeToNetworkState,
@@ -224,9 +225,10 @@ function MainApp() {
     });
   }, []);
 
-  // Warm up dynamic chunks in the background so clicks to Create, Practice, and modals are 0ms instant
+  // Warm up dynamic chunks and initialize one-time cloud-linked Supabase config on boot
   useEffect(() => {
     warmUpAppModules();
+    initSupabaseFromCloud().catch(() => {});
   }, []);
 
   // Modals
@@ -823,8 +825,9 @@ function MainApp() {
         </div>
       ) : (
         <div className="min-h-screen bg-transparent text-zinc-900 dark:text-zinc-100 transition-colors font-['Plus_Jakarta_Sans',sans-serif] selection:bg-zinc-900 selection:text-white dark:selection:bg-white dark:selection:text-zinc-950 relative">
-      {/* Navigation Bar */}
-      <Navbar
+
+          {/* Navigation Bar */}
+          <Navbar
         activeTab={activeTab}
         onTabChange={(tab) => {
           if (tab !== 'create') {
@@ -843,7 +846,7 @@ function MainApp() {
       />
 
     {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 md:pb-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-28 md:pb-12">
         <PWAInstallBanner />
         {activeTab === 'home' && (
           <HomeView

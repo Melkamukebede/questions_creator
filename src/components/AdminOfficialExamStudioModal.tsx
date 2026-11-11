@@ -433,9 +433,9 @@ Explanation: Grouping minterms \\( m(0,2,8,10) \\) into a corner quad gives the 
         className="hidden"
       />
 
-      <div className="relative w-full max-w-5xl rounded-[32px] bg-white dark:bg-[#0c182b] text-zinc-900 dark:text-white border border-zinc-200/80 dark:border-white/10 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-5xl rounded-[32px] liquid-glass text-zinc-900 dark:text-white border border-white/70 dark:border-white/15 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-100 dark:border-white/10 flex items-center justify-between bg-zinc-50/70 dark:bg-[#070e1a]/70 shrink-0">
+        <div className="px-6 py-4 border-b border-white/60 dark:border-white/10 flex items-center justify-between bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
               <ShieldCheck className="w-5 h-5" />

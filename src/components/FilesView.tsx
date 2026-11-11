@@ -324,38 +324,34 @@ export const FilesView: React.FC<FilesViewProps> = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold shadow-xl flex items-center gap-2 border border-white/20"
+            className="fixed top-20 right-6 z-50 px-4 py-2.5 rounded-full bg-white dark:bg-white text-slate-900 dark:text-zinc-950 text-xs font-bold shadow-xl flex items-center gap-2 border border-white/90"
           >
-            <CheckCircle className="w-4 h-4 text-zinc-950 dark:text-white" />
+            <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-zinc-950" />
             <span>{copiedNotification}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* ─────────────────────────────────────────────────────────────
-          LAYER 1: TRANSLUCENT CONTAINER (Header & Filter Actions)
+          LAYER 2 CONTAINER: HEADER & FILTER ACTIONS
       ───────────────────────────────────────────────────────────── */}
-      <div className="relative rounded-[32px] sm:rounded-[38px] bg-white/60 dark:bg-[#070e1a]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 p-5 sm:p-7 shadow-[0_20px_50px_rgba(25,50,80,0.06)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.45)] space-y-5 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
-        {/* Subtle Atmospheric Ambient Glow */}
-        <div className="absolute -top-24 -right-24 w-80 h-80 bg-zinc-400/5 dark:bg-white/[0.03] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-zinc-500/5 dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none" />
-
+      <div className="relative rounded-[28px] sm:rounded-[32px] liquid-glass p-5 sm:p-7 space-y-5 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
         {/* Top Header Row */}
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 flex items-center justify-center shadow-xs border border-white/80 dark:border-zinc-800">
-              <BookOpen className="w-5 h-5 text-zinc-700 dark:text-zinc-300" />
+            <div className="w-10 h-10 rounded-2xl liquid-glass-subtle text-slate-800 dark:text-zinc-200 flex items-center justify-center shrink-0">
+              <BookOpen className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] tracking-tight text-zinc-900 dark:text-white">
+                <h1 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-950 dark:text-white">
                   Exams Repository
                 </h1>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold border border-zinc-200 dark:border-zinc-700">
-                  {filteredExams.length} of {exams.length}
+                <span className="text-xs text-slate-500 dark:text-zinc-400 font-semibold tabular-nums">
+                  · {filteredExams.length} of {exams.length}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                 Explore, preview questions, and practice official curriculum exams
               </p>
             </div>
@@ -367,12 +363,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenCuratedCatalogModal}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black hover:bg-zinc-900 text-white font-bold text-xs transition cursor-pointer shadow-[0_3px_0_#000000] border-2 border-black active:scale-98"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass-btn font-bold text-xs cursor-pointer whitespace-nowrap"
                 title={user?.grade ? `Download exams filtered for Grade ${user.grade}` : 'Browse official curriculum exams'}
               >
-                <span className="p-0.5 rounded bg-white text-black flex items-center justify-center">
-                  <CloudDownload className="w-3.5 h-3.5 text-black stroke-[2.5]" />
-                </span>
+                <CloudDownload className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                 <span>Download Exams {user?.grade ? `(G${user.grade})` : ''}</span>
               </button>
             )}
@@ -381,10 +375,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenDownloadCenter}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-xs active:scale-98"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs transition cursor-pointer shadow-xs active:scale-98 whitespace-nowrap"
                 title="Download 1-3 or 1-5 year university & secondary exam bundles into offline SQLite database files"
               >
-                <CloudDownload className="w-3.5 h-3.5 stroke-[2.5]" />
+                <CloudDownload className="w-3.5 h-3.5" />
                 <span>SQLite Bundles (1-5 Yrs)</span>
               </button>
             )}
@@ -393,33 +387,33 @@ export const FilesView: React.FC<FilesViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenDatabaseUpload(exams[0])}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] text-zinc-800 dark:text-zinc-200 border border-white/80 dark:border-white/10 font-semibold text-xs cursor-pointer transition shadow-xs active:scale-98"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full liquid-glass-btn font-semibold text-xs cursor-pointer whitespace-nowrap"
                 title="Upload questions to Cloud Firestore"
               >
-                <CloudUpload className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+                <CloudUpload className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                 <span>Upload</span>
               </button>
             )}
 
             {/* Sort selector */}
-            <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-white dark:bg-[#0c182b] px-3 py-1.5 rounded-full border border-white/80 dark:border-white/10 shadow-xs">
-              <ArrowUpDown className="w-3.5 h-3.5 text-zinc-500" />
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-zinc-400 liquid-glass-subtle px-3 py-1.5 rounded-full">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="bg-transparent text-xs font-semibold text-zinc-800 dark:text-zinc-200 cursor-pointer focus:outline-none"
+                className="bg-transparent text-xs font-semibold text-slate-800 dark:text-zinc-200 cursor-pointer focus:outline-none"
               >
-                <option value="newest">Newest First</option>
-                <option value="questions">Most Questions</option>
-                <option value="duration">Longest Duration</option>
-                <option value="name">Title (A - Z)</option>
+                <option value="newest" className="bg-white dark:bg-[#0c182b] text-slate-900 dark:text-white">Newest First</option>
+                <option value="questions" className="bg-white dark:bg-[#0c182b] text-slate-900 dark:text-white">Most Questions</option>
+                <option value="duration" className="bg-white dark:bg-[#0c182b] text-slate-900 dark:text-white">Longest Duration</option>
+                <option value="name" className="bg-white dark:bg-[#0c182b] text-slate-900 dark:text-white">Title (A - Z)</option>
               </select>
             </div>
           </div>
         </div>
 
         {/* Source Tabs */}
-        <div className="relative z-10 flex items-center gap-2 p-1 rounded-full bg-white/70 dark:bg-zinc-900/60 border border-white/80 dark:border-white/10 w-full sm:w-fit overflow-x-auto">
+        <div className="relative z-10 flex items-center gap-1.5 p-1 rounded-full bg-slate-200/50 dark:bg-[#0c182b] border border-white/80 dark:border-white/10 w-full sm:w-fit overflow-x-auto">
           {isTeacherUser ? (
             <>
               <button
@@ -427,14 +421,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('all')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'all'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <span>All Exams</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {exams.length}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({exams.length})</span>
               </button>
 
               <button
@@ -442,15 +434,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('my_created')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'my_created'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <BookOpen className="w-3.5 h-3.5 text-zinc-500" />
                 <span>My Created</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {userCreatedCount}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({userCreatedCount})</span>
               </button>
 
               <button
@@ -458,15 +447,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('pushed_cloud')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'pushed_cloud'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <CloudUpload className="w-3.5 h-3.5 text-zinc-900 dark:text-white" />
                 <span>Pushed to Cloud</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {pushedCloudCount}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({pushedCloudCount})</span>
               </button>
 
               <button
@@ -474,15 +460,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('local_storage')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'local_storage'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-zinc-500" />
-                <span>Local Storage Drafts</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {localStorageCount}
-                </span>
+                <span>Local Drafts</span>
+                <span className="text-[10px] opacity-75 tabular-nums">({localStorageCount})</span>
               </button>
 
               <button
@@ -490,15 +473,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('downloaded')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'downloaded'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <CloudDownload className="w-3.5 h-3.5 text-zinc-500" />
                 <span>Official Curriculum</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {officialCount}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({officialCount})</span>
               </button>
             </>
           ) : (
@@ -508,14 +488,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('all')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'all'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 <span>All Exams</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {exams.length}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({exams.length})</span>
               </button>
 
               <button
@@ -523,15 +501,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('downloaded')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'downloaded'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <CloudDownload className="w-3.5 h-3.5 text-zinc-500" />
                 <span>Official Curriculum</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {officialCount}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({officialCount})</span>
               </button>
 
               <button
@@ -539,15 +514,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('teacher')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'teacher'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <School className="w-3.5 h-3.5 text-emerald-500" />
                 <span>School Teacher</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {teacherCount}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({teacherCount})</span>
               </button>
 
               <button
@@ -555,41 +527,38 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 onClick={() => setSourceFilter('user_created')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-98 ${
                   sourceFilter === 'user_created'
-                    ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-2xs font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-zinc-500" />
                 <span>Student Drafts</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-zinc-200/60 dark:bg-zinc-800 font-semibold">
-                  {userCreatedCount}
-                </span>
+                <span className="text-[10px] opacity-75 tabular-nums">({userCreatedCount})</span>
               </button>
             </>
           )}
         </div>
 
         {/* ─────────────────────────────────────────────────────────
-            LAYER 2: FILTER PANEL (Collapsible & Expandable)
+            LAYER 3: FILTER PANEL (Collapsible & Expandable)
         ───────────────────────────────────────────────────────── */}
-        <div className="relative z-10 p-3.5 sm:p-5 rounded-[26px] bg-white dark:bg-[#0c182b] border border-white/80 dark:border-white/10 shadow-xs space-y-3">
+        <div className="relative z-10 p-3.5 sm:p-5 rounded-2xl liquid-glass-subtle space-y-3">
           {/* Search Input Bar & Filter Toggle Row */}
           <div className="space-y-2.5">
             <div className="relative">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 id="fileSearchInput"
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by title, subject, grade, topic, or question keywords..."
-                className="w-full pl-10 pr-14 py-2.5 text-xs sm:text-sm rounded-full bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition"
+                className="w-full pl-10 pr-14 py-2.5 text-xs sm:text-sm rounded-full bg-white dark:bg-[#070e1a] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 cursor-pointer"
                 >
                   Clear
                 </button>
@@ -605,21 +574,15 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   onClick={() => setIsFiltersExpanded((prev) => !prev)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer border active:scale-95 ${
                     isFiltersExpanded || activeFiltersCount > 0
-                      ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-2xs'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-zinc-950 border-slate-900 dark:border-white shadow-2xs'
+                      : 'bg-white dark:bg-[#0c182b] text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-[#132238]'
                   }`}
                   title={isFiltersExpanded ? 'Collapse grade, subject & topic filters' : 'Expand grade, subject & topic filters'}
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>{isFiltersExpanded ? 'Hide Filters' : 'Filter Options'}</span>
                   {activeFiltersCount > 0 && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                        isFiltersExpanded || activeFiltersCount > 0
-                          ? 'bg-white/20 dark:bg-zinc-900/20 text-white dark:text-zinc-950'
-                          : 'bg-zinc-300 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200'
-                      }`}
-                    >
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold tabular-nums bg-white/20 dark:bg-zinc-900/20">
                       {activeFiltersCount}
                     </span>
                   )}
@@ -630,10 +593,8 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   )}
                 </button>
 
-                {/* Active Filter Chips (visible even when collapsed for instant context) */}
                 {selectedGrade !== 'All' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700">
-                    <GraduationCap className="w-3 h-3 text-zinc-500" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#0c182b] text-slate-800 dark:text-zinc-200 border border-slate-200/80 dark:border-white/10">
                     <span>{selectedGrade}</span>
                     <button
                       type="button"
@@ -647,8 +608,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 )}
 
                 {selectedSubject !== 'All' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700">
-                    <BookOpen className="w-3 h-3 text-zinc-500" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#0c182b] text-slate-800 dark:text-zinc-200 border border-slate-200/80 dark:border-white/10">
                     <span>{selectedSubject}</span>
                     <button
                       type="button"
@@ -662,8 +622,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 )}
 
                 {selectedTopic !== 'All' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700">
-                    <Bookmark className="w-3 h-3 text-zinc-500" />
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#0c182b] text-slate-800 dark:text-zinc-200 border border-slate-200/80 dark:border-white/10">
                     <span className="max-w-[120px] truncate">{selectedTopic}</span>
                     <button
                       type="button"
@@ -681,9 +640,9 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition ml-auto"
+                  className="text-[11px] font-bold text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition ml-auto"
                 >
-                  <RotateCcw className="w-3 h-3 text-zinc-500" />
+                  <RotateCcw className="w-3 h-3" />
                   <span>Reset All</span>
                 </button>
               )}
@@ -698,21 +657,20 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden space-y-3.5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80"
+                className="overflow-hidden space-y-3.5 pt-3 border-t border-slate-200/70 dark:border-white/10"
               >
-                {/* Strict 3 Filters: Grade, Subject, Topic */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* 1. Grade Filter */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                      <GraduationCap className="w-3.5 h-3.5 text-zinc-500" />
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5" />
                       <span>Grade</span>
                     </label>
                     <select
                       id="filterGradeSelect"
                       value={selectedGrade}
                       onChange={(e) => setSelectedGrade(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
                     >
                       <option value="All">All Grades ({exams.length})</option>
                       {dynamicGrades
@@ -727,15 +685,15 @@ export const FilesView: React.FC<FilesViewProps> = ({
 
                   {/* 2. Subject Filter */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-zinc-500" />
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5" />
                       <span>Subject</span>
                     </label>
                     <select
                       id="filterSubjectSelect"
                       value={selectedSubject}
                       onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
                     >
                       <option value="All">All Subjects ({exams.length})</option>
                       {dynamicSubjects
@@ -750,15 +708,15 @@ export const FilesView: React.FC<FilesViewProps> = ({
 
                   {/* 3. Topic / Unit Filter */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                      <Bookmark className="w-3.5 h-3.5 text-zinc-500" />
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+                      <Bookmark className="w-3.5 h-3.5" />
                       <span>Topic</span>
                     </label>
                     <select
                       id="filterTopicSelect"
                       value={selectedTopic}
                       onChange={(e) => setSelectedTopic(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none truncate"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none truncate"
                     >
                       <option value="All">All Topics ({exams.length})</option>
                       {dynamicTopics
@@ -772,20 +730,13 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   </div>
                 </div>
 
-                {/* Quick Subject Access & Push in Every Subject (if Admin) */}
+                {/* Quick Subject Access */}
                 {dynamicSubjects.length > 1 && (
-                  <div className="pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+                  <div className="pt-2.5 border-t border-slate-200/70 dark:border-white/10 space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5 text-zinc-500" />
-                        <span>Subjects ({dynamicSubjects.filter((s) => s !== 'All').length})</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                        Subjects ({dynamicSubjects.filter((s) => s !== 'All').length})
                       </span>
-                      {isAdmin && (
-                        <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 flex items-center gap-1">
-                          <CloudUpload className="w-3 h-3 text-zinc-900 dark:text-white" />
-                          <span>Admin: Push exams per subject</span>
-                        </span>
-                      )}
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {dynamicSubjects.map((subj) => {
@@ -800,8 +751,8 @@ export const FilesView: React.FC<FilesViewProps> = ({
                             key={subj}
                             className={`inline-flex items-center rounded-full text-xs transition border overflow-hidden ${
                               isSelected
-                                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 border-zinc-950 dark:border-white shadow-xs'
-                                : 'bg-zinc-50 dark:bg-zinc-900/80 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                                ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 border-slate-900 dark:border-white font-bold'
+                                : 'bg-white dark:bg-[#070e1a] text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-white/10 hover:border-slate-300'
                             }`}
                           >
                             <button
@@ -810,18 +761,9 @@ export const FilesView: React.FC<FilesViewProps> = ({
                               className="px-3 py-1 font-semibold flex items-center gap-1.5 cursor-pointer active:scale-98"
                             >
                               <span>{subj}</span>
-                              <span
-                                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                                  isSelected
-                                    ? 'bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900'
-                                    : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
-                                }`}
-                              >
-                                {count}
-                              </span>
+                              <span className="text-[10px] opacity-75 tabular-nums">({count})</span>
                             </button>
 
-                            {/* Admin Push button in every subject */}
                             {isAdmin && onOpenDatabaseUpload && subj !== 'All' && subjectExam && (
                               <button
                                 type="button"
@@ -829,14 +771,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
                                   e.stopPropagation();
                                   onOpenDatabaseUpload(subjectExam);
                                 }}
-                                className={`px-2 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border-l active:scale-95 ${
-                                  isSelected
-                                    ? 'border-zinc-800 dark:border-zinc-200 hover:bg-zinc-800 dark:hover:bg-zinc-100 text-amber-300 dark:text-amber-600'
-                                    : 'border-zinc-200 dark:border-zinc-700 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                }`}
+                                className="px-2 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border-l border-slate-200/50 dark:border-white/10 hover:bg-amber-500/10 text-amber-500"
                                 title={`Push ${subj} exam to Cloud Firestore`}
                               >
-                                <Flame className="w-3 h-3 fill-amber-500/20" />
+                                <Flame className="w-3 h-3" />
                                 <span>Push</span>
                               </button>
                             )}
@@ -846,21 +784,6 @@ export const FilesView: React.FC<FilesViewProps> = ({
                     </div>
                   </div>
                 )}
-
-                {/* Filter Summary & Close Toggle */}
-                <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
-                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                    Filters applied: Grade ({selectedGrade}), Subject ({selectedSubject}), Topic ({selectedTopic !== 'All' ? 'Custom' : 'All'})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsFiltersExpanded(false)}
-                    className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 cursor-pointer transition py-0.5 px-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  >
-                    <ChevronUp className="w-3 h-3" />
-                    <span>Collapse Filters</span>
-                  </button>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -868,23 +791,22 @@ export const FilesView: React.FC<FilesViewProps> = ({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          LAYER 1 CONTAINER: EXAMS REPOSITORY GRID
-          With Expandable Questions (showing question number, time, LaTeX text, choices & solutions)
+          EXAMS REPOSITORY GRID (Uncrowded 3-Layer Fluid Glass Cards)
       ───────────────────────────────────────────────────────────── */}
       {filteredExams.length === 0 ? (
-        <div className="text-center py-14 px-4 rounded-[32px] bg-white/40 dark:bg-white/[0.04] backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-xs">
-          <BookOpen className="w-8 h-8 text-zinc-400 mx-auto mb-2 opacity-50" />
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-white">No matching exams found</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+        <div className="text-center py-14 px-4 rounded-[28px] liquid-glass">
+          <BookOpen className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">No matching exams found</h3>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             Try adjusting your Grade, Subject, or Topic filter criteria.
           </p>
           {activeFiltersCount > 0 && (
             <button
               type="button"
               onClick={handleResetFilters}
-              className="mt-3.5 px-5 py-2 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer transition shadow-xs"
+              className="mt-3.5 px-5 py-2 rounded-full liquid-glass-btn font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
               <span>Clear All Filters</span>
             </button>
           )}
@@ -898,7 +820,16 @@ export const FilesView: React.FC<FilesViewProps> = ({
               const topicLabel = getExamTopic(exam);
               const isExpanded = Boolean(expandedExamIds[exam.id]);
               const questionCount = exam.questions?.length || 0;
-              const avgSecondsPerQ = questionCount > 0 ? Math.max(1, Math.round((exam.timeLimit * 60) / questionCount)) : 60;
+              const sourceLabel =
+                exam.category === 'official' || isCurated
+                  ? exam.examYear
+                    ? `Official ${exam.examYear}`
+                    : 'Official'
+                  : (exam.category === 'created' && exam.createdType === 'teacher') || exam.school
+                  ? exam.school || exam.teacherName || 'Teacher'
+                  : isPushedToCloud(exam)
+                  ? 'Cloud'
+                  : 'Local';
 
               return (
                 <motion.div
@@ -907,92 +838,65 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96 }}
-                  className={`group rounded-[22px] bg-white dark:bg-[#0c182b] border border-white/80 dark:border-white/10 transition-all shadow-xs hover:shadow-md overflow-hidden min-w-0 ${
-                    isExpanded ? 'ring-1 ring-zinc-900/15 dark:ring-white/15' : ''
+                  className={`group rounded-[24px] liquid-glass-elevated overflow-hidden min-w-0 ${
+                    isExpanded ? 'ring-1 ring-sky-500/30 dark:ring-sky-400/30' : ''
                   }`}
                 >
                   {!isExpanded ? (
                     /* ─────────────────────────────────────────────────────────────
-                       COLLAPSED VIEW: GRADE, SUBJECT, TOPIC, WITH PRACTICE & EXPAND
+                       COLLAPSED VIEW: CLEAN UNBOXED METADATA + TOPIC + ACTIONS
                     ───────────────────────────────────────────────────────────── */
                     <div
                       onClick={() => toggleExpandExam(exam.id)}
-                      className="p-3 sm:p-3.5 flex flex-col gap-2 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition select-none rounded-[22px] min-w-0"
+                      className="p-4 flex flex-col gap-2.5 cursor-pointer hover:bg-white/40 dark:hover:bg-white/[0.02] transition select-none min-w-0"
                     >
-                      {/* Top Row: Grade, Subject, and Actions (Practice, Push, Share, Expand) */}
-                      <div className="flex items-center justify-between gap-1.5 min-w-0">
-                        <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
-                          {/* Grade Badge */}
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shrink-0">
-                            <GraduationCap className="w-2.5 h-2.5" />
-                            <span>{gradeLabel}</span>
+                      {/* Top Row: Clean Unboxed Metadata (Grade · Subject · Source) */}
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-zinc-400 min-w-0 truncate">
+                          <span className="font-bold text-slate-900 dark:text-white shrink-0">
+                            {gradeLabel}
                           </span>
-
-                          {/* Subject Badge */}
-                          <span
-                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 truncate max-w-[90px] sm:max-w-[130px]"
-                            title={exam.subject || 'General'}
-                          >
+                          <span>·</span>
+                          <span className="truncate font-semibold text-sky-700 dark:text-sky-300">
                             {exam.subject || 'General'}
                           </span>
-
-                          {exam.category === 'official' || isCurated ? (
-                            <span
-                              className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 shrink-0"
-                              title="Official Curriculum Exam"
-                            >
-                              <CloudDownload className="w-2 h-2 text-amber-500" />
-                              <span>Official</span>
-                              {exam.examYear && <span className="text-[8px] font-mono opacity-80">{exam.examYear}</span>}
-                            </span>
-                          ) : (exam.category === 'created' && exam.createdType === 'teacher') || exam.school ? (
-                            <span
-                              className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 shrink-0 max-w-[140px] truncate"
-                              title={`School: ${exam.school || 'School'} | Teacher: ${exam.teacherName || 'Teacher'}`}
-                            >
-                              <School className="w-2 h-2 text-emerald-500 shrink-0" />
-                              <span className="truncate">{exam.school || exam.teacherName || 'Teacher'}</span>
-                            </span>
-                          ) : (
-                            <span
-                              className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                                isPushedToCloud(exam)
-                                  ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shadow-2xs'
-                                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
-                              }`}
-                              title={isPushedToCloud(exam) ? 'Exam is synced to Cloud Firestore' : 'Exam stored in Local Storage'}
-                            >
-                              {isPushedToCloud(exam) ? (
-                                <>
-                                  <CloudUpload className="w-2.5 h-2.5" />
-                                  <span>Pushed</span>
-                                </>
-                              ) : (
-                                <span>Local Draft</span>
-                              )}
-                            </span>
-                          )}
+                          <span>·</span>
+                          <span className="truncate opacity-85">{sourceLabel}</span>
                         </div>
 
-                        {/* Collapsed Actions: Practice, Push (Teacher/Admin), Share, and Expand */}
-                        <div className="flex items-center gap-1 shrink-0 ml-auto">
-                          {/* Practice Button */}
-                          <button
-                            type="button"
-                            onMouseEnter={prefetchPracticeModal}
-                            onTouchStart={prefetchPracticeModal}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartPractice(exam);
-                            }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90 active:scale-95 transition cursor-pointer shadow-2xs shrink-0"
-                            title="Start Practice"
-                          >
-                            <Play className="w-2.5 h-2.5 fill-current" />
-                            <span>Practice</span>
-                          </button>
+                        <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 tabular-nums shrink-0">
+                          {questionCount} Qs
+                        </span>
+                      </div>
 
-                          {/* Push Button (Teacher/Admin) */}
+                      {/* Middle Row: Exam Name & Topic */}
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-sm font-['Outfit',sans-serif] text-slate-950 dark:text-white truncate">
+                          {exam.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mt-0.5" title={topicLabel}>
+                          {topicLabel}
+                        </p>
+                      </div>
+
+                      {/* Bottom Row: Primary & Secondary Actions */}
+                      <div className="pt-2 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between gap-1.5 min-w-0">
+                        <button
+                          type="button"
+                          onMouseEnter={prefetchPracticeModal}
+                          onTouchStart={prefetchPracticeModal}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStartPractice(exam);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-900 dark:bg-white text-white dark:text-zinc-950 hover:opacity-95 active:scale-95 transition cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+                          title="Start Practice"
+                        >
+                          <Play className="w-3 h-3 fill-current" />
+                          <span>Practice</span>
+                        </button>
+
+                        <div className="flex items-center gap-1 shrink-0 ml-auto">
                           {canUpload && onOpenDatabaseUpload && (
                             <button
                               type="button"
@@ -1000,19 +904,14 @@ export const FilesView: React.FC<FilesViewProps> = ({
                                 e.stopPropagation();
                                 onOpenDatabaseUpload(exam);
                               }}
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition cursor-pointer active:scale-95 shrink-0 ${
-                                isPushedToCloud(exam)
-                                  ? 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700'
-                                  : 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90 shadow-2xs'
-                              }`}
-                              title={isPushedToCloud(exam) ? 'Update exam in Cloud Firestore' : `Push ${exam.subject || 'exam'} to Cloud Firestore`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold liquid-glass-subtle hover:bg-white dark:hover:bg-[#132238] text-slate-800 dark:text-zinc-200 transition cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                              title={isPushedToCloud(exam) ? 'Update exam in Cloud Firestore' : 'Push to Cloud Firestore'}
                             >
-                              <CloudUpload className="w-2.5 h-2.5" />
-                              <span>{isPushedToCloud(exam) ? 'Update Cloud' : 'Push to Cloud'}</span>
+                              <CloudUpload className="w-3 h-3 text-sky-600 dark:text-sky-400" />
+                              <span>{isPushedToCloud(exam) ? 'Update' : 'Push'}</span>
                             </button>
                           )}
 
-                          {/* Share Button */}
                           <button
                             type="button"
                             id={`share-exam-btn-${exam.id}`}
@@ -1020,91 +919,50 @@ export const FilesView: React.FC<FilesViewProps> = ({
                               e.stopPropagation();
                               setExamToShare(exam);
                             }}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-700 transition cursor-pointer active:scale-95 shadow-2xs touch-manipulation shrink-0"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold liquid-glass-subtle hover:bg-white dark:hover:bg-[#132238] text-slate-700 dark:text-zinc-300 transition cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                             title="Share exam deep link & specification"
                           >
-                            <Share2 className="w-2.5 h-2.5 text-zinc-600 dark:text-zinc-300" />
+                            <Share2 className="w-3 h-3" />
                             <span>Share</span>
                           </button>
 
-                          {/* Expand Button */}
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleExpandExam(exam.id);
                             }}
-                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition cursor-pointer active:scale-95 shrink-0"
+                            className="inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-[11px] font-medium text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer shrink-0"
                             title="Expand details"
                           >
-                            <span>Expand</span>
-                            <ChevronDown className="w-3 h-3" />
+                            <ChevronDown className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      </div>
-
-                      {/* Topic Pill */}
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/60 px-2.5 py-1 rounded-xl border border-zinc-100 dark:border-zinc-800 min-w-0 overflow-hidden">
-                        <Tag className="w-3 h-3 text-zinc-400 shrink-0" />
-                        <span className="font-medium truncate text-[11px]" title={topicLabel}>
-                          <strong className="text-zinc-700 dark:text-zinc-300">Topic:</strong> {topicLabel}
-                        </span>
                       </div>
                     </div>
                   ) : (
                     /* ─────────────────────────────────────────────────────────────
-                       EXPANDED VIEW: GRADE, SUBJECT, TOPIC, TITLE,
-                       TOTAL QUE, TIME, AND COMPACT ACTION BUTTONS
+                       EXPANDED VIEW: FULL DETAILS & ACTIONS
                     ───────────────────────────────────────────────────────────── */
-                    <div className="p-3.5 sm:p-4 space-y-3 flex flex-col justify-between min-w-0">
+                    <div className="p-4 space-y-3 flex flex-col justify-between min-w-0">
                       <div className="space-y-2.5 min-w-0">
-                        {/* Header: Grade, Subject, Official Badge & Collapse Button */}
-                        <div className="flex items-center justify-between gap-1.5 min-w-0">
-                          <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 shrink-0">
-                              <GraduationCap className="w-2.5 h-2.5" />
-                              <span>{gradeLabel}</span>
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-zinc-400 min-w-0 truncate">
+                            <span className="font-bold text-slate-900 dark:text-white shrink-0">
+                              {gradeLabel}
                             </span>
-
-                            <span
-                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 truncate max-w-[90px] sm:max-w-[130px]"
-                              title={exam.subject || 'General'}
-                            >
+                            <span>·</span>
+                            <span className="truncate font-semibold text-sky-700 dark:text-sky-300">
                               {exam.subject || 'General'}
                             </span>
-
-                            {exam.category === 'official' || isCurated ? (
-                              <span
-                                className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 shrink-0"
-                                title="Official Curriculum Exam"
-                              >
-                                <CloudDownload className="w-2 h-2 text-amber-500" />
-                                <span>Official</span>
-                                {exam.examYear && <span className="text-[8px] font-mono opacity-80">{exam.examYear}</span>}
-                              </span>
-                            ) : (exam.category === 'created' && exam.createdType === 'teacher') || exam.school ? (
-                              <span
-                                className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 shrink-0"
-                                title={`School Teacher Exam: ${exam.school || 'School'}`}
-                              >
-                                <School className="w-2 h-2 text-emerald-500" />
-                                <span>Teacher: {exam.teacherName || 'Instructor'} ({exam.school || 'School'})</span>
-                              </span>
-                            ) : (
-                              <span
-                                className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 shrink-0"
-                                title="Student Study Draft (Local & Offline)"
-                              >
-                                <Layers className="w-2 h-2 text-zinc-500" />
-                                <span>Draft (Local)</span>
-                              </span>
-                            )}
+                            <span>·</span>
+                            <span className="truncate">{sourceLabel}</span>
                           </div>
 
                           <button
                             type="button"
                             onClick={() => toggleExpandExam(exam.id)}
-                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 transition cursor-pointer shadow-2xs hover:opacity-90 active:scale-95 shrink-0 ml-auto"
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold liquid-glass-subtle text-slate-800 dark:text-zinc-200 transition cursor-pointer shrink-0 ml-auto"
                             title="Collapse"
                           >
                             <span>Collapse</span>
@@ -1112,93 +970,74 @@ export const FilesView: React.FC<FilesViewProps> = ({
                           </button>
                         </div>
 
-                        {/* Title & Topic */}
                         <div className="space-y-1 min-w-0">
-                          <h3 className="font-semibold text-sm font-['Outfit',sans-serif] text-zinc-900 dark:text-white leading-snug truncate">
+                          <h3 className="font-bold text-sm font-['Outfit',sans-serif] text-slate-950 dark:text-white leading-snug">
                             {exam.name}
                           </h3>
-                          <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900/60 px-2.5 py-1 rounded-xl border border-zinc-100 dark:border-zinc-800 min-w-0 overflow-hidden">
-                            <Tag className="w-3 h-3 text-zinc-400 shrink-0" />
-                            <span className="font-medium truncate text-[11px]" title={topicLabel}>
-                              <strong className="text-zinc-700 dark:text-zinc-300">Topic:</strong> {topicLabel}
-                            </span>
-                          </div>
+                          <p className="text-xs text-slate-600 dark:text-zinc-400">
+                            <strong className="text-slate-800 dark:text-zinc-200">Topic:</strong> {topicLabel}
+                          </p>
                         </div>
 
-                        {/* Concise Metrics: Total que & Time */}
-                        <div className="flex items-center gap-3 text-xs py-1 px-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800">
-                          <div className="flex items-center gap-1.5 font-medium">
-                            <HelpCircle className="w-3 h-3 text-zinc-400 shrink-0" />
-                            <span className="text-zinc-500 dark:text-zinc-400">Total que:</span>
-                            <span className="text-zinc-900 dark:text-white font-semibold">{questionCount}</span>
-                          </div>
-                          <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                          <div className="flex items-center gap-1.5 font-medium">
-                            <Clock className="w-3 h-3 text-zinc-400 shrink-0" />
-                            <span className="text-zinc-500 dark:text-zinc-400">Time:</span>
-                            <span className="text-zinc-900 dark:text-white font-semibold">{exam.timeLimit} mins</span>
-                          </div>
+                        <div className="flex items-center gap-3 text-xs py-1.5 px-3 rounded-xl liquid-glass-subtle tabular-nums">
+                          <span className="text-slate-600 dark:text-zinc-400">
+                            Questions: <strong className="text-slate-900 dark:text-white">{questionCount}</strong>
+                          </span>
+                          <span className="text-slate-400">·</span>
+                          <span className="text-slate-600 dark:text-zinc-400">
+                            Duration: <strong className="text-slate-900 dark:text-white">{exam.timeLimit} mins</strong>
+                          </span>
                         </div>
 
-                        {/* Action Buttons: [Practice] [Push (Admin)] [Share] [Edit] [Export] [Delete] */}
-                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 min-w-0">
-                          {/* Button 1: Practice */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1 min-w-0">
                           <button
                             type="button"
                             onMouseEnter={prefetchPracticeModal}
                             onTouchStart={prefetchPracticeModal}
                             onClick={() => onStartPractice(exam)}
-                            className="py-1 px-2.5 rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 font-semibold text-[11px] inline-flex items-center justify-center gap-1 transition hover:opacity-90 active:scale-95 cursor-pointer shadow-xs"
-                            title="Start Timed Practice"
+                            className="py-1.5 px-3.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs inline-flex items-center justify-center gap-1.5 transition hover:opacity-90 active:scale-95 cursor-pointer shadow-2xs whitespace-nowrap"
                           >
-                            <Play className="w-2.5 h-2.5 fill-current" />
+                            <Play className="w-3 h-3 fill-current" />
                             <span>Practice</span>
                           </button>
 
-                          {/* Button Teacher/Admin: Push to Cloud */}
                           {canUpload && onOpenDatabaseUpload && (
                             <button
                               type="button"
                               onClick={() => onOpenDatabaseUpload(exam)}
-                              className="py-1 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white font-bold text-[10px] inline-flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer shadow-2xs border border-zinc-200 dark:border-zinc-700"
-                              title={`Upload ${exam.subject || 'exam'} to Cloud Firestore`}
+                              className="py-1.5 px-3 rounded-full liquid-glass-subtle text-slate-900 dark:text-white font-semibold text-xs inline-flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer whitespace-nowrap"
                             >
-                              <Flame className="w-2.5 h-2.5 text-black dark:text-white" />
+                              <CloudUpload className="w-3 h-3 text-sky-600 dark:text-sky-400" />
                               <span>Push</span>
                             </button>
                           )}
 
-                          {/* Button Share: Specification & Deep Link */}
                           <button
                             type="button"
                             id={`share-exam-expanded-btn-${exam.id}`}
                             onClick={() => setExamToShare(exam)}
-                            className="py-1 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold text-[11px] inline-flex items-center justify-center gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer border border-zinc-200/80 dark:border-zinc-700 active:scale-95 shadow-2xs touch-manipulation"
-                            title="Share Exam Specification & Deep Link"
+                            className="py-1.5 px-3 rounded-full liquid-glass-subtle text-slate-800 dark:text-zinc-200 font-semibold text-xs inline-flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 whitespace-nowrap"
                           >
-                            <Share2 className="w-2.5 h-2.5 text-zinc-600 dark:text-zinc-300" />
+                            <Share2 className="w-3 h-3" />
                             <span>Share</span>
                           </button>
 
-                          {/* Button 2: Edit or Export */}
                           {!isCurated ? (
                             <>
                               <button
                                 type="button"
                                 onClick={() => onEditExam(exam)}
-                                className="py-1 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold text-[11px] inline-flex items-center justify-center gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer border border-zinc-200/80 dark:border-zinc-700 active:scale-95"
-                                title="Edit Exam in Wizard"
+                                className="py-1.5 px-3 rounded-full liquid-glass-subtle text-slate-800 dark:text-zinc-200 font-semibold text-xs inline-flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 whitespace-nowrap"
                               >
-                                <Edit className="w-2.5 h-2.5" />
+                                <Edit className="w-3 h-3" />
                                 <span>Edit</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={(e) => handleExportTxt(exam, e)}
-                                className="py-1 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer border border-zinc-200/80 dark:border-zinc-700 active:scale-95 text-[11px] font-medium inline-flex items-center justify-center gap-1"
-                                title="Export TXT"
+                                className="py-1.5 px-3 rounded-full liquid-glass-subtle text-slate-700 dark:text-zinc-300 transition cursor-pointer active:scale-95 text-xs font-medium inline-flex items-center justify-center gap-1 whitespace-nowrap"
                               >
-                                <FileDown className="w-2.5 h-2.5" />
+                                <FileDown className="w-3 h-3" />
                                 <span>Export</span>
                               </button>
                             </>
@@ -1206,22 +1045,19 @@ export const FilesView: React.FC<FilesViewProps> = ({
                             <button
                               type="button"
                               onClick={(e) => handleExportTxt(exam, e)}
-                              className="py-1 px-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold text-[11px] inline-flex items-center justify-center gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer border border-zinc-200/80 dark:border-zinc-700 active:scale-95"
-                              title="Export as text file"
+                              className="py-1.5 px-3 rounded-full liquid-glass-subtle text-slate-800 dark:text-zinc-200 font-semibold text-xs inline-flex items-center justify-center gap-1 transition cursor-pointer active:scale-95 whitespace-nowrap"
                             >
-                              <FileDown className="w-2.5 h-2.5" />
+                              <FileDown className="w-3 h-3" />
                               <span>Export</span>
                             </button>
                           )}
 
-                          {/* Button 3: Delete */}
                           <button
                             type="button"
                             onClick={() => onDeleteExam(exam.id)}
-                            className="py-1 px-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-semibold text-[11px] inline-flex items-center justify-center gap-1 transition hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200/60 dark:border-rose-900/30 active:scale-95 cursor-pointer ml-auto"
-                            title={isCurated ? 'Remove from downloaded exams' : 'Delete Exam'}
+                            className="py-1.5 px-3 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-semibold text-xs inline-flex items-center justify-center gap-1 transition hover:bg-rose-500/20 border border-rose-500/20 active:scale-95 cursor-pointer ml-auto whitespace-nowrap"
                           >
-                            <Trash2 className="w-2.5 h-2.5" />
+                            <Trash2 className="w-3 h-3" />
                             <span>Delete</span>
                           </button>
                         </div>

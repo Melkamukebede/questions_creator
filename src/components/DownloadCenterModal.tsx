@@ -218,10 +218,10 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-[28px] sm:rounded-[32px] bg-white dark:bg-[#0c182b] text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10 shadow-2xl overflow-hidden backdrop-blur-2xl">
+      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-[28px] sm:rounded-[32px] liquid-glass text-zinc-900 dark:text-white border border-white/70 dark:border-white/15 shadow-2xl overflow-hidden backdrop-blur-2xl">
         
         {/* Header */}
-        <div className="px-5 sm:px-6 py-4 border-b border-zinc-100 dark:border-white/10 flex items-center justify-between bg-zinc-50/80 dark:bg-[#070e1a]/80">
+        <div className="px-5 sm:px-6 py-4 border-b border-white/60 dark:border-white/10 flex items-center justify-between bg-white/40 dark:bg-white/[0.02] backdrop-blur-md">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-xs">
               <Download className="w-5 h-5" />

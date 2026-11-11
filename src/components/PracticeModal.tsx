@@ -62,6 +62,7 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
 
   // Lightbox modal for technical diagrams/circuits/images
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string; title?: string } | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   // Scroll ref to top of question container when page/question changes
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -321,20 +322,45 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
   const batchEndIdx = Math.min(batchStartIdx + BATCH_SIZE, sessionQuestions.length);
   const currentBatchQuestions = sessionQuestions.slice(batchStartIdx, batchEndIdx);
 
-  // Helper component to render a single Question Card (used in both 1-to-1 and 6-to-1)
+  // Extract inline markdown image ![caption](url) or [IMAGE: url] if present in question text
+  const extractQuestionMedia = (q: Question): { cleanText: string; imageUrl?: string; imageCaption?: string } => {
+    let text = q.text || '';
+    let resolvedUrl = q.imageUrl?.trim();
+    let resolvedCaption = q.imageCaption?.trim();
+
+    const mdImgMatch = text.match(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+|data:image\/[^\s)]+)\)/i);
+    if (mdImgMatch) {
+      if (!resolvedUrl) resolvedUrl = mdImgMatch[2];
+      if (!resolvedCaption && mdImgMatch[1]) resolvedCaption = mdImgMatch[1];
+      text = text.replace(mdImgMatch[0], '').trim();
+    }
+
+    const tagImgMatch = text.match(/\[(?:IMAGE|DIAGRAM|FIGURE)\s*:\s*(https?:\/\/[^\s\]]+|data:image\/[^\s\]]+)\]/i);
+    if (tagImgMatch) {
+      if (!resolvedUrl) resolvedUrl = tagImgMatch[1];
+      text = text.replace(tagImgMatch[0], '').trim();
+    }
+
+    return { cleanText: text, imageUrl: resolvedUrl, imageCaption: resolvedCaption };
+  };
+
+  // Helper component to render a single Question Card
   const renderQuestionCard = (q: Question, qIndex: number) => {
     const isAnswered = userAnswers[qIndex] !== null && userAnswers[qIndex] !== undefined;
     const isExplRevealed = !!revealedQuestions[qIndex];
     const isDisabled = isAnswered || isExplRevealed;
     const selectedOpt = userAnswers[qIndex];
+    const isChoiceEvaluated = isAnswered || isExplRevealed;
+    const { cleanText, imageUrl: resolvedImageUrl, imageCaption: resolvedImageCaption } = extractQuestionMedia(q);
+    const imgKey = `q_${qIndex}_${resolvedImageUrl || ''}`;
 
     return (
       <div
         key={q.id || qIndex}
         id={`practice-question-${qIndex}`}
-        className="p-5 sm:p-6 rounded-[28px] bg-white dark:bg-[#0c182b] border border-zinc-200/80 dark:border-white/10 shadow-xs dark:shadow-lg space-y-4 transition-all text-zinc-900 dark:text-white"
+        className="p-5 sm:p-6 rounded-[28px] liquid-glass-subtle border border-white/80 dark:border-white/10 shadow-xs space-y-4 transition-all text-zinc-900 dark:text-white"
       >
-        {/* Card Header: Question Number */}
+        {/* Card Header: Question Number & Instant Evaluation Pill */}
         <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-zinc-100 dark:border-white/10">
           <div className="flex items-center gap-2.5">
             <span className="w-7 h-7 rounded-xl bg-zinc-100 dark:bg-[#0f1d33] text-zinc-900 dark:text-white font-bold text-xs flex items-center justify-center border border-zinc-200/60 dark:border-white/10">
@@ -344,53 +370,99 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
               Question {qIndex + 1} of {sessionQuestions.length}
             </span>
           </div>
+
+          {isAnswered && (
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                selectedOpt === q.correct
+                  ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                  : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30'
+              }`}
+            >
+              {selectedOpt === q.correct ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Correct</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                  <span>Incorrect • Ans: {String.fromCharCode(65 + q.correct)}</span>
+                </>
+              )}
+            </span>
+          )}
         </div>
 
         {/* Question Statement */}
         <div className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white leading-relaxed pt-1">
-          <MathRenderer content={q.text} />
+          <MathRenderer content={cleanText} />
         </div>
 
-        {/* Technical Diagram / Circuit / Anatomical Illustration */}
-        {q.imageUrl && (
-          <div className="pt-2">
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() =>
-                setLightboxImage({
-                  url: q.imageUrl!,
-                  caption: q.imageCaption,
-                  title: `Question ${qIndex + 1} Diagram`,
-                })
-              }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+        {/* Crisp Diagram / Figure Card with Auto-Fit, Dark-Mode Contrast Pad & Click-to-Zoom */}
+        {resolvedImageUrl && (
+          <div className="pt-1.5">
+            {!brokenImages[imgKey] ? (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() =>
                   setLightboxImage({
-                    url: q.imageUrl!,
-                    caption: q.imageCaption,
-                    title: `Question ${qIndex + 1} Diagram`,
-                  });
+                    url: resolvedImageUrl,
+                    caption: resolvedImageCaption,
+                    title: `Question ${qIndex + 1} Figure`,
+                  })
                 }
-              }}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-[#070e1a] p-3 flex flex-col items-center justify-center max-w-xl hover:border-zinc-400 dark:hover:border-white/30 transition shadow-2xs"
-            >
-              <img
-                src={q.imageUrl}
-                alt={q.imageCaption || `Question ${qIndex + 1} diagram`}
-                className="max-h-64 sm:max-h-80 w-auto object-contain rounded-xl transition duration-200 group-hover:scale-[1.01]"
-                loading="lazy"
-              />
-              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-zinc-950/80 dark:bg-black/85 text-white text-[11px] font-semibold flex items-center gap-1.5 backdrop-blur-xs shadow-xs pointer-events-none opacity-90 group-hover:opacity-100">
-                <Maximize2 className="w-3.5 h-3.5" />
-                <span>Enlarge</span>
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setLightboxImage({
+                      url: resolvedImageUrl,
+                      caption: resolvedImageCaption,
+                      title: `Question ${qIndex + 1} Figure`,
+                    });
+                  }
+                }}
+                className="group relative cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200/90 dark:border-white/15 liquid-glass-subtle p-2.5 sm:p-3.5 flex flex-col items-center justify-center max-w-2xl mx-auto hover:border-sky-500/50 dark:hover:border-sky-400/40 transition shadow-xs"
+              >
+                {/* Contrast-Stabilized Inner Pad so dark-line circuits & transparent PNGs stay crisp in Dark Mode */}
+                <div className="relative w-full rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/60 dark:border-white/10 p-3 sm:p-4 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={resolvedImageUrl}
+                    alt={resolvedImageCaption || `Question ${qIndex + 1} diagram`}
+                    onError={() => setBrokenImages((prev) => ({ ...prev, [imgKey]: true }))}
+                    className="max-h-64 sm:max-h-80 w-auto max-w-full object-contain rounded-lg transition duration-200 group-hover:scale-[1.015] bg-white dark:bg-white/95 p-1.5"
+                    loading="lazy"
+                  />
+                  <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-slate-900/85 dark:bg-black/85 text-white text-[11px] font-semibold flex items-center gap-1.5 backdrop-blur-xs shadow-xs pointer-events-none opacity-85 group-hover:opacity-100 transition">
+                    <Maximize2 className="w-3 h-3" />
+                    <span>Click to Zoom</span>
+                  </div>
+                </div>
+
+                {resolvedImageCaption && (
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium text-center px-3">
+                    {resolvedImageCaption}
+                  </p>
+                )}
               </div>
-              {q.imageCaption && (
-                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 italic text-center px-2">
-                  {q.imageCaption}
-                </p>
-              )}
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
+                  <span>
+                    Diagram preview unavailable offline{resolvedImageCaption ? `: "${resolvedImageCaption}"` : '.'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBrokenImages((prev) => ({ ...prev, [imgKey]: false }))}
+                  className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 font-bold text-[11px] cursor-pointer transition"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -401,29 +473,37 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
           </div>
         )}
 
-        {/* Options List */}
+        {/* Options List: Immediate Green if Correct, Red if Wrong + Highlight True Answer */}
         <div className="space-y-2.5 pt-1">
           {q.options.map((optText, optIdx) => {
             const isSelected = selectedOpt === optIdx;
             const letter = String.fromCharCode(65 + optIdx);
             const isCorrectOption = q.correct === optIdx;
 
-            // Visual Styling based on selection and explanation state using dynamic Light / Dark palette
             let optionCardClasses = '';
-            if (isExplRevealed) {
+            let badgeClasses = '';
+
+            if (isChoiceEvaluated) {
               if (isCorrectOption) {
-                optionCardClasses = 'bg-emerald-500/10 dark:bg-emerald-500/15 border-emerald-500 text-zinc-950 dark:text-white shadow-2xs font-medium';
+                optionCardClasses =
+                  'bg-emerald-500/15 dark:bg-emerald-500/20 border-emerald-500 text-emerald-950 dark:text-emerald-50 shadow-xs font-semibold ring-1 ring-emerald-500/30';
+                badgeClasses = 'bg-emerald-600 text-white shadow-xs';
               } else if (isSelected && !isCorrectOption) {
-                optionCardClasses = 'bg-rose-500/10 dark:bg-rose-500/15 border-rose-500 text-zinc-950 dark:text-white shadow-2xs';
+                optionCardClasses =
+                  'bg-rose-500/15 dark:bg-rose-500/20 border-rose-500 text-rose-950 dark:text-rose-50 shadow-xs font-semibold ring-1 ring-rose-500/30';
+                badgeClasses = 'bg-rose-600 text-white shadow-xs';
               } else {
-                optionCardClasses = 'bg-zinc-50/50 dark:bg-[#091322]/40 border-zinc-200/80 dark:border-white/5 opacity-60 text-zinc-500 dark:text-zinc-400';
+                optionCardClasses =
+                  'bg-zinc-50/50 dark:bg-[#091322]/40 border-zinc-200/80 dark:border-white/5 opacity-60 text-zinc-500 dark:text-zinc-400';
+                badgeClasses =
+                  'bg-zinc-100 dark:bg-[#0c182b] text-zinc-500 dark:text-zinc-400 border border-zinc-200/50 dark:border-white/10';
               }
-            } else if (isSelected) {
-              optionCardClasses = 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 border-zinc-950 dark:border-white shadow-xs font-bold';
             } else {
               optionCardClasses = isDisabled
                 ? 'bg-zinc-50/60 dark:bg-[#091322]/40 border-zinc-200/80 dark:border-white/5 text-zinc-500 opacity-60 cursor-not-allowed'
                 : 'bg-white dark:bg-[#0f1d33] border-zinc-200/80 dark:border-white/10 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-[#132238] cursor-pointer shadow-2xs';
+              badgeClasses =
+                'bg-zinc-100 dark:bg-[#0c182b] text-zinc-600 dark:text-zinc-400 border border-zinc-200/50 dark:border-white/10';
             }
 
             return (
@@ -435,87 +515,70 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
                   }
                 }}
                 className={`flex items-center gap-3.5 p-3.5 sm:p-4 rounded-[20px] border transition-all select-none ${
-                  isDisabled ? 'cursor-not-allowed pointer-events-none' : 'cursor-pointer active:scale-[0.995]'
+                  isDisabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.995]'
                 } ${optionCardClasses}`}
               >
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
-                    isExplRevealed && isCorrectOption
-                      ? 'bg-emerald-500 text-white shadow-xs'
-                      : isExplRevealed && isSelected && !isCorrectOption
-                      ? 'bg-rose-500 text-white shadow-xs'
-                      : isSelected
-                      ? 'bg-white text-zinc-950 dark:bg-zinc-950 dark:text-white shadow-xs'
-                      : 'bg-zinc-100 dark:bg-[#0c182b] text-zinc-600 dark:text-zinc-400 border border-zinc-200/50 dark:border-white/10'
-                  }`}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${badgeClasses}`}
                 >
                   {letter}
                 </div>
-                <div className="flex-1 text-sm sm:text-base leading-relaxed font-normal space-y-1.5">
+                <div className="flex-1 text-sm sm:text-base leading-relaxed space-y-2">
                   <MathRenderer content={optText} inline />
                   {q.optionImages?.[optIdx] && (
                     <div className="pt-1">
-                      <img
-                        src={q.optionImages[optIdx]!}
-                        alt={`Option ${letter} Diagram`}
-                        className="max-h-24 sm:max-h-28 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0c182b] object-contain p-1 shadow-2xs hover:scale-102 transition cursor-zoom-in"
-                        loading="lazy"
+                      <div
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => {
                           e.stopPropagation();
                           setLightboxImage({
                             url: q.optionImages![optIdx]!,
-                            caption: `Option ${letter} Diagram`,
-                            title: `Question ${qIndex + 1} - Choice ${letter}`,
+                            caption: `Option ${letter} Figure`,
+                            title: `Question ${qIndex + 1} — Choice ${letter}`,
                           });
                         }}
-                      />
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            setLightboxImage({
+                              url: q.optionImages![optIdx]!,
+                              caption: `Option ${letter} Figure`,
+                              title: `Question ${qIndex + 1} — Choice ${letter}`,
+                            });
+                          }
+                        }}
+                        className="inline-flex flex-col items-start p-1.5 rounded-xl border border-slate-200 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 shadow-2xs hover:border-sky-500 transition cursor-zoom-in"
+                      >
+                        <img
+                          src={q.optionImages[optIdx]!}
+                          alt={`Option ${letter} Figure`}
+                          className="max-h-28 sm:max-h-32 w-auto object-contain rounded-lg bg-white p-1"
+                          loading="lazy"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-                {/* Visual Icon Check / Indicator */}
-                {isExplRevealed && isCorrectOption && (
+                {/* Immediate Right-Side Visual Icon Check / Cross Indicator */}
+                {isChoiceEvaluated && isCorrectOption && (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 )}
-                {isExplRevealed && isSelected && !isCorrectOption && (
-                  <XCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0" />
+                {isChoiceEvaluated && isSelected && !isCorrectOption && (
+                  <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
                 )}
               </div>
             );
           })}
         </div>
 
-        {/* Bottom Question Actions: Explanation Button at the bottom of every question */}
-        <div className="pt-2 flex items-center justify-between flex-wrap gap-2 border-t border-zinc-100 dark:border-white/10">
-          <button
-            type="button"
-            onClick={() => handleToggleExplanation(qIndex)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 cursor-pointer transition border shadow-2xs active:scale-98 ${
-              isExplRevealed
-                ? 'bg-zinc-100 dark:bg-[#162742] text-zinc-900 dark:text-white border-zinc-300 dark:border-white/20'
-                : 'bg-white dark:bg-[#0f1d33] text-zinc-700 dark:text-zinc-300 border-zinc-200/80 dark:border-white/10 hover:bg-zinc-50 dark:hover:bg-[#132238]'
-            }`}
-          >
-            {isExplRevealed ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-zinc-900 dark:text-white" />
-                <span>Hide Explanation</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-                <span>View Explanation</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Correct Answer Shower & Step-by-Step Explanation Banner */}
-        {isExplRevealed && (
+        {/* Correct Answer Shower & Step-by-Step Explanation Content (Rendered ABOVE the button) */}
+        {isAnswered && isExplRevealed && (
           <div className="p-4 sm:p-5 rounded-[24px] bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-emerald-500/30 text-zinc-900 dark:text-white space-y-3 animate-in fade-in duration-200">
             {/* Banner Header: Correct Answer Shower */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-zinc-200/80 dark:border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
                   {String.fromCharCode(65 + q.correct)}
                 </div>
                 <div>
@@ -531,35 +594,61 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
               {/* Status Comparison Badge */}
               <div className="shrink-0">
                 {selectedOpt === q.correct ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 dark:bg-[#0f1d33] text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     Your Choice: Correct ✓
                   </span>
-                ) : selectedOpt !== null && selectedOpt !== undefined ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
-                    <XCircle className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
-                    Your Choice: Option {String.fromCharCode(65 + selectedOpt)} (Incorrect)
-                  </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                    No answer selected
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                    Your Choice: Option {String.fromCharCode(65 + (selectedOpt ?? 0))} (Incorrect)
                   </span>
                 )}
               </div>
             </div>
 
             {/* Step-by-Step Solution & LaTeX formulas */}
-            {q.explanation && (
-              <div className="pt-1 text-xs sm:text-sm text-zinc-700 dark:text-zinc-200 space-y-1.5">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <span>Step-by-step Solution:</span>
-                </div>
-                <div className="leading-relaxed">
-                  <MathRenderer content={q.explanation} />
-                </div>
+            <div className="pt-1 text-xs sm:text-sm text-zinc-700 dark:text-zinc-200 space-y-1.5">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                <span>Step-by-step Solution:</span>
               </div>
-            )}
+              <div className="leading-relaxed">
+                <MathRenderer
+                  content={
+                    q.explanation?.trim()
+                      ? q.explanation
+                      : `The correct option is **${String.fromCharCode(65 + q.correct)}** (${q.options[q.correct]}).`
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Explanation Button: Shown ONLY after a choice is selected, positioned at the bottom-right edge below explanation content */}
+        {isAnswered && (
+          <div className="pt-2 flex items-center justify-end border-t border-zinc-100 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => handleToggleExplanation(qIndex)}
+              className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 cursor-pointer transition border shadow-2xs active:scale-98 ${
+                isExplRevealed
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 border-zinc-900 dark:border-white'
+                  : 'bg-white dark:bg-[#0f1d33] text-zinc-800 dark:text-zinc-200 border-zinc-200/80 dark:border-white/15 hover:bg-zinc-50 dark:hover:bg-[#132238]'
+              }`}
+            >
+              {isExplRevealed ? (
+                <>
+                  <EyeOff className="w-3.5 h-3.5" />
+                  <span>Hide Explanation</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Explanation</span>
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
@@ -569,9 +658,9 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-        <div className="w-full max-w-4xl h-[94vh] max-h-[880px] bg-white dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 rounded-[32px] shadow-2xl flex flex-col overflow-hidden text-zinc-900 dark:text-white backdrop-blur-2xl">
+        <div className="w-full max-w-4xl h-[94vh] max-h-[880px] liquid-glass border border-white/70 dark:border-white/15 rounded-[32px] shadow-2xl flex flex-col overflow-hidden text-zinc-900 dark:text-white backdrop-blur-2xl">
           {/* Header Bar using App Dynamic Theme (Clean, mode buttons eliminated) */}
-          <div className="px-5 sm:px-6 py-3.5 border-b border-zinc-100 dark:border-white/10 flex items-center justify-between gap-3 bg-white/90 dark:bg-[#0c182b]/95 backdrop-blur-md flex-wrap text-zinc-900 dark:text-white">
+          <div className="px-5 sm:px-6 py-3.5 border-b border-white/60 dark:border-white/10 flex items-center justify-between gap-3 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md flex-wrap text-zinc-900 dark:text-white">
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
               <h2 className="font-['Outfit',sans-serif] font-bold text-sm sm:text-base text-zinc-900 dark:text-white truncate">
