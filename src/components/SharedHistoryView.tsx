@@ -206,7 +206,7 @@ ${item.shareUrl}`;
     deleteFromSharedHistory(item.id);
     refreshHistory();
     setItemToDelete(null);
-    showToast(item.type === 'shared_by_me' ? 'Removed from Firebase cloud & shared history (slot freed).' : 'Removed from shared history.');
+    showToast(item.type === 'shared_by_me' ? 'Removed from shared exams (sharing slot freed).' : 'Removed from shared history.');
   };
 
   // Clear all
@@ -269,7 +269,7 @@ ${item.shareUrl}`;
               <div className="text-base font-bold text-zinc-900 dark:text-white">{sharedByMeCount}</div>
             </div>
             <div className="px-3.5 py-2 rounded-2xl bg-zinc-100 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 text-center">
-              <div className="text-[10px] font-bold uppercase text-zinc-400">Firebase Storage</div>
+              <div className="text-[10px] font-bold uppercase text-zinc-400">Sharing Slots</div>
               <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
                 {isPrivilegedUser ? 'Unlimited' : `${sharedByMeCount} / ${MAX_USER_SHARED_EXAMS}`}
               </div>

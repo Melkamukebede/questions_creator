@@ -32,6 +32,12 @@ import { Exam, AppUser } from '../types';
 import { ShareExamModal } from './ShareExamModal';
 import { isUserTeacher } from '../services/db';
 import { prefetchPracticeModal, prefetchCreateWizard } from '../services/prefetch';
+import {
+  doesExamMatchStudentClass,
+  isStudentClassLocked,
+  formatClassLevelLabel,
+  getExamClassLevel,
+} from '../utils/classLevelFilter';
 
 interface FilesViewProps {
   exams: Exam[];
@@ -83,14 +89,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
 
   // Helper to extract clean grade label from an exam
   const getExamGrade = (exam: Exam): string => {
-    if (exam.grade !== undefined && exam.grade !== null && String(exam.grade).trim() !== '') {
-      const g = String(exam.grade).trim();
-      return g.toLowerCase().startsWith('grade') ? g : `Grade ${g}`;
-    }
-    const match = exam.name.match(/grade\s*(\d{1,2})/i) || exam.name.match(/g(\d{1,2})/i);
-    if (match) return `Grade ${match[1]}`;
-    if (/freshman|university|college/i.test(exam.name)) return 'Freshman';
-    return 'General';
+    const canonical = getExamClassLevel(exam);
+    if (canonical === 'Freshman') return 'Freshman';
+    if (canonical === 'Senior University') return 'Senior University';
+    return `Grade ${canonical}`;
   };
 
   // Helper to extract primary topic
@@ -103,6 +105,13 @@ export const FilesView: React.FC<FilesViewProps> = ({
 
   const canUpload = Boolean(isAdmin || (user && isUserTeacher(user)));
   const isTeacherUser = Boolean(user && isUserTeacher(user));
+  const classLocked = isStudentClassLocked(user, isAdmin);
+
+  // Scope exams strictly to student's registered class unless Admin, Guest, or Teacher
+  const scopedExams = useMemo(() => {
+    if (!classLocked) return exams;
+    return exams.filter((e) => doesExamMatchStudentClass(e, user, isAdmin));
+  }, [exams, classLocked, user, isAdmin]);
 
   const isExamOfficial = (e: Exam) => Boolean(e.category === 'official' || e.isDownloaded || e.sourceType === 'curated_catalog');
   const isExamTeacher = (e: Exam) => Boolean((e.category === 'created' && e.createdType === 'teacher') || e.school);
@@ -117,35 +126,35 @@ export const FilesView: React.FC<FilesViewProps> = ({
 
   // Counts by source
   const officialCount = useMemo(
-    () => exams.filter(isExamOfficial).length,
-    [exams]
+    () => scopedExams.filter(isExamOfficial).length,
+    [scopedExams]
   );
   const teacherCount = useMemo(
-    () => exams.filter(isExamTeacher).length,
-    [exams]
+    () => scopedExams.filter(isExamTeacher).length,
+    [scopedExams]
   );
   const userCreatedCount = useMemo(
-    () => exams.filter((e) => !isExamOfficial(e)).length,
-    [exams]
+    () => scopedExams.filter((e) => !isExamOfficial(e)).length,
+    [scopedExams]
   );
   const pushedCloudCount = useMemo(
-    () => exams.filter((e) => !isExamOfficial(e) && isPushedToCloud(e)).length,
-    [exams]
+    () => scopedExams.filter((e) => !isExamOfficial(e) && isPushedToCloud(e)).length,
+    [scopedExams]
   );
   const localStorageCount = useMemo(
-    () => exams.filter((e) => !isExamOfficial(e) && !isPushedToCloud(e)).length,
-    [exams]
+    () => scopedExams.filter((e) => !isExamOfficial(e) && !isPushedToCloud(e)).length,
+    [scopedExams]
   );
 
   // Dynamically extract grades and counts
   const gradeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    exams.forEach((e) => {
+    scopedExams.forEach((e) => {
       const g = getExamGrade(e);
       counts[g] = (counts[g] || 0) + 1;
     });
     return counts;
-  }, [exams]);
+  }, [scopedExams]);
 
   const dynamicGrades = useMemo(() => {
     const keys = Object.keys(gradeCounts).sort((a, b) => {
@@ -162,12 +171,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
   // Dynamically extract subjects and counts
   const subjectCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    exams.forEach((e) => {
+    scopedExams.forEach((e) => {
       const subj = e.subject?.trim() || 'General';
       counts[subj] = (counts[subj] || 0) + 1;
     });
     return counts;
-  }, [exams]);
+  }, [scopedExams]);
 
   const dynamicSubjects = useMemo(() => {
     return ['All', ...Object.keys(subjectCounts).sort()];
@@ -176,12 +185,12 @@ export const FilesView: React.FC<FilesViewProps> = ({
   // Dynamically extract topics/units and counts
   const topicCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    exams.forEach((e) => {
+    scopedExams.forEach((e) => {
       const topic = getExamTopic(e);
       counts[topic] = (counts[topic] || 0) + 1;
     });
     return counts;
-  }, [exams]);
+  }, [scopedExams]);
 
   const dynamicTopics = useMemo(() => {
     return ['All', ...Object.keys(topicCounts).sort()];
@@ -259,7 +268,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
 
   // Filtered & Sorted exams
   const filteredExams = useMemo(() => {
-    const list = exams.filter((exam) => {
+    const list = scopedExams.filter((exam) => {
       const examGrade = getExamGrade(exam);
       const examSubject = exam.subject?.trim() || 'General';
       const examTopic = getExamTopic(exam);
@@ -273,7 +282,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
         exam.questions.some((q) => q.text.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchGrade =
-        selectedGrade === 'All' || examGrade.toLowerCase() === selectedGrade.toLowerCase();
+        classLocked || selectedGrade === 'All' || examGrade.toLowerCase() === selectedGrade.toLowerCase();
 
       const matchSubject =
         selectedSubject === 'All' || examSubject.toLowerCase() === selectedSubject.toLowerCase();
@@ -313,7 +322,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
       // 'newest' default
       return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     });
-  }, [exams, searchTerm, selectedGrade, selectedSubject, selectedTopic, sourceFilter, sortBy]);
+  }, [scopedExams, classLocked, searchTerm, selectedGrade, selectedSubject, selectedTopic, sourceFilter, sortBy]);
 
   return (
     <div className="space-y-6 pb-20 max-w-6xl mx-auto">
@@ -343,55 +352,51 @@ export const FilesView: React.FC<FilesViewProps> = ({
               <BookOpen className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-950 dark:text-white">
                   Exams Repository
                 </h1>
                 <span className="text-xs text-slate-500 dark:text-zinc-400 font-semibold tabular-nums">
-                  · {filteredExams.length} of {exams.length}
+                  · {filteredExams.length} of {scopedExams.length}
                 </span>
+                {classLocked && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-500/25">
+                    <GraduationCap className="w-3 h-3" />
+                    <span>{formatClassLevelLabel(user?.grade)}</span>
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                Explore, preview questions, and practice official curriculum exams
+                {classLocked
+                  ? `Showing exams curated for your registered class (${formatClassLevelLabel(user?.grade)})`
+                  : 'Explore, preview questions, and practice official curriculum exams'}
               </p>
             </div>
           </div>
 
           {/* Action Controls & Sort */}
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-            {onOpenCuratedCatalogModal && (
+            {(onOpenDownloadCenter || onOpenCuratedCatalogModal) && (
               <button
                 type="button"
-                onClick={onOpenCuratedCatalogModal}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full liquid-glass-btn font-bold text-xs cursor-pointer whitespace-nowrap"
-                title={user?.grade ? `Download exams filtered for Grade ${user.grade}` : 'Browse official curriculum exams'}
-              >
-                <CloudDownload className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                <span>Download Exams {user?.grade ? `(G${user.grade})` : ''}</span>
-              </button>
-            )}
-
-            {onOpenDownloadCenter && (
-              <button
-                type="button"
-                onClick={onOpenDownloadCenter}
+                onClick={onOpenDownloadCenter || onOpenCuratedCatalogModal}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs transition cursor-pointer shadow-xs active:scale-98 whitespace-nowrap"
-                title="Download 1-3 or 1-5 year university & secondary exam bundles into offline SQLite database files"
+                title="Download official and school exams for offline practice"
               >
                 <CloudDownload className="w-3.5 h-3.5" />
-                <span>SQLite Bundles (1-5 Yrs)</span>
+                <span>Download Exams</span>
               </button>
             )}
 
-            {canUpload && onOpenDatabaseUpload && exams.length > 0 && (
+            {canUpload && onOpenDatabaseUpload && scopedExams.length > 0 && (
               <button
                 type="button"
-                onClick={() => onOpenDatabaseUpload(exams[0])}
+                onClick={() => onOpenDatabaseUpload(scopedExams[0])}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full liquid-glass-btn font-semibold text-xs cursor-pointer whitespace-nowrap"
-                title="Upload questions to Cloud Firestore"
+                title="Publish questions online for students"
               >
                 <CloudUpload className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                <span>Upload</span>
+                <span>Publish</span>
               </button>
             )}
 
@@ -426,7 +431,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 }`}
               >
                 <span>All Exams</span>
-                <span className="text-[10px] opacity-75 tabular-nums">({exams.length})</span>
+                <span className="text-[10px] opacity-75 tabular-nums">({scopedExams.length})</span>
               </button>
 
               <button
@@ -451,7 +456,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                     : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <span>Pushed to Cloud</span>
+                <span>Published Online</span>
                 <span className="text-[10px] opacity-75 tabular-nums">({pushedCloudCount})</span>
               </button>
 
@@ -464,7 +469,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                     : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <span>Local Drafts</span>
+                <span>Saved on Device</span>
                 <span className="text-[10px] opacity-75 tabular-nums">({localStorageCount})</span>
               </button>
 
@@ -493,7 +498,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 }`}
               >
                 <span>All Exams</span>
-                <span className="text-[10px] opacity-75 tabular-nums">({exams.length})</span>
+                <span className="text-[10px] opacity-75 tabular-nums">({scopedExams.length})</span>
               </button>
 
               <button
@@ -551,7 +556,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by title, subject, grade, topic, or question keywords..."
+                placeholder="Search by title, subject, topic, or question keywords..."
                 className="w-full pl-10 pr-14 py-2.5 text-xs sm:text-sm rounded-full bg-white dark:bg-[#070e1a] border border-slate-200/90 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
               />
               {searchTerm && (
@@ -593,7 +598,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   )}
                 </button>
 
-                {selectedGrade !== 'All' && (
+                {!classLocked && selectedGrade !== 'All' && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white dark:bg-[#0c182b] text-slate-800 dark:text-zinc-200 border border-slate-200/80 dark:border-white/10">
                     <span>{selectedGrade}</span>
                     <button
@@ -664,23 +669,30 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
                       <GraduationCap className="w-3.5 h-3.5" />
-                      <span>Grade</span>
+                      <span>{classLocked ? 'Registered Class' : 'Grade'}</span>
                     </label>
-                    <select
-                      id="filterGradeSelect"
-                      value={selectedGrade}
-                      onChange={(e) => setSelectedGrade(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
-                    >
-                      <option value="All">All Grades ({exams.length})</option>
-                      {dynamicGrades
-                        .filter((g) => g !== 'All')
-                        .map((grade) => (
-                          <option key={grade} value={grade}>
-                            {grade} ({gradeCounts[grade] || 0})
-                          </option>
-                        ))}
-                    </select>
+                    {classLocked ? (
+                      <div className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-bold flex items-center justify-between">
+                        <span>{formatClassLevelLabel(user?.grade)}</span>
+                        <span className="text-[10px] text-sky-600 dark:text-sky-400">({scopedExams.length})</span>
+                      </div>
+                    ) : (
+                      <select
+                        id="filterGradeSelect"
+                        value={selectedGrade}
+                        onChange={(e) => setSelectedGrade(e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
+                      >
+                        <option value="All">All Grades ({scopedExams.length})</option>
+                        {dynamicGrades
+                          .filter((g) => g !== 'All')
+                          .map((grade) => (
+                            <option key={grade} value={grade}>
+                              {grade} ({gradeCounts[grade] || 0})
+                            </option>
+                          ))}
+                      </select>
+                    )}
                   </div>
 
                   {/* 2. Subject Filter */}
@@ -695,7 +707,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                       onChange={(e) => setSelectedSubject(e.target.value)}
                       className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none"
                     >
-                      <option value="All">All Subjects ({exams.length})</option>
+                      <option value="All">All Subjects ({scopedExams.length})</option>
                       {dynamicSubjects
                         .filter((s) => s !== 'All')
                         .map((subj) => (
@@ -718,7 +730,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                       onChange={(e) => setSelectedTopic(e.target.value)}
                       className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-zinc-100 font-medium cursor-pointer focus:outline-none truncate"
                     >
-                      <option value="All">All Topics ({exams.length})</option>
+                      <option value="All">All Topics ({scopedExams.length})</option>
                       {dynamicTopics
                         .filter((t) => t !== 'All')
                         .map((topic) => (
@@ -741,10 +753,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {dynamicSubjects.map((subj) => {
                         const isSelected = selectedSubject.toLowerCase() === subj.toLowerCase();
-                        const count = subj === 'All' ? exams.length : (subjectCounts[subj] || 0);
+                        const count = subj === 'All' ? scopedExams.length : (subjectCounts[subj] || 0);
                         const subjectExam = subj === 'All'
-                          ? exams[0]
-                          : exams.find((e) => (e.subject || 'General').toLowerCase() === subj.toLowerCase());
+                          ? scopedExams[0]
+                          : scopedExams.find((e) => (e.subject || 'General').toLowerCase() === subj.toLowerCase());
 
                         return (
                           <div
@@ -772,10 +784,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
                                   onOpenDatabaseUpload(subjectExam);
                                 }}
                                 className="px-2 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer transition border-l border-slate-200/50 dark:border-white/10 hover:bg-amber-500/10 text-amber-500"
-                                title={`Push ${subj} exam to Cloud Firestore`}
+                                title={`Publish ${subj} exam online`}
                               >
                                 <Flame className="w-3 h-3" />
-                                <span>Push</span>
+                                <span>Publish</span>
                               </button>
                             )}
                           </div>
@@ -828,8 +840,8 @@ export const FilesView: React.FC<FilesViewProps> = ({
                   : (exam.category === 'created' && exam.createdType === 'teacher') || exam.school
                   ? exam.school || exam.teacherName || 'Teacher'
                   : isPushedToCloud(exam)
-                  ? 'Cloud'
-                  : 'Local';
+                  ? 'Published'
+                  : 'On Device';
 
               return (
                 <motion.div
@@ -905,10 +917,10 @@ export const FilesView: React.FC<FilesViewProps> = ({
                                 onOpenDatabaseUpload(exam);
                               }}
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold liquid-glass-subtle hover:bg-white dark:hover:bg-[#132238] text-slate-800 dark:text-zinc-200 transition cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
-                              title={isPushedToCloud(exam) ? 'Update exam in Cloud Firestore' : 'Push to Cloud Firestore'}
+                              title={isPushedToCloud(exam) ? 'Update published exam' : 'Publish online for students'}
                             >
                               <CloudUpload className="w-3 h-3 text-sky-600 dark:text-sky-400" />
-                              <span>{isPushedToCloud(exam) ? 'Update' : 'Push'}</span>
+                              <span>{isPushedToCloud(exam) ? 'Update' : 'Publish'}</span>
                             </button>
                           )}
 
@@ -1008,7 +1020,7 @@ export const FilesView: React.FC<FilesViewProps> = ({
                               className="py-1.5 px-3 rounded-full liquid-glass-subtle text-slate-900 dark:text-white font-semibold text-xs inline-flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer whitespace-nowrap"
                             >
                               <CloudUpload className="w-3 h-3 text-sky-600 dark:text-sky-400" />
-                              <span>Push</span>
+                              <span>Publish</span>
                             </button>
                           )}
 

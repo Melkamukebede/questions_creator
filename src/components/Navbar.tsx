@@ -263,17 +263,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Offline Bundles / Download Center Button */}
+          {/* Unified Download Exams Button */}
           {onOpenDownloadCenter && (
             <button
               id="nav-tab-download-center"
               type="button"
               onClick={onOpenDownloadCenter}
               className="glass-pill-btn cursor-pointer text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 border border-transparent"
-              title="Download University and Secondary exams in offline SQLite database bundles"
+              title="Download official and university exams for offline practice"
             >
               <Download className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-              <span>Offline Library</span>
+              <span>Download Exams</span>
             </button>
           )}
         </nav>

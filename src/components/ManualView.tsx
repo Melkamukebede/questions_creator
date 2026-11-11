@@ -201,13 +201,13 @@ OUTPUT RULES (PHONE-OPTIMIZED EXACT LATEX):
                 Create with Agent
               </span>
               <span>·</span>
-              <span>Multi-Agent Loop · KaTeX STEM · SQLite Export</span>
+              <span>Multi-Agent Loop · KaTeX STEM · Offline Ready</span>
             </div>
             <h3 className="text-base font-bold text-slate-950 dark:text-white font-['Outfit',sans-serif]">
               Autonomous 3-Agent AI Pipeline (Curator &rarr; Author &rarr; Adversarial Critic)
             </h3>
             <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl leading-relaxed">
-              Agent A reads curriculum syllabus · Agent B drafts KaTeX-formatted STEM problems · Agent C audits zero hallucinations before saving to Cloud Firestore and exporting portable offline SQLite database files.
+              Agent A reads curriculum syllabus · Agent B drafts KaTeX-formatted STEM problems · Agent C audits zero hallucinations before saving to your online &amp; offline exam library.
             </p>
           </div>
           <button

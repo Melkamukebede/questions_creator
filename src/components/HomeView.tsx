@@ -39,6 +39,11 @@ import { UserTierStatus } from '../services/subscriptionLimits';
 import { SinahardLogo } from './SinahardLogo';
 import { prefetchCreateWizard, prefetchPracticeModal } from '../services/prefetch';
 import { useNotifications } from '../context/NotificationContext';
+import {
+  doesExamMatchStudentClass,
+  isStudentClassLocked,
+  formatClassLevelLabel,
+} from '../utils/classLevelFilter';
 
 export interface HomeViewProps {
   exams: Exam[];
@@ -107,9 +112,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const isTeacher = Boolean(user && isUserTeacher(user));
   const isPremiumActive = isUserSubscriptionActive(activeSubscription || null);
   const { studyStreakDays, completedToday, dailyGoal } = useNotifications();
+  const classLocked = isStudentClassLocked(user, isAdmin);
 
-  // Student Metrics (only used when student/admin)
-  const totalQuestions = exams.reduce((acc, e) => acc + (e.questions?.length || 0), 0);
+  const scopedExams = useMemo(() => {
+    if (!classLocked) return exams;
+    return exams.filter((e) => doesExamMatchStudentClass(e, user, isAdmin));
+  }, [exams, classLocked, user, isAdmin]);
+
+  // Student Metrics (scoped to registered class for students, all exams for Admin/Guest)
+  const totalQuestions = scopedExams.reduce((acc, e) => acc + (e.questions?.length || 0), 0);
   const avgScore = results.length
     ? Math.round(results.reduce((acc, r) => acc + (r.percentage || 0), 0) / results.length)
     : 0;
@@ -295,7 +306,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
               <h1 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-950 dark:text-white tracking-tight leading-snug">
                 {isAdmin
-                  ? 'National Curriculum & Cloud Firestore Manager'
+                  ? 'National Curriculum & Exam Library Manager'
                   : `Welcome, Teacher ${user?.teacherName || user?.displayName || 'Educator'}`}
               </h1>
 
@@ -314,7 +325,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       2
                     </span>
                     <span>
-                      <strong className="text-slate-950 dark:text-white">Publish:</strong> Push tests to Cloud Firestore for student access.
+                      <strong className="text-slate-950 dark:text-white">Publish:</strong> Share exams online for student access.
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
@@ -322,13 +333,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       3
                     </span>
                     <span>
-                      <strong className="text-slate-950 dark:text-white">Manage:</strong> Edit or export offline drafts in My School.
+                      <strong className="text-slate-950 dark:text-white">Manage:</strong> Edit or export saved exams in My School.
                     </span>
                   </div>
                 </div>
               ) : (
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
-                  Curate official university and secondary examinations, verify Ethiopian Birr subscriptions, and manage Cloud Firestore records.
+                  Curate official university and secondary examinations, verify Ethiopian Birr subscriptions, and manage shared exam records.
                 </p>
               )}
             </div>
@@ -438,14 +449,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
-                    Cloud Firestore
+                    Published Online
                   </span>
                   <CloudUpload className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                 </div>
                 <div className="text-2xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
                   {teacherPushedCount}
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Published online</div>
+                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Shared with students</div>
               </div>
 
               <div
@@ -458,14 +469,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
-                    Local Drafts
+                    Saved on Device
                   </span>
                   <HardDrive className="w-4 h-4 text-slate-700 dark:text-zinc-300" />
                 </div>
                 <div className="text-2xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
                   {teacherLocalCount}
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Offline storage</div>
+                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Private drafts</div>
               </div>
 
               <div
@@ -497,7 +508,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   My Created Class Exams
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                  View, edit, test-run, or publish your exams to Cloud Firestore.
+                  View, edit, test-run, or publish your exams online for students.
                 </p>
               </div>
 
@@ -522,7 +533,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Cloud ({teacherPushedCount})
+                  Published ({teacherPushedCount})
                 </button>
                 <button
                   type="button"
@@ -533,7 +544,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  Local ({teacherLocalCount})
+                  On Device ({teacherLocalCount})
                 </button>
               </div>
             </div>
@@ -543,9 +554,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <BookOpen className="w-7 h-7 text-slate-400 dark:text-zinc-500 mx-auto" />
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-['Outfit',sans-serif]">
                   {teacherExamFilter === 'pushed'
-                    ? 'No exams pushed to Cloud Firestore yet'
+                    ? 'No exams published online yet'
                     : teacherExamFilter === 'local'
-                    ? 'No local drafts found'
+                    ? 'No saved drafts found on device'
                     : 'You haven’t created any exams yet'}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
@@ -575,7 +586,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-zinc-400 font-medium tabular-nums">
                           <span className={isPushed ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'font-semibold'}>
-                            {isPushed ? 'Cloud Synced' : 'Local Draft'}
+                            {isPushed ? 'Published Online' : 'Saved on Device'}
                           </span>
                           <span>
                             {questionsCount} Qs · {exam.timeLimit || 60}m
@@ -599,7 +610,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                               className="px-3 py-1.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold transition cursor-pointer flex items-center gap-1.5 active:scale-95 whitespace-nowrap"
                             >
                               <CloudUpload className="w-3.5 h-3.5" />
-                              <span>{isPushed ? 'Update Cloud' : 'Push to Cloud'}</span>
+                              <span>{isPushed ? 'Update Online' : 'Publish Online'}</span>
                             </button>
                           )}
                           <button
@@ -669,20 +680,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="space-y-1.5 max-w-2xl">
                   <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold text-slate-600 dark:text-zinc-400">
                     <span className="text-sky-700 dark:text-sky-300 font-bold">
-                      Dual-Tier Repository
+                      {classLocked ? formatClassLevelLabel(user?.grade) : 'Dual-Tier Repository'}
                     </span>
                     <span>·</span>
-                    <span>University &amp; Secondary</span>
+                    <span>{classLocked ? 'Registered Class Workspace' : 'University & Secondary'}</span>
                     <span>·</span>
                     <span className="text-emerald-700 dark:text-emerald-400 font-bold">
                       100% Offline Ready
                     </span>
+                    {classLocked && onOpenRegistrationModal && (
+                      <>
+                        <span>·</span>
+                        <button
+                          type="button"
+                          onClick={onOpenRegistrationModal}
+                          className="text-sky-600 dark:text-sky-400 hover:underline font-bold cursor-pointer"
+                        >
+                          Change Class
+                        </button>
+                      </>
+                    )}
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-950 dark:text-white leading-snug">
                     Bridging the Gap from Reading to Active Practice
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
-                    Practice official university Freshman &amp; Senior archives (AAU, ASTU, Hawassa, Jimma) and secondary matriculation exams with rendered KaTeX formulas, diagrams, and zero internet requirement.
+                    {classLocked
+                      ? `Practice curated exams for ${formatClassLevelLabel(user?.grade)} with rendered KaTeX formulas, diagrams, and step-by-step explanations.`
+                      : 'Practice official university Freshman & Senior archives (AAU, ASTU, Hawassa, Jimma) and secondary matriculation exams with rendered KaTeX formulas, diagrams, and zero internet requirement.'}
                   </p>
                 </div>
               </div>
@@ -698,14 +723,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <span>Explore Exams</span>
                 </button>
 
-                {onOpenDownloadCenter && (
+                {(onOpenDownloadCenter || onOpenCuratedModal) && (
                   <button
                     type="button"
-                    onClick={onOpenDownloadCenter}
+                    onClick={onOpenDownloadCenter || onOpenCuratedModal}
                     className="px-4 py-2.5 rounded-full liquid-glass-btn text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
                   >
                     <Download className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                    <span>Offline Bundles</span>
+                    <span>Download Exams</span>
                   </button>
                 )}
 
@@ -900,9 +925,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <BookOpen className="w-4 h-4 text-slate-700 dark:text-zinc-300" />
                 </div>
                 <div className="text-2xl font-bold font-['Outfit',sans-serif] tabular-nums text-slate-950 dark:text-white">
-                  {exams.length}
+                  {scopedExams.length}
                 </div>
-                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">Curriculum sets</div>
+                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+                  {classLocked ? formatClassLevelLabel(user?.grade) : 'Curriculum sets'}
+                </div>
               </div>
 
               <div

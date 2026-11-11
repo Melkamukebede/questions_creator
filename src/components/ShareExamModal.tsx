@@ -120,7 +120,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
       if (!isAlreadyInCloud && currentList.length >= MAX_USER_SHARED_EXAMS) {
         setCloudSyncStatus('error');
         setCloudSyncError(
-          `Firebase Storage limit reached (${currentList.length}/${MAX_USER_SHARED_EXAMS}). Delete one of your shared exams below to share this exam.`
+          `Sharing limit reached (${currentList.length}/${MAX_USER_SHARED_EXAMS}). Remove one of your shared exams below to share this exam.`
         );
         setShowManageShared(true);
         return;
@@ -137,7 +137,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
       fetchUserSharedExams();
     } else {
       setCloudSyncStatus('error');
-      setCloudSyncError(result.error || 'Failed to upload exam to cloud.');
+      setCloudSyncError(result.error || 'Failed to prepare share link.');
       if (result.error?.includes('limit reached')) {
         setShowManageShared(true);
       }
@@ -152,7 +152,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
         if (!isPrivileged && items.length >= MAX_USER_SHARED_EXAMS && !isAlreadyInCloud) {
           setCloudSyncStatus('error');
           setCloudSyncError(
-            `Firebase Storage limit reached (${items.length}/${MAX_USER_SHARED_EXAMS}). Delete one of your shared exams below to share this exam.`
+            `Sharing limit reached (${items.length}/${MAX_USER_SHARED_EXAMS}). Remove one of your shared exams below to share this exam.`
           );
           setShowManageShared(true);
         } else {
@@ -162,35 +162,35 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
     }
   }, [isOpen, exam?.id, handlePublishToCloud, fetchUserSharedExams, compactExamId, isPrivileged]);
 
-  // Delete a shared exam to free up a slot in Firebase
+  // Delete a shared exam to free up a sharing slot
   const handleDeleteSharedExam = async (examIdToDelete: string) => {
     setIsDeletingId(examIdToDelete);
     setActionNotice(null);
     try {
       const res = await deleteExamFromCloud(examIdToDelete);
       if (res.success) {
-        setActionNotice('Exam removed from Firebase! Storage slot freed.');
+        setActionNotice('Exam removed from active sharing! Slot freed.');
         const updatedList = await fetchUserSharedExams();
         // If we were waiting to share the current exam because of the limit, publish it now
         if (
           !isCurrentExamInCloud &&
           (cloudSyncStatus === 'error' || updatedList.length < MAX_USER_SHARED_EXAMS)
         ) {
-          setActionNotice('Storage slot freed! Generating share link for this exam...');
+          setActionNotice('Slot freed! Generating share link for this exam...');
           await handlePublishToCloud(true);
         }
       } else {
-        setActionNotice(`Failed to delete: ${res.error || 'Unknown error'}`);
+        setActionNotice(`Failed to remove: ${res.error || 'Unknown error'}`);
       }
     } catch (err: any) {
-      setActionNotice(`Failed to delete exam: ${err.message || 'Error'}`);
+      setActionNotice(`Failed to remove exam: ${err.message || 'Error'}`);
     } finally {
       setIsDeletingId(null);
       setTimeout(() => setActionNotice(null), 4000);
     }
   };
 
-  // Unshare the current exam from Firebase
+  // Unshare the current exam
   const handleUnshareCurrentExam = async () => {
     if (!compactExamId) return;
     setIsDeletingId(compactExamId);
@@ -198,7 +198,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
     try {
       const res = await deleteExamFromCloud(compactExamId);
       if (res.success) {
-        setActionNotice('Exam unshared and removed from Firebase.');
+        setActionNotice('Exam unshared. Link disabled.');
         setCloudSyncStatus('idle');
         fetchUserSharedExams();
       } else {
@@ -341,16 +341,16 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
           )}
 
           {/* ─────────────────────────────────────────────────────────────
-              FIREBASE STORAGE LIMIT & PRIVILEGE QUOTA BAR
+              SHARING LIMIT & PRIVILEGE QUOTA BAR
           ───────────────────────────────────────────────────────────── */}
           {isPrivileged ? (
             <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-800 dark:text-sky-200 text-xs flex items-center justify-between gap-2.5">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
                 <div>
-                  <span className="font-bold">Unlimited Cloud Storage</span>
+                  <span className="font-bold">Unlimited Exam Sharing</span>
                   <span className="text-zinc-500 dark:text-zinc-400 ml-1.5 font-normal">
-                    (Teacher / Admin Privilege: Unlimited creation &amp; sharing)
+                    (Teacher / Admin Privilege)
                   </span>
                 </div>
               </div>
@@ -369,8 +369,8 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
             <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5 font-bold text-zinc-900 dark:text-white">
-                  <Database className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-                  <span>Firebase Shared Storage Quota</span>
+                  <Share2 className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                  <span>Active Shared Exams</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span
@@ -380,7 +380,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
                         : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                     }`}
                   >
-                    {userSharedExams.length} / {MAX_USER_SHARED_EXAMS} Exams Shared
+                    {userSharedExams.length} / {MAX_USER_SHARED_EXAMS} Shared
                   </span>
                   {userSharedExams.length > 0 && (
                     <button
@@ -412,12 +412,12 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
               <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
                 <span>
                   {userSharedExams.length >= MAX_USER_SHARED_EXAMS
-                    ? 'Storage limit reached (5/5). Delete a shared exam to free space.'
-                    : `${MAX_USER_SHARED_EXAMS - userSharedExams.length} shared exam slot${
+                    ? 'Sharing limit reached (5/5). Remove a shared exam to share a new one.'
+                    : `${MAX_USER_SHARED_EXAMS - userSharedExams.length} sharing slot${
                         MAX_USER_SHARED_EXAMS - userSharedExams.length === 1 ? '' : 's'
                       } remaining.`}
                 </span>
-                <span className="italic">Unlimited for Teachers &amp; Admins</span>
+                <span className="italic">Unlimited for Teachers</span>
               </div>
             </div>
           )}
@@ -431,10 +431,10 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
                 <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-bold font-['Outfit',sans-serif]">
-                    Firebase Storage Limit Reached ({userSharedExams.length}/{MAX_USER_SHARED_EXAMS})
+                    Sharing Limit Reached ({userSharedExams.length}/{MAX_USER_SHARED_EXAMS})
                   </h4>
                   <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
-                    Regular accounts can store up to 5 shared exams in Firebase. Delete one of your previously shared exams below to free up a slot and immediately share <strong>"{exam.name}"</strong>.
+                    Student accounts can share up to 5 exams at a time. Remove one of your previously shared exams below to share <strong>"{exam.name}"</strong>.
                   </p>
                 </div>
               </div>
@@ -442,7 +442,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
               {/* Shared Exams List with Delete Buttons */}
               <div className="space-y-2 pt-1">
                 <div className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                  Delete an Exam to Free a Slot:
+                  Remove an Exam to Free a Slot:
                 </div>
                 {userSharedExams.map((sharedItem) => (
                   <div
@@ -466,14 +466,14 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
                       disabled={isDeletingId === sharedItem.id}
                       onClick={() => handleDeleteSharedExam(sharedItem.id)}
                       className="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold flex items-center gap-1 transition cursor-pointer active:scale-95 shadow-2xs shrink-0 disabled:opacity-50"
-                      title="Delete from Firebase and free slot"
+                      title="Stop sharing and free slot"
                     >
                       {isDeletingId === sharedItem.id ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
                       ) : (
                         <Trash2 className="w-3 h-3" />
                       )}
-                      <span>Delete &amp; Share</span>
+                      <span>Remove &amp; Share</span>
                     </button>
                   </div>
                 ))}
@@ -488,11 +488,11 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
             <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200/80 dark:border-white/10 space-y-2.5 animate-in fade-in duration-150">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>Your Shared Exams in Firebase ({userSharedExams.length})</span>
+                  <Share2 className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>Your Shared Exams ({userSharedExams.length})</span>
                 </span>
                 <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-                  Delete anytime to manage your storage
+                  Remove anytime to manage slots
                 </span>
               </div>
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -519,7 +519,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
                       disabled={isDeletingId === item.id}
                       onClick={() => handleDeleteSharedExam(item.id)}
                       className="p-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer active:scale-95 disabled:opacity-50"
-                      title="Delete from Firebase"
+                      title="Stop sharing exam"
                     >
                       {isDeletingId === item.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -533,12 +533,12 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
             </div>
           )}
 
-          {/* Cloud Synchronization Status Banner */}
+          {/* Link Preparation Status Banner */}
           {cloudSyncStatus === 'syncing' && (
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs flex items-center justify-between gap-2.5">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-amber-600 dark:text-amber-400 shrink-0" />
-                <span>Uploading exam to Firebase Cloud so anyone can practice...</span>
+                <span>Preparing shareable link so anyone can practice...</span>
               </div>
             </div>
           )}
@@ -548,7 +548,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span className="font-medium">
-                  Exam uploaded to Firebase! Anyone with this link can practice instantly.
+                  Share link ready! Anyone with this link can practice immediately.
                 </span>
               </div>
             </div>
@@ -559,7 +559,7 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
               <div className="flex items-center gap-2 min-w-0">
                 <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                 <span className="truncate">
-                  Cloud upload: {cloudSyncError || 'Network issue'}
+                  Link setup: {cloudSyncError || 'Connection issue'}
                 </span>
               </div>
               <button
@@ -589,17 +589,17 @@ export const ShareExamModal: React.FC<ShareExamModalProps> = ({
                 </span>
               </div>
 
-              {/* Unshare button if this exam is already in cloud */}
+              {/* Stop sharing button if this exam is currently shared */}
               {isCurrentExamInCloud && (
                 <button
                   type="button"
                   disabled={isDeletingId === compactExamId}
                   onClick={handleUnshareCurrentExam}
                   className="text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  title="Unshare from Firebase and free slot"
+                  title="Stop sharing this exam and free slot"
                 >
                   <Trash2 className="w-3 h-3" />
-                  <span>Unshare from Cloud</span>
+                  <span>Stop Sharing</span>
                 </button>
               )}
             </div>

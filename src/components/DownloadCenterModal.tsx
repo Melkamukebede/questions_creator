@@ -1,143 +1,243 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   X,
   Download,
+  CloudDownload,
   Database,
-  Filter,
+  Search,
   GraduationCap,
   BookOpen,
-  Calendar,
   Layers,
-  Sparkles,
   CheckCircle2,
   Image as ImageIcon,
   Table as TableIcon,
   Play,
   Loader2,
-  Building2,
   Clock,
   ChevronDown,
+  ChevronUp,
   Check,
   Cloud,
+  RefreshCw,
+  Sparkles,
+  RotateCcw,
 } from 'lucide-react';
-import { Exam, ETHIOPIAN_UNIVERSITIES, FRESHMAN_SUBJECTS, SECONDARY_SUBJECTS, YearDurationFilter } from '../types';
+import { Exam, YearDurationFilter } from '../types';
 import { downloadMultiExamSqliteBundle } from '../services/sqliteService';
-import { CURATED_OFFICIAL_EXAMS } from '../services/supabaseService';
+import {
+  CURATED_OFFICIAL_EXAMS,
+  fetchOfficialExams,
+  getSupabaseConfig,
+} from '../services/supabaseService';
+import { CURATED_EXAMS_CATALOG } from '../data/curatedCatalog';
 import { addDownloadedExamsToRepository, isUserAdmin } from '../services/db';
 import { useAuth } from '../context/AuthContext';
+import { MathRenderer } from './MathRenderer';
+import {
+  normalizeClassLevel,
+  getExamClassLevel,
+  isStudentClassLocked,
+  doesExamMatchStudentClass,
+  formatClassLevelLabel,
+} from '../utils/classLevelFilter';
 
 interface DownloadCenterModalProps {
   isOpen: boolean;
   onClose: () => void;
   allExams: Exam[];
-  userAcademicYear?: string; // e.g. 'Freshman'
+  userAcademicYear?: string;
   userUniversity?: string;
   onStartExam?: (exam: Exam) => void;
   onOpenSupabaseConfig?: () => void;
   onExamsDownloaded?: (downloadedExams: Exam[]) => void;
+  downloadedCatalogIds?: string[];
 }
+
+const LEVEL_FILTERS = [
+  { id: 'All', label: 'All Levels' },
+  { id: '12', label: 'Grade 12' },
+  { id: '11', label: 'Grade 11' },
+  { id: '10', label: 'Grade 10' },
+  { id: '9', label: 'Grade 9' },
+  { id: 'Freshman', label: 'Univ Freshman' },
+  { id: 'Senior University', label: 'Univ Senior' },
+];
 
 export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
   isOpen,
   onClose,
   allExams,
-  userAcademicYear = 'Freshman',
-  userUniversity,
+  userAcademicYear,
   onStartExam,
   onOpenSupabaseConfig,
   onExamsDownloaded,
+  downloadedCatalogIds = [],
 }) => {
-  const { user } = useAuth();
+  const { user, openRegistrationModal } = useAuth();
   const isAdmin = Boolean(user && !user.isAnonymous && user.uid !== 'guest' && isUserAdmin(user));
+  const classLocked = isStudentClassLocked(user, isAdmin);
+  const studentLockedLevel = useMemo(
+    () => normalizeClassLevel(user?.grade || userAcademicYear || '12'),
+    [user?.grade, userAcademicYear]
+  );
 
-  // Merge prop exams with curated official exams (deduplicated by ID)
+  // Cloud-fetched exams from Supabase & Firestore
+  const [cloudExams, setCloudExams] = useState<Exam[]>([]);
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
+
+  // Determine default level filter from user profile if available, else 'All'
+  const initialLevel = useMemo(() => {
+    if (classLocked) return studentLockedLevel;
+    const raw = String(user?.grade || userAcademicYear || '').trim();
+    if (LEVEL_FILTERS.some((l) => l.id.toLowerCase() === raw.toLowerCase() && l.id !== 'All')) {
+      return LEVEL_FILTERS.find((l) => l.id.toLowerCase() === raw.toLowerCase())!.id;
+    }
+    return 'All';
+  }, [classLocked, studentLockedLevel, user?.grade, userAcademicYear]);
+
+  // Simplified filter state
+  const [selectedLevel, setSelectedLevel] = useState<string>(() =>
+    classLocked ? studentLockedLevel : 'All'
+  );
+  const [selectedSubject, setSelectedSubject] = useState<string>('All');
+  const [yearDuration, setYearDuration] = useState<YearDurationFilter>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [previewExamId, setPreviewExamId] = useState<string | null>(null);
+
+  // Sync selectedLevel whenever student class lock or grade changes
+  useEffect(() => {
+    if (classLocked) {
+      setSelectedLevel(studentLockedLevel);
+    }
+  }, [classLocked, studentLockedLevel]);
+
+  // Action states
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const [savedExamIds, setSavedExamIds] = useState<Record<string, boolean>>({});
+
+  // Sync live exams from Supabase & Cloud when modal opens
+  const syncCloudCatalog = useCallback(async () => {
+    setIsSyncingCloud(true);
+    try {
+      const remote = await fetchOfficialExams();
+      if (remote && remote.length > 0) {
+        setCloudExams(remote);
+      }
+    } catch {
+      // Fallback to local & Firestore exams seamlessly
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      syncCloudCatalog();
+    }
+  }, [isOpen, syncCloudCatalog]);
+
+  // Merge Supabase, Firebase Cloud, and Curated Official Catalog (deduplicated by ID & scoped to student class if locked)
   const combinedExams = useMemo(() => {
     const map = new Map<string, Exam>();
+    for (const ex of CURATED_EXAMS_CATALOG) {
+      map.set(ex.id, ex);
+    }
     for (const ex of CURATED_OFFICIAL_EXAMS) {
       map.set(ex.id, ex);
     }
     for (const ex of allExams) {
       map.set(ex.id, ex);
     }
-    return Array.from(map.values());
-  }, [allExams]);
+    for (const ex of cloudExams) {
+      map.set(ex.id, ex);
+    }
+    const allList = Array.from(map.values());
+    if (classLocked) {
+      return allList.filter((ex) => doesExamMatchStudentClass(ex, user, isAdmin));
+    }
+    return allList;
+  }, [allExams, cloudExams, classLocked, user, isAdmin]);
 
-  // Catalog Level: 'university' or 'secondary'
-  const isFreshmanUser = userAcademicYear?.toLowerCase().includes('freshman');
-  const [selectedTier, setSelectedTier] = useState<'university' | 'secondary'>(
-    isFreshmanUser ? 'university' : 'secondary'
-  );
+  // Normalize exam level label
+  const getNormalizedLevel = (exam: Exam): string => {
+    return getExamClassLevel(exam);
+  };
 
-  // Filters state
-  const [selectedUniversity, setSelectedUniversity] = useState<string>(userUniversity || 'All');
-  const [selectedSubject, setSelectedSubject] = useState<string>('All');
-  const [selectedSemester, setSelectedSemester] = useState<'All' | 'Semester 1' | 'Semester 2'>('All');
-  const [selectedExamType, setSelectedExamType] = useState<string>('All');
-  const [yearDuration, setYearDuration] = useState<YearDurationFilter>('all');
-  const [isExporting, setIsExporting] = useState<boolean>(false);
-  const [exportNotice, setExportNotice] = useState<string | null>(null);
-  const [savedExamIds, setSavedExamIds] = useState<Record<string, boolean>>({});
+  const effectiveSelectedLevel = classLocked ? studentLockedLevel : selectedLevel;
 
-  // Compute filtered exams
+  // Dynamic subject list based on current level selection
+  const availableSubjects = useMemo(() => {
+    const set = new Set<string>();
+    combinedExams.forEach((e) => {
+      const level = getNormalizedLevel(e);
+      if (effectiveSelectedLevel === 'All' || level === effectiveSelectedLevel) {
+        if (e.subject?.trim()) set.add(e.subject.trim());
+      }
+    });
+    return ['All', ...Array.from(set).sort()];
+  }, [combinedExams, effectiveSelectedLevel]);
+
+  // Filtered exams
   const filteredExams = useMemo(() => {
     return combinedExams.filter((exam) => {
-      // 1. Tier Filter
-      const examTier = exam.tier || (exam.university || exam.grade === 'Freshman' ? 'university' : 'secondary');
-      if (selectedTier !== examTier) return false;
-
-      // 2. University Filter (if university tier)
-      if (selectedTier === 'university' && selectedUniversity !== 'All') {
-        const matchesUni = (exam.university || '').toLowerCase().includes(selectedUniversity.toLowerCase());
-        if (!matchesUni) return false;
+      // 1. Level Filter
+      if (effectiveSelectedLevel !== 'All') {
+        const examLevel = getNormalizedLevel(exam);
+        if (examLevel !== effectiveSelectedLevel) return false;
       }
 
-      // 3. Subject Filter
+      // 2. Subject Filter
       if (selectedSubject !== 'All') {
         const sub = (exam.subject || '').toLowerCase();
         const targetSub = selectedSubject.toLowerCase();
-        if (!sub.includes(targetSub) && !targetSub.includes(sub)) return false;
+        if (sub !== targetSub && !sub.includes(targetSub)) return false;
       }
 
-      // 4. Semester Filter
-      if (selectedSemester !== 'All') {
-        if (exam.semester && exam.semester !== 'All' && exam.semester !== selectedSemester) return false;
+      // 3. Year Duration Filter (All, 1-3 Yrs, 1-5 Yrs)
+      if (yearDuration !== 'all') {
+        const rawYear = String(exam.examYear || exam.targetExamYear || '');
+        const yearNum = parseInt(rawYear.replace(/[^0-9]/g, '').slice(0, 4) || '2025', 10);
+        const isEc = yearNum <= 2020;
+        const refYear = isEc ? 2018 : 2026;
+        const diff = Math.max(0, refYear - yearNum);
+        if (yearDuration === '1-3' && diff > 3) return false;
+        if (yearDuration === '1-5' && diff > 5) return false;
       }
 
-      // 5. Exam Type Filter (Mid vs Final)
-      if (selectedExamType !== 'All') {
-        const type = (exam.examType || '').toLowerCase();
-        const targetType = selectedExamType.toLowerCase();
-        if (!type.includes(targetType)) return false;
-      }
-
-      // 6. Year Duration Filter
-      const rawYear = String(exam.examYear || '');
-      const yearNum = parseInt(rawYear.replace(/[^0-9]/g, '').slice(0, 4) || '2024', 10);
-      const currentEcyear = 2017;
-      const currentGcyear = 2025;
-      const isEc = yearNum <= 2020;
-      const refYear = isEc ? currentEcyear : currentGcyear;
-      const diff = Math.max(0, refYear - yearNum);
-
-      if (yearDuration === '1-3') {
-        if (diff > 3) return false;
-      } else if (yearDuration === '1-5') {
-        if (diff > 5) return false;
+      // 4. Search Filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const title = `${exam.title || ''} ${exam.name || ''}`.toLowerCase();
+        const sub = (exam.subject || '').toLowerCase();
+        const topic = (exam.topic || '').toLowerCase();
+        const uni = (exam.university || exam.school || '').toLowerCase();
+        if (!title.includes(q) && !sub.includes(q) && !topic.includes(q) && !uni.includes(q)) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [combinedExams, selectedTier, selectedUniversity, selectedSubject, selectedSemester, selectedExamType, yearDuration]);
+  }, [combinedExams, effectiveSelectedLevel, selectedSubject, yearDuration, searchQuery]);
 
-  // Aggregate stats
   const totalQuestionsInFilter = useMemo(() => {
     return filteredExams.reduce((sum, e) => sum + (e.questions?.length || 0), 0);
   }, [filteredExams]);
 
   if (!isOpen) return null;
 
-  // Handle in-app repository download (Zero file clutter, zero WASM failure)
-  const handleDownloadQuestionsToRepository = () => {
+  const isExamSaved = (exam: Exam) => {
+    return Boolean(
+      savedExamIds[exam.id] ||
+        exam.isDownloaded ||
+        downloadedCatalogIds.includes(exam.id) ||
+        downloadedCatalogIds.includes(exam.catalogId || '')
+    );
+  };
+
+  // Download all matching exams into in-app repository
+  const handleDownloadAllMatching = () => {
     if (filteredExams.length === 0) return;
     setIsExporting(true);
     setExportNotice(null);
@@ -152,14 +252,14 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
       setSavedExamIds(newlySaved);
 
       setExportNotice(
-        `Downloaded ${filteredExams.length} official exams (${totalQuestionsInFilter} questions with diagrams & tables) directly into your local Exams Repository! Ready for zero-data offline practice.`
+        `Saved ${filteredExams.length} exams (${totalQuestionsInFilter} questions) to your Exams Library!`
       );
 
       if (onExamsDownloaded) {
         onExamsDownloaded(filteredExams);
       }
 
-      setTimeout(() => setExportNotice(null), 5500);
+      setTimeout(() => setExportNotice(null), 4500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Save failed';
       setExportNotice(`Download error: ${msg}`);
@@ -168,23 +268,23 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
     }
   };
 
-  // Handle single exam save to local repository
+  // Save single exam to local repository
   const handleSaveSingleExam = (exam: Exam) => {
     try {
       addDownloadedExamsToRepository([exam]);
       setSavedExamIds((prev) => ({ ...prev, [exam.id]: true }));
-      setExportNotice(`Saved "${exam.title || exam.name}" into your Exams Repository for offline practice!`);
+      setExportNotice(`Saved "${exam.title || exam.name}" to your Exams Library!`);
       if (onExamsDownloaded) {
         onExamsDownloaded([exam]);
       }
-      setTimeout(() => setExportNotice(null), 4000);
+      setTimeout(() => setExportNotice(null), 3500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Save failed';
       setExportNotice(`Save error: ${msg}`);
     }
   };
 
-  // Practice immediately (auto-caches to local repository on first attempt)
+  // Start practice directly
   const handleStartExamSession = (exam: Exam) => {
     addDownloadedExamsToRepository([exam]);
     setSavedExamIds((prev) => ({ ...prev, [exam.id]: true }));
@@ -196,365 +296,421 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
     }
   };
 
-  // Optional manual file export for developers
-  const handleManualSqliteExport = async () => {
+  // Optional offline backup file export (Admin only)
+  const handleExportSqliteBundle = async () => {
     if (filteredExams.length === 0) return;
     setIsExporting(true);
     try {
-      const durationLabel = yearDuration === '1-3' ? 'Past_1_3_Years' : yearDuration === '1-5' ? 'Past_1_5_Years' : 'All_Years';
-      const levelLabel = selectedTier === 'university' ? 'University_Freshman' : 'Secondary_Matric';
-      const bundleTitle = `SinaHard_${levelLabel}_${durationLabel}_Bundle`;
+      const durationLabel =
+        yearDuration === '1-3' ? '1_3_Yrs' : yearDuration === '1-5' ? '1_5_Yrs' : 'All_Yrs';
+      const levelLabel = selectedLevel === 'All' ? 'All_Levels' : `Level_${selectedLevel}`;
+      const bundleTitle = `Sinahard_${levelLabel}_${durationLabel}_Pack`;
 
       const result = await downloadMultiExamSqliteBundle(bundleTitle, filteredExams);
-      setExportNotice(`Exported raw file: ${result.fileName} (${(result.sizeBytes / 1024).toFixed(1)} KB)`);
-      setTimeout(() => setExportNotice(null), 5000);
+      setExportNotice(
+        `Downloaded offline backup file: ${result.fileName} (${(result.sizeBytes / 1024).toFixed(1)} KB)`
+      );
+      setTimeout(() => setExportNotice(null), 4500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Export failed';
-      setExportNotice(`File export error: ${msg}`);
+      setExportNotice(`Backup export error: ${msg}`);
     } finally {
       setIsExporting(false);
     }
   };
 
+  const handleResetFilters = () => {
+    if (!classLocked) {
+      setSelectedLevel('All');
+    }
+    setSelectedSubject('All');
+    setYearDuration('all');
+    setSearchQuery('');
+  };
+
+  const supabaseLinked = getSupabaseConfig().isConfigured;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-[28px] sm:rounded-[32px] liquid-glass text-zinc-900 dark:text-white border border-white/70 dark:border-white/15 shadow-2xl overflow-hidden backdrop-blur-2xl">
-        
-        {/* Header */}
-        <div className="px-5 sm:px-6 py-4 border-b border-white/60 dark:border-white/10 flex items-center justify-between bg-white/40 dark:bg-white/[0.02] backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-xs">
-              <Download className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-150 font-['Plus_Jakarta_Sans',sans-serif]">
+      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-[28px] sm:rounded-[32px] liquid-glass text-slate-900 dark:text-white border border-white/75 dark:border-white/15 shadow-2xl overflow-hidden backdrop-blur-2xl">
+        {/* ─────────────────────────────────────────────────────────────
+            HEADER: UNIFIED DOWNLOAD EXAMS
+        ───────────────────────────────────────────────────────────── */}
+        <div className="px-5 sm:px-6 py-4 border-b border-white/60 dark:border-white/10 flex items-center justify-between gap-3 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl liquid-glass-subtle text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+              <CloudDownload className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base font-['Outfit',sans-serif] text-zinc-950 dark:text-white">
-                  Exam Repository &amp; Offline Download Center
-                </h3>
-                <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                  Zero-Data Offline Ready
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-bold text-base sm:text-lg font-['Outfit',sans-serif] text-slate-950 dark:text-white tracking-tight">
+                  Download Exams
+                </h2>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                  {isAdmin
+                    ? supabaseLinked
+                      ? 'Official Library Connected'
+                      : 'Online Library Ready'
+                    : 'Works Without Internet'}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Download questions with technical diagrams and tables directly into your in-app Exams Repository
+              <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
+                Save exams to your phone or computer and practice anytime offline
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={syncCloudCatalog}
+              disabled={isSyncingCloud}
+              className="px-3 py-1.5 rounded-full liquid-glass-btn text-xs font-bold flex items-center gap-1.5 cursor-pointer transition disabled:opacity-50"
+              title="Check for newly added exams"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-sky-600 dark:text-sky-400 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isSyncingCloud ? 'Updating...' : 'Refresh'}</span>
+            </button>
+
             {isAdmin && onOpenSupabaseConfig && (
               <button
                 type="button"
                 onClick={onOpenSupabaseConfig}
-                className="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-[#0f1d33] hover:bg-zinc-200 dark:hover:bg-[#132238] text-zinc-700 dark:text-zinc-300 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer border border-zinc-200 dark:border-white/10"
-                title="Admin: Configure Supabase Cloud Storage (No Credit Card)"
+                className="px-3 py-1.5 rounded-full liquid-glass-btn text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+                title="Admin: Link or manage media storage"
               >
                 <Cloud className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="hidden sm:inline">Supabase Storage</span>
+                <span className="hidden sm:inline">Admin Setup</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-[#0f1d33] text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
+              className="w-8 h-8 rounded-full liquid-glass-btn text-slate-600 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white flex items-center justify-center transition cursor-pointer"
+              aria-label="Close"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Scrollable Body */}
-        <div className="overflow-y-auto p-5 sm:p-6 space-y-6 flex-1">
-          
-          {/* Tier Switcher (University vs Secondary) */}
-          <div className="flex items-center justify-between flex-wrap gap-3 p-1.5 rounded-2xl bg-zinc-100 dark:bg-[#091322] border border-zinc-200/80 dark:border-white/10">
-            <div className="flex items-center gap-1.5 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedTier('university');
-                  setSelectedSubject('All');
-                }}
-                className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                  selectedTier === 'university'
-                    ? 'bg-white dark:bg-[#0f1d33] text-zinc-950 dark:text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
-                }`}
-              >
-                <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>University Vault (Freshman &amp; Remedial)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedTier('secondary');
-                  setSelectedSubject('All');
-                }}
-                className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
-                  selectedTier === 'secondary'
-                    ? 'bg-white dark:bg-[#0f1d33] text-zinc-950 dark:text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                <span>Secondary Vault (Grades 7–12 Matric)</span>
-              </button>
-            </div>
-
-            {/* Year Duration Chips */}
-            <div className="flex items-center gap-1 px-2 py-1 w-full sm:w-auto justify-end">
-              <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide mr-1 hidden sm:inline">
-                Year Duration:
-              </span>
-              {(['all', '1-3', '1-5'] as YearDurationFilter[]).map((dur) => (
-                <button
-                  key={dur}
-                  type="button"
-                  onClick={() => setYearDuration(dur)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    yearDuration === dur
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {dur === 'all' ? 'All Years' : dur === '1-3' ? 'Past 1–3 Yrs' : 'Past 1–5 Yrs'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Filter Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10">
-            {/* University Selector (if university tier) */}
-            {selectedTier === 'university' && (
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                  <Building2 className="w-3 h-3 text-emerald-500" />
-                  <span>University</span>
-                </label>
-                <select
-                  value={selectedUniversity}
-                  onChange={(e) => setSelectedUniversity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
-                >
-                  <option value="All">All Ethiopian Universities</option>
-                  {ETHIOPIAN_UNIVERSITIES.map((uni) => (
-                    <option key={uni} value={uni}>{uni}</option>
-                  ))}
-                </select>
+        {/* ─────────────────────────────────────────────────────────────
+            SIMPLIFIED FILTER BAR (Level Pills + Search + Subject + Years)
+        ───────────────────────────────────────────────────────────── */}
+        <div className="px-5 sm:px-6 py-3.5 border-b border-white/60 dark:border-white/10 bg-white/30 dark:bg-black/20 space-y-3 shrink-0">
+          {/* Row 1: Level Pills (for Admin/Guest) OR Registered Class Indicator (for Registered Student) */}
+          {classLocked ? (
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2 text-xs">
+                <GraduationCap className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
+                <span className="text-slate-600 dark:text-zinc-400">Registered Class:</span>
+                <span className="font-bold text-slate-950 dark:text-white">
+                  {formatClassLevelLabel(studentLockedLevel)}
+                </span>
+                <span className="text-slate-400">·</span>
+                <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                  Showing only exams for your registered class
+                </span>
               </div>
-            )}
-
-            {/* Subject Selector */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                <BookOpen className="w-3 h-3 text-emerald-500" />
-                <span>Course / Subject</span>
-              </label>
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  openRegistrationModal();
+                }}
+                className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer whitespace-nowrap"
               >
-                <option value="All">All Subjects ({selectedTier === 'university' ? 'Freshman' : 'Grades 7–12'})</option>
-                {(selectedTier === 'university' ? FRESHMAN_SUBJECTS : SECONDARY_SUBJECTS).map((sub) => (
-                  <option key={sub} value={sub}>{sub}</option>
-                ))}
-              </select>
+                Change Class
+              </button>
             </div>
-
-            {/* Semester Selector */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-emerald-500" />
-                <span>Semester</span>
-              </label>
-              <select
-                value={selectedSemester}
-                onChange={(e) => setSelectedSemester(e.target.value as any)}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
-              >
-                <option value="All">All Semesters</option>
-                <option value="Semester 1">Semester 1</option>
-                <option value="Semester 2">Semester 2</option>
-              </select>
-            </div>
-
-            {/* Exam Type Selector (Mid vs Final) */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                <Filter className="w-3 h-3 text-emerald-500" />
-                <span>Exam Type</span>
-              </label>
-              <select
-                value={selectedExamType}
-                onChange={(e) => setSelectedExamType(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c182b] border border-zinc-200 dark:border-white/10 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-hidden cursor-pointer"
-              >
-                <option value="All">All Exam Types (Mid &amp; Final)</option>
-                <option value="Mid">Midterm Exam</option>
-                <option value="Final">Final Exam</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Feedback Alert */}
-          {exportNotice && (
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{exportNotice}</span>
+          ) : (
+            <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-0.5">
+              <div className="flex items-center gap-1.5">
+                {LEVEL_FILTERS.map((lvl) => {
+                  const isActive = selectedLevel === lvl.id;
+                  const isUserGrade = initialLevel !== 'All' && lvl.id === initialLevel;
+                  return (
+                    <button
+                      key={lvl.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedLevel(lvl.id);
+                        setSelectedSubject('All');
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
+                          : 'liquid-glass-subtle text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white'
+                      }`}
+                    >
+                      <span>{lvl.label}</span>
+                      {isUserGrade && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Your Grade" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* Download Questions Action Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-zinc-50 dark:from-emerald-500/15 dark:via-[#0c182b] dark:to-[#0c182b] border border-emerald-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30">
-                  {selectedTier === 'university' ? 'University Freshman Vault' : 'Secondary Matriculation Vault'}
-                </span>
-                <span className="text-xs text-zinc-500">
-                  {yearDuration === '1-3' ? 'Past 1–3 Years' : yearDuration === '1-5' ? 'Past 1–5 Years' : 'All Historical Years'}
-                </span>
-              </div>
-              <h4 className="font-bold text-base font-['Outfit',sans-serif] text-zinc-950 dark:text-white">
-                {filteredExams.length} Exams Ready ({totalQuestionsInFilter} Total Questions)
-              </h4>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xl">
-                Download questions with technical diagrams, circuit schematics, and markdown data tables directly into your in-app <strong>Exams Repository</strong> for instant offline practice without downloading raw files.
-              </p>
+          {/* Row 2: Search + Subject Dropdown + Year Duration Pills */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by subject, topic, university, or exam title..."
+                className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/90 dark:bg-[#070e1a] border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-sky-500/40"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
-              <button
-                type="button"
-                disabled={isExporting || filteredExams.length === 0}
-                onClick={handleDownloadQuestionsToRepository}
-                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md disabled:opacity-40 active:scale-98"
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+              {/* Subject Select */}
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+                className="px-3.5 py-2 rounded-full bg-white/90 dark:bg-[#070e1a] border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-800 dark:text-zinc-200 focus:outline-hidden cursor-pointer"
               >
-                {isExporting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Saving to Repository...</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 text-white" />
-                    <span>Download Questions ({filteredExams.length} Exams)</span>
-                  </>
-                )}
-              </button>
+                {availableSubjects.map((sub) => (
+                  <option key={sub} value={sub} className="bg-white dark:bg-[#0c182b]">
+                    {sub === 'All' ? 'All Subjects' : sub}
+                  </option>
+                ))}
+              </select>
+
+              {/* Year Duration Chips (All / 1-3 Yrs / 1-5 Yrs) */}
+              <div className="inline-flex items-center p-0.5 rounded-full liquid-glass-subtle">
+                {(['all', '1-3', '1-5'] as YearDurationFilter[]).map((dur) => (
+                  <button
+                    key={dur}
+                    type="button"
+                    onClick={() => setYearDuration(dur)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                      yearDuration === dur
+                        ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs'
+                        : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {dur === 'all' ? 'All Yrs' : dur === '1-3' ? '1–3 Yrs' : '1–5 Yrs'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Exam Cards Grid */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-zinc-900 dark:text-white">
-                Available Exams in Vault ({filteredExams.length})
-              </span>
-              <span className="text-[11px] text-zinc-400">
-                Includes KaTeX Formulas, Schematics &amp; Tables
-              </span>
+        {/* ─────────────────────────────────────────────────────────────
+            SCROLLABLE BODY: 1-CLICK SAVE ALL + EXAM CARDS
+        ───────────────────────────────────────────────────────────── */}
+        <div className="overflow-y-auto p-4 sm:p-6 space-y-4 flex-1">
+          {/* Status Toast Banner */}
+          {exportNotice && (
+            <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center justify-between gap-2 animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>{exportNotice}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExportNotice(null)}
+                className="text-emerald-700 dark:text-emerald-300 hover:opacity-75 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
+          )}
 
-            {filteredExams.length === 0 ? (
-              <div className="py-12 text-center rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-2">
-                <Database className="w-8 h-8 text-zinc-400 mx-auto" />
-                <p className="font-bold text-xs text-zinc-700 dark:text-zinc-300">
-                  No exams match the selected filter combination
-                </p>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
-                  Try changing your University, Semester, or Year duration filter above.
+          {/* Compact 1-Click Save All Bar */}
+          {filteredExams.length > 0 && (
+            <div className="p-4 rounded-2xl liquid-glass-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="text-xs sm:text-sm font-bold text-slate-950 dark:text-white flex items-center gap-2 flex-wrap">
+                  <span>
+                    {filteredExams.length} {filteredExams.length === 1 ? 'Exam' : 'Exams'} Ready
+                  </span>
+                  <span className="text-slate-400">·</span>
+                  <span className="text-sky-700 dark:text-sky-300">
+                    {totalQuestionsInFilter} Total Questions
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                  Save all shown exams to your library so you can practice anytime without internet.
                 </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {filteredExams.map((exam) => {
-                  const isSaved = Boolean(savedExamIds[exam.id] || exam.isDownloaded);
 
-                  return (
-                    <div
-                      key={exam.id}
-                      className="p-4 rounded-2xl bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-white/10 space-y-3 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-white/20 transition shadow-2xs"
-                    >
-                      <div className="space-y-2">
-                        {/* Top Badges */}
-                        <div className="flex items-center justify-between gap-1 flex-wrap">
-                          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                            {exam.examYear || '2016 E.C.'}
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    disabled={isExporting}
+                    onClick={handleExportSqliteBundle}
+                    className="px-3.5 py-2 rounded-full liquid-glass-btn text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5 cursor-pointer transition disabled:opacity-40"
+                    title="Admin: Export filtered exams as an offline backup file"
+                  >
+                    <Database className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                    <span>Offline Backup</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={isExporting}
+                  onClick={handleDownloadAllMatching}
+                  className="px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs hover:opacity-95 active:scale-98 transition disabled:opacity-40"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download All ({filteredExams.length})</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Exam Cards List */}
+          {filteredExams.length === 0 ? (
+            <div className="py-12 px-4 text-center rounded-3xl liquid-glass-subtle space-y-2.5">
+              <BookOpen className="w-8 h-8 text-slate-400 mx-auto opacity-70" />
+              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                No exams match your current filters
+              </p>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
+                Try switching to All Levels or clearing your search filter.
+              </p>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="mt-1 px-4 py-2 rounded-full liquid-glass-btn text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                <span>Reset Filters</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">
+              {filteredExams.map((exam) => {
+                const isSaved = isExamSaved(exam);
+                const isPreviewing = previewExamId === exam.id;
+                const levelLabel = getNormalizedLevel(exam);
+                const hasFigures = Boolean(
+                  exam.hasImages ||
+                    exam.questions?.some(
+                      (q) => Boolean(q.imageUrl) || (Array.isArray(q.optionImages) && q.optionImages.some(Boolean))
+                    )
+                );
+                const hasTables = Boolean(
+                  exam.hasTables || exam.questions?.some((q) => Boolean(q.tableMarkdown))
+                );
+
+                return (
+                  <div
+                    key={exam.id}
+                    className="p-4 rounded-[24px] liquid-glass-elevated flex flex-col justify-between gap-3 transition"
+                  >
+                    <div className="space-y-2">
+                      {/* Unboxed Metadata Header */}
+                      <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
+                        <div className="flex items-center gap-1.5 min-w-0 truncate">
+                          <span className="font-bold text-slate-900 dark:text-white shrink-0">
+                            {levelLabel === 'Freshman'
+                              ? 'Univ Freshman'
+                              : levelLabel === 'Senior University'
+                              ? 'Univ Senior'
+                              : `Grade ${levelLabel}`}
                           </span>
-
-                          <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-zinc-400 font-semibold">
-                            {exam.hasImages && (
-                              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400" title="Contains Diagrams & Schematics">
-                                <ImageIcon className="w-3 h-3" />
-                                <span>Diagrams</span>
-                              </span>
-                            )}
-                            {exam.hasTables && (
-                              <span className="flex items-center gap-1 text-sky-600 dark:text-sky-400" title="Contains Markdown Tables">
-                                <TableIcon className="w-3 h-3" />
-                                <span>Tables</span>
-                              </span>
-                            )}
-                          </div>
+                          <span>·</span>
+                          <span className="font-semibold text-sky-700 dark:text-sky-300 truncate">
+                            {exam.subject || 'General'}
+                          </span>
+                          {exam.examYear && (
+                            <>
+                              <span>·</span>
+                              <span className="truncate">{exam.examYear}</span>
+                            </>
+                          )}
                         </div>
 
-                        {/* Title & Subject */}
-                        <div>
-                          <h4 className="font-bold text-xs text-zinc-900 dark:text-white leading-snug">
-                            {exam.title || exam.name}
-                          </h4>
-                          <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                            {exam.university && (
-                              <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                                {exam.university} &bull;
-                              </span>
-                            )}
-                            <span>{exam.semester || 'Semester 1'} &bull;</span>
-                            <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                              {exam.examType || 'Final'}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {hasFigures && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400"
+                              title="Includes Diagrams / Figures"
+                            >
+                              <ImageIcon className="w-3 h-3" />
                             </span>
-                          </div>
-                        </div>
-
-                        {/* Question Count & Time */}
-                        <div className="flex items-center gap-3 text-[11px] text-zinc-500 dark:text-zinc-400 pt-1">
-                          <span className="flex items-center gap-1">
-                            <Layers className="w-3 h-3" />
-                            <span>{exam.questions?.length || 0} Questions</span>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{exam.timeLimit || 60} mins</span>
+                          )}
+                          {hasTables && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-600 dark:text-sky-400"
+                              title="Includes Data Tables"
+                            >
+                              <TableIcon className="w-3 h-3" />
+                            </span>
+                          )}
+                          <span className="font-bold text-slate-700 dark:text-zinc-300 tabular-nums">
+                            {exam.questions?.length || 0} Qs
                           </span>
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-200/80 dark:border-white/5">
+                      {/* Title & Subtitle */}
+                      <div>
+                        <h4 className="font-bold text-sm font-['Outfit',sans-serif] text-slate-950 dark:text-white leading-snug">
+                          {exam.title || exam.name}
+                        </h4>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 flex-wrap">
+                          {exam.university && <span>{exam.university}</span>}
+                          {exam.topic && <span className="truncate max-w-[200px]">{exam.topic}</span>}
+                          <span className="inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{exam.timeLimit || 30}m</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Row */}
+                    <div className="pt-2.5 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleSaveSingleExam(exam)}
-                          className={`px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1.5 transition cursor-pointer shadow-2xs ${
+                          className={`px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
                             isSaved
                               ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-zinc-100 dark:bg-[#0f1d33] hover:bg-zinc-200 dark:hover:bg-[#132238] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10'
+                              : 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 shadow-2xs hover:opacity-95'
                           }`}
-                          title="Save to local in-app repository"
                         >
                           {isSaved ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>In Repository</span>
+                              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                              <span>In Library</span>
                             </>
                           ) : (
                             <>
                               <Download className="w-3.5 h-3.5" />
-                              <span>Download Questions</span>
+                              <span>Download</span>
                             </>
                           )}
                         </button>
@@ -563,33 +719,78 @@ export const DownloadCenterModal: React.FC<DownloadCenterModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleStartExamSession(exam)}
-                            className="px-3.5 py-1.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-bold text-[11px] flex items-center gap-1 transition cursor-pointer shadow-xs active:scale-98"
+                            className="px-3 py-1.5 rounded-full liquid-glass-btn font-bold text-xs text-slate-800 dark:text-zinc-200 flex items-center gap-1 transition cursor-pointer"
                           >
                             <Play className="w-3 h-3 fill-current" />
-                            <span>Practice Now</span>
+                            <span>Practice</span>
                           </button>
                         )}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
-          {/* Developer / Offline Lab File Export Toggle */}
-          <div className="pt-2 text-center">
-            <button
-              type="button"
-              onClick={handleManualSqliteExport}
-              disabled={isExporting || filteredExams.length === 0}
-              className="text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline cursor-pointer transition disabled:opacity-40"
-            >
-              School Lab / USB Transfer: Export as standalone .sqlite binary file
-            </button>
-          </div>
+                      {exam.questions && exam.questions.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewExamId(isPreviewing ? null : exam.id)}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white flex items-center gap-1 cursor-pointer transition"
+                        >
+                          <span>{isPreviewing ? 'Hide Q1' : 'Sample Q'}</span>
+                          {isPreviewing ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Sample Question Preview */}
+                    {isPreviewing && exam.questions && exam.questions.length > 0 && (
+                      <div className="pt-2.5 border-t border-slate-200/60 dark:border-white/10 space-y-2 text-xs animate-in fade-in duration-150">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Sample Question (1 of {exam.questions.length})</span>
+                        </div>
+                        <div className="p-3 rounded-2xl bg-white/90 dark:bg-[#070e1a] border border-slate-200/80 dark:border-white/10 space-y-2">
+                          <MathRenderer
+                            content={exam.questions[0].text}
+                            className="font-semibold text-slate-900 dark:text-white"
+                          />
+                          {exam.questions[0].imageUrl && (
+                            <div className="p-2 rounded-xl bg-white border border-slate-200/70 flex justify-center">
+                              <img
+                                src={exam.questions[0].imageUrl}
+                                alt={exam.questions[0].imageCaption || 'Question 1 diagram'}
+                                className="max-h-32 w-auto object-contain"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                            {exam.questions[0].options.map((opt, idx) => (
+                              <div
+                                key={idx}
+                                className={`px-2.5 py-1 rounded-xl text-[11px] border ${
+                                  idx === exam.questions[0].correct
+                                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                                    : 'bg-slate-50 dark:bg-[#0c182b] border-slate-200/70 dark:border-white/10 text-slate-700 dark:text-zinc-300'
+                                }`}
+                              >
+                                <span className="font-bold mr-1">{String.fromCharCode(65 + idx)}.</span>
+                                <MathRenderer content={opt} inline />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
+

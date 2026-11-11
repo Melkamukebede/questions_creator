@@ -287,7 +287,7 @@ function MainApp() {
         } else {
           setIsOpeningPracticeLink(false);
           setPracticeLinkError(
-            `Exam "${examId}" was not found in the cloud library. Please ensure the author uploaded the exam via the Share menu.`
+            `Exam "${examId}" was not found. Please ask the sender to open the exam and tap Share.`
           );
         }
       })
@@ -521,7 +521,7 @@ function MainApp() {
         } else {
           setIsOpeningPracticeLink(false);
           setPracticeLinkError(
-            `Exam "${targetId}" was not found in the cloud library. The author may need to open the exam and tap Share to complete the cloud sync.`
+            `Exam "${targetId}" was not found. The sender may need to open the exam and tap Share to activate the link.`
           );
         }
       })
@@ -536,7 +536,7 @@ function MainApp() {
           );
         } else {
           setPracticeLinkError(
-            `Exam "${targetId}" could not be found in the cloud library. Please ensure the author uploaded the exam via the Share menu.`
+            `Exam "${targetId}" could not be found. Please ask the sender to share the exam again.`
           );
         }
       });
@@ -1083,28 +1083,19 @@ function MainApp() {
           />
         )}
 
-        {/* Curated Official Exams Download Modal */}
-        {isCuratedModalOpen && (
-          <CuratedExamsModal
-            isOpen={isCuratedModalOpen}
-            onClose={() => setIsCuratedModalOpen(false)}
-            onDownloadExam={handleDownloadCuratedExam}
-            downloadedCatalogIds={downloadedCatalogIds}
-            user={user}
-            officialExams={officialExams}
-            onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
-            onStartPractice={handleStartPractice}
-          />
-        )}
-
-        {/* Offline Exam Download Center Modal (Multi-Year SQLite Bundles) */}
-        {isDownloadCenterOpen && (
+        {/* Unified Download Exams Modal (Supabase + Firebase Cloud + Offline Bundles) */}
+        {(isDownloadCenterOpen || isCuratedModalOpen) && (
           <DownloadCenterModal
-            isOpen={isDownloadCenterOpen}
-            onClose={() => setIsDownloadCenterOpen(false)}
+            isOpen={isDownloadCenterOpen || isCuratedModalOpen}
+            onClose={() => {
+              setIsDownloadCenterOpen(false);
+              setIsCuratedModalOpen(false);
+            }}
             allExams={[...officialExams, ...exams]}
+            downloadedCatalogIds={downloadedCatalogIds}
             onStartExam={(exam) => {
               setIsDownloadCenterOpen(false);
+              setIsCuratedModalOpen(false);
               handleStartPractice(exam);
             }}
             onExamsDownloaded={(downloaded) => {
@@ -1176,7 +1167,7 @@ function MainApp() {
               setExams((prev) =>
                 prev.map((e) => (e.id === updatedExam.id ? { ...e, ...updatedExam } : e))
               );
-              showToast(`Questions successfully synced to Cloud Firestore repository!`);
+              showToast(`Exam published online for students!`);
             }}
           />
         )}

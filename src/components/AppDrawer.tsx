@@ -166,14 +166,14 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                       <>
                         <Cloud className="w-3 h-3 text-zinc-900 dark:text-white" />
                         <span className="text-zinc-900 dark:text-white font-medium">
-                          Cloud Synced
+                          Account Active
                         </span>
                       </>
                     ) : (
                       <>
                         <CloudOff className="w-3 h-3 text-zinc-400" />
                         <span className="text-zinc-500 dark:text-zinc-400 font-medium">
-                          Local Guest Storage
+                          Saved on Device
                         </span>
                       </>
                     )}
@@ -339,7 +339,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </button>
               )}
 
-              {/* Database Storage Uploader (Cloud Firestore - Teacher or Admin) */}
+              {/* Publish Exam for Students (Teacher or Admin) */}
               {(isUserAdmin(user) || isUserTeacher(user)) && onOpenDatabaseUpload && (
                 <button
                   id="drawer-db-upload-btn"
@@ -356,13 +356,13 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                        <span>Push to Cloud Firestore</span>
+                        <span>Publish Exam for Students</span>
                         <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-[#0f1d33] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/10">
                           {isUserAdmin(user) ? 'Admin' : 'Teacher'}
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Push exams and questions directly to Cloud Firestore
+                        Share your exams and questions online with students
                       </div>
                     </div>
                   </div>
@@ -370,7 +370,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                 </button>
               )}
 
-              {/* Offline SQLite Download Center */}
+              {/* Unified Download Exams */}
               {onOpenDownloadCenter && (
                 <button
                   id="drawer-download-center-btn"
@@ -382,18 +382,18 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                   className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold shadow-2xs">
+                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center justify-center font-bold shadow-2xs">
                       <Download className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                        <span>Offline Download Center</span>
+                        <span>Download Exams</span>
                         <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
-                          SQLite .db
+                          Offline Ready
                         </span>
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Download multi-year university &amp; high school exam bundles
+                        Save official &amp; university exams to practice without internet
                       </div>
                     </div>
                   </div>
