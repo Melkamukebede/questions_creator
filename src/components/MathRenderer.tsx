@@ -153,12 +153,29 @@ function processMathContent(content: string, isInlineOnly = false): string {
     return token;
   });
 
-  // If isInlineOnly is true (like multiple-choice options) and the text still has LaTeX commands (\text, \frac, etc.)
+  // If isInlineOnly is true (like multiple-choice options) and the text still has LaTeX commands (\text, \frac, etc.),
+  // only wrap the entire option as one math formula if it is primarily a math expression (NOT a wide prose sentence).
   if (isInlineOnly && text.includes('\\') && !text.includes('__MATH_')) {
-    const token = `__MATH_INLINE_${counter++}__`;
-    const html = getCachedKatex(text.trim(), false);
-    mathTokens.push({ token, html });
-    text = token;
+    const plainWords = text
+      .replace(/\\[a-zA-Z]+(?:\{[^}]*\})?/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter((w) => /^[a-zA-Z]{2,}$/.test(w));
+
+    if (plainWords.length <= 4) {
+      const token = `__MATH_INLINE_${counter++}__`;
+      const html = getCachedKatex(text.trim(), false);
+      mathTokens.push({ token, html });
+      text = token;
+    } else {
+      // Wide prose sentence with embedded naked LaTeX command(s): only render the LaTeX tokens inline so prose wraps freely
+      text = text.replace(/\\[a-zA-Z]+(?:\{[^}\n]*\})?(?:\{[^}\n]*\})?(?:[_^](?:\{[^}\n]*\}|[a-zA-Z0-9+-]+))?/g, (cmdMatch) => {
+        const token = `__MATH_INLINE_${counter++}__`;
+        const html = getCachedKatex(cmdMatch.trim(), false);
+        mathTokens.push({ token, html });
+        return token;
+      });
+    }
   }
 
   // Step 2: Escape HTML
@@ -200,7 +217,7 @@ const MathRendererComponent: React.FC<MathRendererProps> = ({
   if (inline) {
     return (
       <span
-        className={`katex-rendered inline ${className}`}
+        className={`katex-rendered inline max-w-full break-words whitespace-normal ${className}`}
         dangerouslySetInnerHTML={{ __html: renderedHtml }}
       />
     );
@@ -208,7 +225,7 @@ const MathRendererComponent: React.FC<MathRendererProps> = ({
 
   return (
     <div
-      className={`katex-rendered leading-relaxed ${className}`}
+      className={`katex-rendered leading-relaxed max-w-full break-words whitespace-normal ${className}`}
       dangerouslySetInnerHTML={{ __html: renderedHtml }}
     />
   );

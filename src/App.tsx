@@ -7,6 +7,11 @@ import { ConfirmationDialog } from './components/ConfirmationDialog';
 import { AppDrawer } from './components/AppDrawer';
 import { MobileNav } from './components/MobileNav';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
+import {
+  WelcomeOnboardingModal,
+  PostPracticeFollowUpModal,
+  ONBOARDING_STORAGE_KEY,
+} from './components/WelcomeOnboardingModal';
 import { CURATED_EXAMS_CATALOG } from './data/curatedCatalog';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -242,6 +247,25 @@ function MainApp() {
   const [isAdminOfficialStudioOpen, setIsAdminOfficialStudioOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [examForDatabaseUpload, setExamForDatabaseUpload] = useState<Exam | null>(null);
+  const [isWelcomeTourOpen, setIsWelcomeTourOpen] = useState(false);
+  const [postPracticeFollowUp, setPostPracticeFollowUp] = useState<{
+    examName: string;
+    scorePercentage: number;
+  } | null>(null);
+
+  // Automatically launch the 3-step Welcome & App Introduction Tour on first visit
+  useEffect(() => {
+    if (showSplashScreen || authLoading) return;
+    if (isStudentLoggedIn || extractTargetExamId()) return;
+    try {
+      const done = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      if (!done) {
+        setIsWelcomeTourOpen(true);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [showSplashScreen, authLoading, isStudentLoggedIn]);
 
   // Delete confirmations
   const [examToDelete, setExamToDelete] = useState<string | null>(null);
@@ -738,11 +762,19 @@ function MainApp() {
       id: result.id || 'res_' + Date.now(),
       userId: user ? user.uid : 'guest',
     };
+    const completedExamName = activePracticeExam?.name || result.examTitle || 'Practice Exam';
     // Optimistic UI update instantly
     setResults((prev) => [resWithId, ...prev]);
     setActivePracticeExam(null);
     setActiveTab('results');
     showToast(`Exam completed! Score: ${result.percentage}%`);
+
+    if (!isStudentLoggedIn) {
+      setPostPracticeFollowUp({
+        examName: completedExamName,
+        scorePercentage: result.percentage || 0,
+      });
+    }
 
     try {
       await saveResultToDb(resWithId, user);
@@ -826,7 +858,7 @@ function MainApp() {
       ) : (
         <div className="min-h-screen bg-transparent text-zinc-900 dark:text-zinc-100 transition-colors font-['Plus_Jakarta_Sans',sans-serif] selection:bg-zinc-900 selection:text-white dark:selection:bg-white dark:selection:text-zinc-950 relative">
 
-          {/* Navigation Bar */}
+          {/* Navigation Bar (Unified Top Bar for both PC and Mobile) */}
           <Navbar
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -842,11 +874,12 @@ function MainApp() {
         onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
         onOpenSupabaseConfig={isAdmin ? () => setIsSupabaseConfigOpen(true) : undefined}
         onOpenAdminOfficialStudio={isAdmin ? () => setIsAdminOfficialStudioOpen(true) : undefined}
+        onOpenWelcomeTour={() => setIsWelcomeTourOpen(true)}
         activeSubscription={activeSubscription}
       />
 
     {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-28 md:pb-12">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-28">
         <PWAInstallBanner />
         {activeTab === 'home' && (
           <HomeView
@@ -868,6 +901,7 @@ function MainApp() {
             onOpenNotificationsModal={() => setIsNotificationsModalOpen(true)}
             onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
             onOpenSupabaseConfig={isAdmin ? () => setIsSupabaseConfigOpen(true) : undefined}
+            onOpenWelcomeTour={() => setIsWelcomeTourOpen(true)}
             activeSubscription={activeSubscription}
             userTier={userTier}
             user={user}
@@ -974,7 +1008,7 @@ function MainApp() {
         )}
       </main>
 
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Unified Static Floating Glass Bottom Navigation Dock (PC & Mobile) */}
       <MobileNav
         activeTab={activeTab}
         onTabChange={(tab) => {
@@ -982,9 +1016,11 @@ function MainApp() {
             setEditingExam(null);
             setCreateExamInitialMode('select');
           }
+          setIsDrawerOpen(false);
           setActiveTab(tab);
         }}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
+        onOpenDrawer={() => setIsDrawerOpen((prev) => !prev)}
+        isDrawerOpen={isDrawerOpen}
         examsCount={exams.length}
       />
 
@@ -1031,7 +1067,38 @@ function MainApp() {
         onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
         onOpenSupabaseConfig={isAdmin ? () => setIsSupabaseConfigOpen(true) : undefined}
         onOpenAdminOfficialStudio={isAdmin ? () => setIsAdminOfficialStudioOpen(true) : undefined}
+        onOpenWelcomeTour={() => setIsWelcomeTourOpen(true)}
         activeSubscription={activeSubscription}
+      />
+
+      {/* First-Time 3-Step Fluid Glass Welcome & App Introduction Tour */}
+      <WelcomeOnboardingModal
+        isOpen={isWelcomeTourOpen}
+        onClose={() => setIsWelcomeTourOpen(false)}
+        onStartRegistration={(_preferredGrade, mode = 'signup') => {
+          setRegistrationInitialStep(1);
+          setRegistrationInitialEmailMode(mode);
+          openRegistrationModal();
+        }}
+      />
+
+      {/* Post-Practice Follow-Up Registration Prompt for Guests */}
+      <PostPracticeFollowUpModal
+        isOpen={postPracticeFollowUp !== null}
+        scorePercentage={postPracticeFollowUp?.scorePercentage || 0}
+        examName={postPracticeFollowUp?.examName || 'Practice Exam'}
+        preferredGrade={user?.grade}
+        onClose={() => setPostPracticeFollowUp(null)}
+        onRegisterNow={() => {
+          setRegistrationInitialStep(1);
+          setRegistrationInitialEmailMode('signup');
+          openRegistrationModal();
+        }}
+        onSignIn={() => {
+          setRegistrationInitialStep(2);
+          setRegistrationInitialEmailMode('signin');
+          openRegistrationModal();
+        }}
       />
 
       {/* Lazy Modals wrapped in Suspense */}
@@ -1330,7 +1397,7 @@ function MainApp() {
 
       {/* Toast Notification Banner */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold font-['Syne',sans-serif] shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-20 sm:bottom-22 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold font-['Syne',sans-serif] shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200">
           {toastMessage}
         </div>
       )}

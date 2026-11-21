@@ -60,6 +60,7 @@ export interface HomeViewProps {
   onOpenDownloadCenter?: () => void;
   onOpenSupabaseConfig?: () => void;
   onOpenAdminOfficialStudio?: () => void;
+  onOpenWelcomeTour?: () => void;
   onEditExam?: (exam: Exam) => void;
   onDeleteExam?: (examId: string) => void;
   activeSubscription?: UserSubscription | null;
@@ -102,6 +103,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenDownloadCenter,
   onOpenSupabaseConfig,
   onOpenAdminOfficialStudio,
+  onOpenWelcomeTour,
   onEditExam,
   onDeleteExam,
   activeSubscription,
@@ -110,9 +112,26 @@ export const HomeView: React.FC<HomeViewProps> = ({
   isAdmin = false,
 }) => {
   const isTeacher = Boolean(user && isUserTeacher(user));
+  const isGuest = !user || user.uid === 'guest' || user.isAnonymous;
   const isPremiumActive = isUserSubscriptionActive(activeSubscription || null);
   const { studyStreakDays, completedToday, dailyGoal } = useNotifications();
   const classLocked = isStudentClassLocked(user, isAdmin);
+  const [followUpDismissed, setFollowUpDismissed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('sinahard_guest_followup_dismissed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleDismissFollowUp = () => {
+    setFollowUpDismissed(true);
+    try {
+      sessionStorage.setItem('sinahard_guest_followup_dismissed', 'true');
+    } catch {
+      // ignore
+    }
+  };
 
   const scopedExams = useMemo(() => {
     if (!classLocked) return exams;
@@ -669,6 +688,63 @@ export const HomeView: React.FC<HomeViewProps> = ({
             Streamlined 3-Layer Fluid Glass Workspace (Uncrowded & Fast)
         ───────────────────────────────────────────────────────────── */
         <>
+          {/* GENTLE FOLLOW-UP REGISTRATION SYSTEM FOR GUESTS */}
+          {isGuest && !followUpDismissed && (
+            <motion.div
+              variants={itemVariants}
+              className="rounded-[24px] sm:rounded-[28px] liquid-glass p-4 sm:p-5 border border-sky-400/35 dark:border-sky-400/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-sky-500/15 border border-sky-400/30 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300">
+                      Guest Follow-Up
+                    </span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      Personalize Exams for {formatClassLevelLabel(user?.grade || '12')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-zinc-300 leading-relaxed max-w-2xl">
+                    You are currently browsing in Guest Mode. Complete your free student registration to filter exams exclusively for your registered class level, save your practice history, and claim <strong>1 Free Coin</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {onOpenRegistrationModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenRegistrationModal}
+                    className="px-4 py-2 rounded-full bg-slate-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-xs hover:opacity-95 whitespace-nowrap"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Complete Registration</span>
+                  </button>
+                )}
+                {onOpenWelcomeTour && (
+                  <button
+                    type="button"
+                    onClick={onOpenWelcomeTour}
+                    className="px-3.5 py-2 rounded-full liquid-glass-btn text-xs font-bold text-slate-800 dark:text-zinc-200 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                    <span>App Intro</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDismissFollowUp}
+                  className="px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+                >
+                  Remind Later
+                </button>
+              </div>
+            </motion.div>
+          )}
+
           {/* 1. STREAMLINED WORKSPACE HEADER & QUICK ACTIONS */}
           <motion.div
             variants={itemVariants}

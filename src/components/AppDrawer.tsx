@@ -41,11 +41,13 @@ interface AppDrawerProps {
   onNavigateToAdminSubs?: () => void;
   onNavigateToSharedHistory?: () => void;
   onOpenDatabaseUpload?: () => void;
+  onOpenSubscriptionModal?: () => void;
   onExportAllData?: () => void;
   onResetDefaultExams?: () => void;
   onOpenDownloadCenter?: () => void;
   onOpenSupabaseConfig?: () => void;
   onOpenAdminOfficialStudio?: () => void;
+  onOpenWelcomeTour?: () => void;
   activeSubscription: UserSubscription | null;
 }
 
@@ -61,6 +63,7 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
   onOpenDownloadCenter,
   onOpenSupabaseConfig,
   onOpenAdminOfficialStudio,
+  onOpenWelcomeTour,
 }) => {
   const { user, signOut, firstRegisteredEmail } = useAuth();
   const isAdmin = Boolean(user && !user.isAnonymous && user.uid !== 'guest' && isUserAdmin(user));
@@ -456,6 +459,34 @@ export const AppDrawer: React.FC<AppDrawerProps> = ({
                       </div>
                       <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
                         View shared tests, access codes &amp; delete history
+                      </div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
+
+              {/* Welcome Tour & Short App Introduction */}
+              {onOpenWelcomeTour && (
+                <button
+                  id="drawer-welcome-tour-btn"
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenWelcomeTour();
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-[22px] bg-white dark:bg-[#0c182b] hover:bg-zinc-50 dark:hover:bg-[#0f1d33] border border-white/80 dark:border-white/10 text-left shadow-xs active:scale-98 transition cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 flex items-center justify-center font-bold shadow-2xs">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                        <span>Welcome Tour &amp; Class Setup</span>
+                      </div>
+                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Short app introduction &amp; choose your class level
                       </div>
                     </div>
                   </div>

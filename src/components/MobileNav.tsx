@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   BookOpen,
   BarChart3,
-  Plus,
+  PlusCircle,
   Menu,
   ShieldCheck,
 } from 'lucide-react';
@@ -17,6 +17,7 @@ interface MobileNavProps {
   activeTab: PageTab;
   onTabChange: (tab: PageTab) => void;
   onOpenDrawer: () => void;
+  isDrawerOpen?: boolean;
   examsCount?: number;
 }
 
@@ -24,6 +25,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   activeTab,
   onTabChange,
   onOpenDrawer,
+  isDrawerOpen = false,
   examsCount = 0,
 }) => {
   const { unreadAlertsCount } = useNotifications();
@@ -31,151 +33,117 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   const isTeacher = Boolean(user && isUserTeacher(user));
   const isAdmin = isUserAdmin(user);
 
+  const navButtonBase =
+    'relative flex-1 flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-2 py-1.5 md:py-2.5 px-2 md:px-4 rounded-full transition-colors duration-150 cursor-pointer select-none';
+
+  const activePillStyle =
+    'bg-white dark:bg-white text-slate-950 dark:text-zinc-950 font-bold shadow-[0_2px_10px_rgba(0,0,0,0.12)] border border-white/95';
+
+  const inactivePillStyle =
+    'bg-transparent text-slate-600 dark:text-zinc-400 hover:text-slate-950 dark:hover:text-white hover:bg-white/45 dark:hover:bg-white/[0.06] font-semibold border border-transparent';
+
   return (
     <nav
-      id="mobile-bottom-nav"
-      aria-label="Mobile Navigation Bar"
-      className="md:hidden fixed bottom-3 left-0 right-0 z-40 px-3 pointer-events-none select-none transition-all duration-300 font-['Plus_Jakarta_Sans',sans-serif]"
+      id="unified-bottom-nav"
+      aria-label="Primary Bottom Navigation Dock"
+      className="fixed bottom-3 sm:bottom-4 left-0 right-0 z-40 px-3 sm:px-4 pointer-events-none select-none font-['Plus_Jakarta_Sans',sans-serif]"
     >
-      <div className="pointer-events-auto max-w-md mx-auto rounded-full floating-glass-bar px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-[0_12px_36px_rgba(0,0,0,0.22)]">
+      <div className="pointer-events-auto max-w-md md:max-w-xl mx-auto rounded-full floating-glass-bar p-1.5 flex items-center justify-between gap-1 shadow-[0_14px_38px_rgba(15,23,42,0.18)] dark:shadow-[0_18px_48px_rgba(0,0,0,0.65)] border border-white/80 dark:border-white/15">
         {/* 1. Home */}
         <button
+          id="bottom-nav-home"
           type="button"
           onClick={() => onTabChange('home')}
-          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
-            activeTab === 'home'
-              ? 'text-slate-950 dark:text-white font-bold'
-              : 'text-slate-600 dark:text-zinc-400 font-medium'
+          className={`${navButtonBase} ${
+            activeTab === 'home' && !isDrawerOpen ? activePillStyle : inactivePillStyle
           }`}
         >
-          <div
-            className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
-              activeTab === 'home'
-                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
-                : 'bg-transparent'
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-          </div>
-          <span className="text-[10px] tracking-tight">Home</span>
+          <LayoutDashboard className="w-4 h-4 shrink-0" />
+          <span className="text-[10px] md:text-xs tracking-tight leading-none">Home</span>
         </button>
 
         {/* 2. Exams / Library */}
         <button
+          id="bottom-nav-files"
           type="button"
           onClick={() => onTabChange('files')}
-          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
-            activeTab === 'files'
-              ? 'text-slate-950 dark:text-white font-bold'
-              : 'text-slate-600 dark:text-zinc-400 font-medium'
+          className={`${navButtonBase} ${
+            activeTab === 'files' && !isDrawerOpen ? activePillStyle : inactivePillStyle
           }`}
         >
-          <div
-            className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
-              activeTab === 'files'
-                ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
-                : 'bg-transparent'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
+          <div className="relative flex items-center justify-center">
+            <BookOpen className="w-4 h-4 shrink-0" />
             {examsCount > 0 && activeTab !== 'files' && (
-              <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 rounded-full bg-sky-500 text-white text-[9px] font-bold tabular-nums flex items-center justify-center shadow-xs">
+              <span className=" -top-1.5 -right-2.5 absolute min-w-3.5 h-3.5 px-1 rounded-full bg-sky-500 text-white text-[9px] font-extrabold tabular-nums flex items-center justify-center shadow-2xs">
                 {examsCount > 99 ? '99+' : examsCount}
               </span>
             )}
           </div>
-          <span className="text-[10px] tracking-tight">{isTeacher ? 'School' : 'Exams'}</span>
+          <span className="text-[10px] md:text-xs tracking-tight leading-none">
+            {isTeacher ? 'School' : 'Exams'}
+          </span>
         </button>
 
-        {/* 3. Center Create Action */}
+        {/* 3. Create Exam */}
         <button
+          id="bottom-nav-create"
           type="button"
           onMouseEnter={prefetchCreateWizard}
           onTouchStart={prefetchCreateWizard}
           onClick={() => onTabChange('create')}
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 py-0.5 px-1 rounded-2xl transition-all cursor-pointer active:scale-90 group"
+          className={`${navButtonBase} ${
+            activeTab === 'create' && !isDrawerOpen ? activePillStyle : inactivePillStyle
+          }`}
         >
-          <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-sm relative ${
-              activeTab === 'create'
-                ? 'bg-slate-900 dark:bg-white text-white dark:text-zinc-950 ring-2 ring-sky-400/50'
-                : 'bg-white dark:bg-[#0f1d33] text-slate-900 dark:text-white border border-white/90 dark:border-white/15'
-            }`}
-          >
-            <Plus className="w-5 h-5 stroke-[2.5]" />
-          </div>
-          <span
-            className={`text-[10px] tracking-tight ${
-              activeTab === 'create'
-                ? 'font-bold text-slate-950 dark:text-white'
-                : 'font-medium text-slate-700 dark:text-zinc-300'
-            }`}
-          >
-            Create
-          </span>
+          <PlusCircle className="w-4 h-4 shrink-0" />
+          <span className="text-[10px] md:text-xs tracking-tight leading-none">Create</span>
         </button>
 
         {/* 4. Activity or Admin Hub */}
         {isAdmin ? (
           <button
+            id="bottom-nav-admin"
             type="button"
             onClick={() => onTabChange('admin-subs')}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
-              activeTab === 'admin-subs'
-                ? 'text-slate-950 dark:text-white font-bold'
-                : 'text-slate-600 dark:text-zinc-400 font-medium'
+            className={`${navButtonBase} ${
+              activeTab === 'admin-subs' && !isDrawerOpen ? activePillStyle : inactivePillStyle
             }`}
           >
-            <div
-              className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
-                activeTab === 'admin-subs'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
-                  : 'bg-transparent'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] tracking-tight">Admin</span>
+            <ShieldCheck className="w-4 h-4 shrink-0" />
+            <span className="text-[10px] md:text-xs tracking-tight leading-none">Admin</span>
           </button>
-        ) : (
+        ) : !isTeacher ? (
           <button
+            id="bottom-nav-results"
             type="button"
             onClick={() => onTabChange('results')}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 ${
-              activeTab === 'results'
-                ? 'text-slate-950 dark:text-white font-bold'
-                : 'text-slate-600 dark:text-zinc-400 font-medium'
+            className={`${navButtonBase} ${
+              activeTab === 'results' && !isDrawerOpen ? activePillStyle : inactivePillStyle
             }`}
           >
-            <div
-              className={`p-1.5 rounded-xl transition-all flex items-center justify-center relative ${
-                activeTab === 'results'
-                  ? 'bg-white dark:bg-white text-slate-900 dark:text-zinc-950 shadow-xs border border-white/95'
-                  : 'bg-transparent'
-              }`}
-            >
-              <BarChart3 className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] tracking-tight">Activity</span>
+            <BarChart3 className="w-4 h-4 shrink-0" />
+            <span className="text-[10px] md:text-xs tracking-tight leading-none">Activity</span>
           </button>
-        )}
+        ) : null}
 
         {/* 5. Menu / Utilities Drawer */}
         <button
+          id="bottom-nav-menu"
           type="button"
           onClick={onOpenDrawer}
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1 px-1 rounded-2xl transition-all cursor-pointer active:scale-95 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+          className={`${navButtonBase} ${
+            isDrawerOpen ? activePillStyle : inactivePillStyle
+          }`}
         >
-          <div className="p-1.5 rounded-xl relative">
-            <Menu className="w-4 h-4" />
+          <div className="relative flex items-center justify-center">
+            <Menu className="w-4 h-4 shrink-0" />
             {unreadAlertsCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-sky-500" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-sky-500" />
             )}
           </div>
-          <span className="text-[10px] tracking-tight">Menu</span>
+          <span className="text-[10px] md:text-xs tracking-tight leading-none">Menu</span>
         </button>
       </div>
     </nav>
   );
 };
-

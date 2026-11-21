@@ -271,37 +271,59 @@ export const ProfessorModal: React.FC<ProfessorModalProps> = ({
     }
   };
 
-  // Calibrated Difficulty Guides
+  // Calibrated Difficulty Guides (mode-aware for Math/LaTeX vs Conceptual)
   const difficultyConfig = useMemo(() => {
+    const isMath = subjectType === 'calculation';
     if (difficulty === 'Easy') {
-      return {
-        label: 'Easy (Foundational Mastery)',
-        summary: 'Direct single-step formulas and core conceptual recall.',
-        briefGuide: 'Direct 1-step substitution (e.g. F = ma directly) with clear, distinct distractors.',
-        distractorRule: 'Distractors must represent simple arithmetic slips or misplaced signs.',
-      };
+      return isMath
+        ? {
+            label: 'Easy (Foundational Mastery)',
+            summary: 'Direct single-step formulas and core quantitative recall.',
+            briefGuide: 'Direct 1-step substitution (e.g. F = ma directly) with clear, distinct distractors.',
+            distractorRule: 'Distractors must represent simple arithmetic slips or misplaced signs.',
+          }
+        : {
+            label: 'Easy (Foundational Concepts)',
+            summary: 'Core definitions, scientific principles, and clear factual recall.',
+            briefGuide: 'Direct recognition of fundamental laws, biological/historical processes, or key terminology with unambiguous stems.',
+            distractorRule: 'Distractors must be clearly distinct related terms or common introductory misconceptions.',
+          };
     } else if (difficulty === 'Hard') {
-      return {
-        label: 'Hard (Challenger & Olympiad)',
-        summary: 'Multi-stage synthesis, variable isolation, and non-trivial calculations.',
-        briefGuide: 'Multi-stage problems requiring derivation and synthesis across multiple concepts before final evaluation.',
-        distractorRule: 'Distractors must be mathematically plausible intermediate results from alternative missteps.',
-      };
+      return isMath
+        ? {
+            label: 'Hard (Challenger & Olympiad)',
+            summary: 'Multi-stage synthesis, variable isolation, and non-trivial calculations.',
+            briefGuide: 'Multi-stage problems requiring derivation and synthesis across multiple concepts before final evaluation.',
+            distractorRule: 'Distractors must be mathematically plausible intermediate results from alternative missteps.',
+          }
+        : {
+            label: 'Hard (Deep Analysis & Synthesis)',
+            summary: 'Multi-concept scenario analysis, cause-and-effect chains, and subtle misconception traps.',
+            briefGuide: 'Higher-order evaluation and synthesis scenarios requiring students to connect multiple principles or predict outcomes when conditions change.',
+            distractorRule: 'Distractors must reflect subtle conceptual misconceptions, reversed cause-and-effect, or partially true statements.',
+          };
     } else {
-      return {
-        label: 'Medium (Standard Exam)',
-        summary: 'National exam benchmark with 2-step algebraic reasoning.',
-        briefGuide: 'Standard preparatory exam standard: 2-step reasoning (e.g. solve for intermediate acceleration first), algebraic rearrangement, and plausible distractors.',
-        distractorRule: 'Distractors must reflect common student math slips like forgetting to square velocity or inverted fractions.',
-      };
+      return isMath
+        ? {
+            label: 'Medium (Standard Exam)',
+            summary: 'National exam benchmark with 2-step algebraic reasoning.',
+            briefGuide: 'Standard preparatory exam standard: 2-step reasoning (e.g. solve for intermediate acceleration first), algebraic rearrangement, and plausible distractors.',
+            distractorRule: 'Distractors must reflect common student math slips like forgetting to square velocity or inverted fractions.',
+          }
+        : {
+            label: 'Medium (Standard Conceptual Exam)',
+            summary: 'National exam benchmark testing comprehension, application, and reasoning.',
+            briefGuide: 'Application and comparison questions asking why a phenomenon occurs, how two principles differ, or what happens in a realistic scenario.',
+            distractorRule: 'Distractors must reflect common student conceptual misunderstandings or plausible overgeneralizations.',
+          };
     }
-  }, [difficulty]);
+  }, [difficulty, subjectType]);
 
-  // Generate standardized Plain Text (.TXT format) prompt for AI with Gold-Standard LaTeX/KaTeX
+  // Generate standardized Plain Text (.TXT format) prompt for AI
   const generatedPrompt = useMemo(() => {
     const isMath = subjectType === 'calculation';
-    const isMobile = isMobileDevice || optimizeForPhone;
-    const mainTopic = topics.split(',')[0]?.trim() || 'Classical Mechanics';
+    const isPhoneSafe = isMobileDevice || optimizeForPhone;
+    const mainTopic = topics.split(',')[0]?.trim() || (isMath ? 'Classical Mechanics' : 'Core Concepts');
     const cleanGrade = String(grade || '12');
     const formattedLevel = formatClassLevelLabel(cleanGrade);
 
@@ -311,20 +333,31 @@ export const ProfessorModal: React.FC<ProfessorModalProps> = ({
         : examFocusStyle === 'University Final'
         ? 'Align with Ethiopian Public University (AAU, ASTU, Hawassa, Jimma) Freshman/Senior Departmental Final Exam rigor.'
         : examFocusStyle === 'Olympiad / Challenger'
-        ? 'Design multi-concept analytical synthesis problems that test deep mathematical derivation and edge-case reasoning.'
-        : 'Prioritize deep conceptual intuition, physical meaning of equations, and common misconception traps.';
+        ? isMath
+          ? 'Design multi-concept analytical synthesis problems that test deep mathematical derivation and edge-case reasoning.'
+          : 'Design deep analytical and scenario-based conceptual problems that test nuanced reasoning and edge-case understanding.'
+        : 'Prioritize deep conceptual intuition, real-world meaning of principles, and common misconception traps.';
 
     const latexMatrixRule = includeLatexTables
       ? `\n- LATEX MATRICES, PIECEWISE FUNCTIONS & DATA TABLES: When a problem involves matrices, systems of equations, or experimental data tables, format them inside inline or display LaTeX using \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}, \\begin{cases} ... \\end{cases}, or \\begin{array}{|c|c|} \\hline x & y \\\\ \\hline 1 & 2 \\\\ \\hline \\end{array}.`
       : '';
 
+    const phoneSafeMathNote = isPhoneSafe
+      ? ' (Phone & PC clipboard-safe: keep backslashes intact and separate display blocks with blank lines)'
+      : '';
+
+    const phoneSafeConceptualNote = isPhoneSafe
+      ? ' Keep formatting clean and mobile-friendly with short, readable paragraphs and blank lines between explanation sections.'
+      : '';
+
     // BRIEF PROMPT MODE: High-impact, concise, holistic
     if (promptStyle === 'brief') {
-      if (isMath || isMobile) {
+      if (isMath) {
         return `Please generate ${totalQuestions} professional multiple choice questions in plain .txt format for:
 Grade: ${cleanGrade} (${formattedLevel})
 Subject: ${subject}
 Topic: ${mainTopic}
+Question Mode: Math / LaTeX Calculation
 Exam Focus: ${examFocusStyle}
 Time Limit: ${timeLimit} minutes
 
@@ -355,7 +388,7 @@ For each question:
 
 **Answer:** $3600\\text{ N}$ (Option B)
 
-CRITICAL RULES FOR EXACT LATEX & CROSS-PLATFORM COMPLIANCE (PC & PHONES):
+CRITICAL RULES FOR EXACT LATEX & CROSS-PLATFORM COMPLIANCE${phoneSafeMathNote}:
 1. DELIMIT EVERY MATHEMATICAL QUANTITY, SYMBOL & UNIT:
    - In Question statements, wrap ALL variables, constants, vectors, chemical formulas, and quantities with units in $...$ (e.g. $m = 1200\\text{ kg}$, $v_0 = 24\\text{ m/s}$, $\\vec{F}_{\\text{net}}$, $\\text{H}_2\\text{SO}_4$, $\\theta = 30^\\circ$).
    - NEVER leave naked \\text{...}, raw Greek letters, or unwrapped units in the question or options. Always enclose in $...$.
@@ -378,10 +411,11 @@ CRITICAL RULES FOR EXACT LATEX & CROSS-PLATFORM COMPLIANCE (PC & PHONES):
 7. REALISTIC DISTRACTORS: Options B, C, D must reflect realistic student calculation slips (${difficultyConfig.distractorRule}).
 8. OUTPUT: Return strictly pure plain text. Do not wrap in markdown code blocks (\`\`\`). Start immediately with the FORMAT SPECIFICATION header.`;
       } else {
-        return `Please generate ${totalQuestions} professional multiple choice questions in plain .txt format for:
+        return `Please generate ${totalQuestions} professional conceptual multiple choice questions in plain .txt format for:
 Grade: ${cleanGrade} (${formattedLevel})
 Subject: ${subject}
 Topic: ${mainTopic}
+Question Mode: Conceptual & Reasoning
 Exam Focus: ${examFocusStyle}
 Time Limit: ${timeLimit} minutes
 
@@ -394,32 +428,62 @@ Time Limit: ${timeLimit} minutes
 ================================================================
 
 For each question:
-1. [Clear conceptual or scenario-based question statement; wrap any scientific symbols or formulas in $...$]
-   A) [Option A]
-   B) [Option B]
-   C) [Option C]
-   D) [Option D]
+1. [Clear conceptual, analytical, or scenario-based question statement written in natural prose; use inline $...$ only when a scientific symbol, chemical formula, or unit naturally appears, e.g. $\\text{CO}_2$, $\\text{ATP}$, or $\\text{pH}$]
+   A) [Concise conceptual option A]
+   B) [Concise conceptual option B]
+   C) [Concise conceptual option C]
+   D) [Concise conceptual option D]
    Answer: [Correct Option Letter: A, B, C, or D]
    Explanation: **Core Concept:**
-[Scientific principle, historical context, or fundamental definition]
+[State the underlying principle, scientific law, historical context, or fundamental definition]
 
 **Key Reason:**
-[Why the chosen option is correct and accurate]
+[Explain clearly why the correct option follows from the concept]
 
 **Distractor Analysis:**
-[Brief reason why other plausible choices are incorrect]
+[Briefly explain why the other plausible choices are incorrect or reflect misconceptions]
 
 **Answer:** Option [Letter]
 
-CRITICAL RULES:
-1. STRICTLY NO NUMBERS IN EXPLANATION: Do NOT write "1. Concept 2. Reason". Use ONLY bold thematic labels (**Core Concept:**, **Key Reason:**, **Distractor Analysis:**, **Answer:**).
-2. BALANCED RANDOM ANSWER SELECTION: Distribute the correct answer evenly across A, B, C, and D without bias.
-3. EXAM FOCUS & DIFFICULTY (${difficulty.toUpperCase()} - ${examFocusStyle}): ${focusDirective} ${difficultyConfig.briefGuide}
-4. OUTPUT: Return strictly pure plain text. Do not wrap in markdown code blocks (\`\`\`). Start immediately with the FORMAT SPECIFICATION header.`;
+CRITICAL CONCEPTUAL RULES:
+1. CONCEPT-FIRST QUESTIONS (NO FORCED CALCULATIONS):
+   - Focus on conceptual understanding, cause-and-effect reasoning, comparisons, and real-world scenarios rather than numerical drill problems.
+   - Write questions and options in crisp, clear prose. Use inline $...$ ONLY when a scientific symbol, chemical formula, or unit naturally belongs in the sentence (e.g. $\\text{H}_2\\text{O}$, $\\text{CO}_2$, $\\text{ATP}$). Do NOT force display equation blocks unless strictly needed.${phoneSafeConceptualNote}
+2. STRICTLY NO NUMBERS IN EXPLANATIONS:
+   - Do NOT write numbered lists like "1. Concept", "2. Reason", or "Step 1".
+   - Use ONLY bold thematic labels (**Core Concept:**, **Key Reason:**, **Distractor Analysis:**, **Answer:**).
+3. BALANCED RANDOM ANSWER SELECTION:
+   - Distribute correct option letters evenly and unpredictably across A, B, C, and D without bias.
+4. EXAM FOCUS & DIFFICULTY (${difficulty.toUpperCase()} - ${examFocusStyle}):
+   - ${focusDirective}
+   - ${difficultyConfig.briefGuide}
+5. PLAUSIBLE CONCEPTUAL DISTRACTORS:
+   - ${difficultyConfig.distractorRule}
+6. OUTPUT: Return strictly pure plain text. Do not wrap in markdown code blocks (\`\`\`). Start immediately with the FORMAT SPECIFICATION header.`;
       }
     }
 
     // DETAILED MASTER PROMPT MODE: Comprehensive curriculum rubric
+    const questionStructureTemplate = isMath
+      ? `QUESTION STRUCTURE (Repeat for all ${totalQuestions} questions):
+1. [Question text or scenario with exact LaTeX: $m = 1200\\text{ kg}$, $v = 24\\text{ m/s}$]
+   A) [Option A with exact LaTeX: $2400\\text{ N}$]
+   B) [Option B with exact LaTeX: $3600\\text{ N}$]
+   C) [Option C with exact LaTeX: $4800\\text{ N}$]
+   D) [Option D with exact LaTeX: $14400\\text{ N}$]
+   Answer: [Correct Option Letter: A, B, C, or D]
+   Explanation:
+[Provide vertical step-wise explanation without numbers according to rules below]`
+      : `QUESTION STRUCTURE (Repeat for all ${totalQuestions} questions):
+1. [Clear conceptual, analytical, or scenario-based question statement in natural prose; use inline $...$ only if a scientific symbol or formula naturally appears, e.g. $\\text{CO}_2$ or $\\text{ATP}$]
+   A) [Clear, concise conceptual Option A]
+   B) [Clear, concise conceptual Option B]
+   C) [Clear, concise conceptual Option C]
+   D) [Clear, concise conceptual Option D]
+   Answer: [Correct Option Letter: A, B, C, or D]
+   Explanation:
+[Provide structured conceptual explanation without numbered steps according to rules below]`;
+
     let subjectRules = '';
     if (isMath) {
       subjectRules = `CRITICAL FORMATTING & VERTICAL STEP-WISE EXPLANATION RULES (MANDATORY):
@@ -453,19 +517,31 @@ CRITICAL RULES:
 5. DISTRACTOR INTEGRITY:
    - ${difficultyConfig.distractorRule}`;
     } else {
-      subjectRules = `CRITICAL THEORY & CONCEPTUAL EXPLANATION RULES:
-1. STRICTLY NO NUMBERS IN EXPLANATION:
-   - Do NOT use numbered lists like "1. Definition 2. Reason".
-   - Structure explanations using bold thematic sections:
-     **Core Concept:** [State underlying scientific law, definition, or historical context]
-     **Key Reason:** [Explain exactly why the correct answer is valid]
-     **Distractor Analysis:** [Briefly clarify why plausible incorrect choices fail]
-     **Answer:** [Option Letter and summary statement]
-2. BALANCED RANDOM ANSWER DISTRIBUTION:
-   - Randomize correct option letters evenly across A, B, C, and D.`;
+      subjectRules = `CRITICAL CONCEPTUAL & REASONING EXPLANATION RULES (MANDATORY):
+1. CONCEPT-DRIVEN DESIGN WITH OPTIONAL INLINE SYMBOLS:
+   - Test deep understanding of principles, cause-and-effect reasoning, comparisons, and real-world application rather than plug-and-chug calculations.
+   - Keep prose natural, clear, and concise. Use inline LaTeX $...$ ONLY when a scientific symbol, chemical formula, or unit naturally appears in context (e.g. $\\text{CO}_2$, $\\text{ATP}$, $\\text{H}^+$, $\\text{pH}$).
+   - Never wrap ordinary English sentences inside $...$.${phoneSafeConceptualNote}
+2. STRICTLY NO NUMBERS IN EXPLANATION:
+   - Do NOT use numbered lists like "1. Definition 2. Reason" or "Step 1".
+   - Structure every explanation vertically using clean, bold thematic sections separated by blank lines:
+     **Core Concept:**
+     [State the underlying scientific law, definition, or theoretical/historical context]
+
+     **Key Reason:**
+     [Explain exactly why the correct option is accurate]
+
+     **Distractor Analysis:**
+     [Briefly clarify why the other plausible choices fail or reflect misconceptions]
+
+     **Answer:** [Option Letter and concise summary]
+3. BALANCED RANDOM ANSWER DISTRIBUTION:
+   - Randomize correct option letters evenly across A, B, C, and D.
+4. DISTRACTOR INTEGRITY:
+   - ${difficultyConfig.distractorRule}`;
     }
 
-    return `You are an expert exam professor and Ethiopian curriculum specialist creating a standardized ${totalQuestions}-question examination for ${formattedLevel} students in ${subject} (${examFocusStyle}).
+    return `You are an expert exam professor and Ethiopian curriculum specialist creating a standardized ${totalQuestions}-question ${isMath ? 'quantitative' : 'conceptual'} examination for ${formattedLevel} students in ${subject} (${examFocusStyle}).
 
 OUTPUT FORMAT REQUIREMENT:
 Return the exam strictly in clean plain text (.TXT format), ready for direct import into Sinahard Exam Studio.
@@ -482,15 +558,7 @@ Topic: ${mainTopic}
 Time Limit: ${timeLimit} minutes
 ================================================================
 
-QUESTION STRUCTURE (Repeat for all ${totalQuestions} questions):
-1. [Question text or scenario with exact LaTeX: $m = 1200\\text{ kg}$, $v = 24\\text{ m/s}$]
-   A) [Option A with exact LaTeX: $2400\\text{ N}$]
-   B) [Option B with exact LaTeX: $3600\\text{ N}$]
-   C) [Option C with exact LaTeX: $4800\\text{ N}$]
-   D) [Option D with exact LaTeX: $14400\\text{ N}$]
-   Answer: [Correct Option Letter: A, B, C, or D]
-   Explanation:
-[Provide step-wise explanation without numbers according to rules below]
+${questionStructureTemplate}
 
 ${focusDirective}
 ${difficultyConfig.summary}
@@ -499,6 +567,7 @@ ${subjectRules}
 
 EXAM PARAMETERS:
 - Total Questions: ${totalQuestions}
+- Question Mode: ${isMath ? 'Math / LaTeX Calculation' : 'Conceptual & Reasoning (Inline symbols only when needed)'}
 - Class Level: ${formattedLevel} (Grade: ${cleanGrade})
 - Specific Topics to Cover: ${topics || 'Standard curriculum'}
 - Exam Focus Style: ${examFocusStyle}
@@ -509,7 +578,7 @@ EXAM PARAMETERS:
   // Sample TXT Output Preview matching format
   const sampleTxtPreview = useMemo(() => {
     const cleanGrade = String(grade || '12');
-    const mainTopic = topics.split(',')[0]?.trim() || 'Classical Mechanics';
+    const mainTopic = topics.split(',')[0]?.trim() || (subjectType === 'calculation' ? 'Classical Mechanics' : 'Core Concepts');
     if (subjectType === 'calculation') {
       return `================================================================
 FORMAT SPECIFICATION:
@@ -561,20 +630,20 @@ Topic: ${mainTopic}
 Time Limit: ${timeLimit} minutes
 ================================================================
 
-1. Which organelle is primarily responsible for generating cellular ATP through oxidative phosphorylation?
-   A) Ribosome
-   B) Mitochondria
-   C) Golgi apparatus
-   D) Endoplasmic reticulum
+1. Why does the rate of cellular $\\text{ATP}$ production drop sharply when oxygen is absent from eukaryotic cells?
+   A) Glycolysis immediately halts in the cytoplasm
+   B) Oxygen is required as the final electron acceptor in oxidative phosphorylation
+   C) Mitochondria convert $\\text{CO}_2$ directly into glucose instead of energy
+   D) Ribosomes stop synthesizing digestive enzymes
    Answer: B
    Explanation: **Core Concept:**
-Mitochondria are the primary biochemical powerhouses of eukaryotic cells, executing the Krebs cycle and oxidative phosphorylation.
+Aerobic cellular respiration relies on the mitochondrial electron transport chain to generate the vast majority of cellular $\\text{ATP}$.
 
 **Key Reason:**
-Option B is correct because the inner mitochondrial cristae host the electron transport chain synthesizing ATP.
+Oxygen acts as the final electron acceptor at the end of the electron transport chain; without it, electron flow backs up and oxidative phosphorylation halts.
 
 **Distractor Analysis:**
-Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER facilitates lipid/protein synthesis.
+Glycolysis can still proceed anaerobically in the cytoplasm (Option A), mitochondria do not perform photosynthesis (Option C), and ribosomes are unrelated to direct $\\text{ATP}$ synthesis (Option D).
 
 **Answer:** Option B`;
     }
@@ -836,7 +905,15 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                   title="Toggle Phone-Safe Exact LaTeX prompt directives"
                 >
                   <Smartphone className="w-3 h-3" />
-                  <span>{optimizeForPhone ? 'Exact LaTeX: Active' : 'Exact LaTeX: Off'}</span>
+                  <span>
+                    {subjectType === 'calculation'
+                      ? optimizeForPhone
+                        ? 'Exact LaTeX: Active'
+                        : 'Exact LaTeX: Standard'
+                      : optimizeForPhone
+                      ? 'Phone-Safe Prose: On'
+                      : 'Phone-Safe Prose: Off'}
+                  </span>
                 </button>
 
                 <button
@@ -1333,7 +1410,7 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                     }`}
                   >
                     <Code className="w-3.5 h-3.5" />
-                    <span>LaTeX Prompt</span>
+                    <span>{subjectType === 'calculation' ? 'LaTeX Prompt' : 'Conceptual Prompt'}</span>
                   </button>
 
                   <button
@@ -1461,22 +1538,31 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                   className="w-full p-4 font-mono text-xs leading-relaxed rounded-[22px] bg-white dark:bg-[#070e1a] border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-zinc-100 select-all focus:outline-none"
                 />
 
-                {/* Live KaTeX Math Rendering Preview Card */}
+                {/* Live Rendering Preview Card (Syncs with Math/LaTeX vs Conceptual mode) */}
                 <div className="p-3.5 rounded-2xl liquid-glass-subtle space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-xs text-slate-900 dark:text-white">
-                        Live KaTeX Math Rendering Preview
+                        {subjectType === 'calculation'
+                          ? 'Live KaTeX Math Rendering Preview'
+                          : 'Live Conceptual Rendering Preview'}
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
-                        · Inline <code className="font-mono">$...$</code> &amp; Display <code className="font-mono">[ ... ]</code>
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">
+                        ·{' '}
+                        {subjectType === 'calculation' ? (
+                          <>
+                            Inline <code className="font-mono">$...$</code> &amp; Display{' '}
+                            <code className="font-mono">[ ... ]</code>
+                          </>
+                        ) : (
+                          'Natural prose with optional inline symbols'
+                        )}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowLatexLivePreview((prev) => !prev)}
-                      className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer shrink-0"
                     >
                       {showLatexLivePreview ? 'Hide Preview' : 'Show Preview'}
                     </button>
@@ -1486,9 +1572,11 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                     <div className="p-3 rounded-xl bg-white dark:bg-[#070e1a] border border-slate-200/70 dark:border-white/10 space-y-2 text-xs text-slate-900 dark:text-zinc-100">
                       <MathRenderer
                         text={
-                          includeLatexTables
-                            ? `Sample Question: For the linear system with coefficient matrix $A = \\begin{pmatrix} 2 & -1 \\\\ 1 & 3 \\end{pmatrix}$ and force $F = 3600\\text{ N}$, the derived acceleration is:\n[ a = \\frac{v - u}{t} = \\frac{24 - 0}{8} = 3\\text{ m/s}^2 ]\nOptions: A) $2400\\text{ N}$  B) $3600\\text{ N}$  C) $\\frac{3\\sqrt{2}}{4}\\text{ m/s}$`
-                            : `Sample Question: A body of mass $m = 1200\\text{ kg}$ accelerates uniformly to $v = 24\\text{ m/s}$ in $t = 8\\text{ s}$ at $\\theta = 30^\\circ$.\n[ a = \\frac{v - u}{t} = 3\\text{ m/s}^2 \\quad \\Rightarrow \\quad F = ma = 3600\\text{ N} ]\nOptions: A) $2400\\text{ N}$  B) $3600\\text{ N}$  C) $\\frac{3\\sqrt{2}}{4}\\text{ m/s}$`
+                          subjectType === 'calculation'
+                            ? includeLatexTables
+                              ? `Sample Question: For the linear system with coefficient matrix $A = \\begin{pmatrix} 2 & -1 \\\\ 1 & 3 \\end{pmatrix}$ and force $F = 3600\\text{ N}$, the derived acceleration is:\n[ a = \\frac{v - u}{t} = \\frac{24 - 0}{8} = 3\\text{ m/s}^2 ]\nOptions: A) $2400\\text{ N}$  B) $3600\\text{ N}$  C) $\\frac{3\\sqrt{2}}{4}\\text{ m/s}$`
+                              : `Sample Question: A body of mass $m = 1200\\text{ kg}$ accelerates uniformly to $v = 24\\text{ m/s}$ in $t = 8\\text{ s}$ at $\\theta = 30^\\circ$.\n[ a = \\frac{v - u}{t} = 3\\text{ m/s}^2 \\quad \\Rightarrow \\quad F = ma = 3600\\text{ N} ]\nOptions: A) $2400\\text{ N}$  B) $3600\\text{ N}$  C) $\\frac{3\\sqrt{2}}{4}\\text{ m/s}$`
+                            : `Sample Conceptual Question: Why does cellular $\\text{ATP}$ production drop sharply when oxygen is absent?\n**Core Concept:** Aerobic respiration relies on the electron transport chain.\n**Key Reason:** Oxygen serves as the final electron acceptor; without it, oxidative phosphorylation halts while only low-yield anaerobic glycolysis continues.`
                         }
                       />
                     </div>
@@ -1497,9 +1585,10 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400 px-1 flex-wrap gap-2">
                   <span>Compatible with ChatGPT, Claude, Gemini &amp; DeepSeek.</span>
-                  <span className="text-slate-900 dark:text-white font-semibold flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Exact KaTeX Math &amp; Balanced Answer Keys (A, B, C, D)
+                  <span className="text-slate-900 dark:text-white font-semibold">
+                    {subjectType === 'calculation'
+                      ? 'Exact KaTeX Math · Balanced Answer Keys (A–D)'
+                      : 'Conceptual Reasoning · Optional Inline Symbols · Balanced Keys (A–D)'}
                   </span>
                 </div>
               </div>
@@ -1515,7 +1604,17 @@ Ribosomes synthesize proteins, the Golgi modifies macromolecules, and the ER fac
                   className="w-full p-4 font-mono text-xs leading-relaxed rounded-[22px] bg-white dark:bg-[#070e1a] border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-zinc-100 select-all focus:outline-none"
                 />
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 px-1">
-                  Format standard: questions, options A–D, Answer letter, and bracket formula display <strong>{'[ a = \\frac{v - u}{t} ]'}</strong>.
+                  {subjectType === 'calculation' ? (
+                    <>
+                      Format standard: questions, options A–D, Answer letter, and bracket formula display{' '}
+                      <strong>{'[ a = \\frac{v - u}{t} ]'}</strong>.
+                    </>
+                  ) : (
+                    <>
+                      Conceptual format standard: scenario/principle question, options A–D, Answer letter, and structured{' '}
+                      <strong>Core Concept / Key Reason / Distractor Analysis</strong> explanation.
+                    </>
+                  )}
                 </p>
               </div>
             )}

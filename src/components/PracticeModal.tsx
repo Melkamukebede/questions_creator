@@ -358,7 +358,7 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
       <div
         key={q.id || qIndex}
         id={`practice-question-${qIndex}`}
-        className="p-5 sm:p-6 rounded-[28px] liquid-glass-subtle border border-white/80 dark:border-white/10 shadow-xs space-y-4 transition-all text-zinc-900 dark:text-white"
+        className="p-5 sm:p-6 rounded-[28px] liquid-glass-subtle border border-white/80 dark:border-white/10 shadow-xs space-y-4 transition-all text-zinc-900 dark:text-white min-w-0 max-w-full overflow-hidden"
       >
         {/* Card Header: Question Number & Instant Evaluation Pill */}
         <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-zinc-100 dark:border-white/10">
@@ -395,7 +395,7 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
         </div>
 
         {/* Question Statement */}
-        <div className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white leading-relaxed pt-1">
+        <div className="text-base sm:text-lg font-medium text-zinc-900 dark:text-white leading-relaxed pt-1 min-w-0 max-w-full break-words whitespace-normal">
           <MathRenderer content={cleanText} />
         </div>
 
@@ -514,17 +514,17 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
                     handleSelectOption(qIndex, optIdx);
                   }
                 }}
-                className={`flex items-center gap-3.5 p-3.5 sm:p-4 rounded-[20px] border transition-all select-none ${
+                className={`flex items-start gap-3 sm:gap-3.5 p-3.5 sm:p-4 rounded-[20px] border transition-all select-none w-full min-w-0 max-w-full overflow-hidden ${
                   isDisabled ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.995]'
                 } ${optionCardClasses}`}
               >
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${badgeClasses}`}
+                  className={`w-7 h-7 mt-0.5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${badgeClasses}`}
                 >
                   {letter}
                 </div>
-                <div className="flex-1 text-sm sm:text-base leading-relaxed space-y-2">
-                  <MathRenderer content={optText} inline />
+                <div className="flex-1 min-w-0 max-w-full text-sm sm:text-base leading-relaxed space-y-2 break-words whitespace-normal">
+                  <MathRenderer content={optText} inline className="block w-full max-w-full break-words whitespace-normal" />
                   {q.optionImages?.[optIdx] && (
                     <div className="pt-1">
                       <div
@@ -562,10 +562,10 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
                 </div>
                 {/* Immediate Right-Side Visual Icon Check / Cross Indicator */}
                 {isChoiceEvaluated && isCorrectOption && (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 mt-0.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 )}
                 {isChoiceEvaluated && isSelected && !isCorrectOption && (
-                  <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
+                  <XCircle className="w-5 h-5 mt-0.5 text-rose-600 dark:text-rose-400 shrink-0" />
                 )}
               </div>
             );
@@ -574,19 +574,20 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
 
         {/* Correct Answer Shower & Step-by-Step Explanation Content (Rendered ABOVE the button) */}
         {isAnswered && isExplRevealed && (
-          <div className="p-4 sm:p-5 rounded-[24px] bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-emerald-500/30 text-zinc-900 dark:text-white space-y-3 animate-in fade-in duration-200">
+          <div className="p-4 sm:p-5 rounded-[24px] bg-zinc-50 dark:bg-[#070e1a] border border-zinc-200 dark:border-emerald-500/30 text-zinc-900 dark:text-white space-y-3 animate-in fade-in duration-200 min-w-0 max-w-full overflow-hidden">
             {/* Banner Header: Correct Answer Shower */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-zinc-200/80 dark:border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5 pb-3 border-b border-zinc-200/80 dark:border-white/10 min-w-0">
+              <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                <div className="w-8 h-8 mt-0.5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
                   {String.fromCharCode(65 + q.correct)}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400 block">
                     Correct Answer
                   </span>
-                  <div className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white">
-                    Option {String.fromCharCode(65 + q.correct)}: <MathRenderer content={q.options[q.correct]} inline />
+                  <div className="text-sm sm:text-base font-bold text-zinc-950 dark:text-white break-words whitespace-normal">
+                    Option {String.fromCharCode(65 + q.correct)}:{' '}
+                    <MathRenderer content={q.options[q.correct]} inline />
                   </div>
                 </div>
               </div>
@@ -608,11 +609,11 @@ export const PracticeModal: React.FC<PracticeModalProps> = ({
             </div>
 
             {/* Step-by-Step Solution & LaTeX formulas */}
-            <div className="pt-1 text-xs sm:text-sm text-zinc-700 dark:text-zinc-200 space-y-1.5">
+            <div className="pt-1 text-xs sm:text-sm text-zinc-700 dark:text-zinc-200 space-y-1.5 min-w-0 max-w-full">
               <div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
                 <span>Step-by-step Solution:</span>
               </div>
-              <div className="leading-relaxed">
+              <div className="leading-relaxed min-w-0 max-w-full break-words whitespace-normal">
                 <MathRenderer
                   content={
                     q.explanation?.trim()

@@ -268,13 +268,58 @@ html.dark .liquid-glass-btn:hover {
 }
 
 .katex-rendered {
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Allow inline KaTeX formulas & wide \text{...} sentences in choices to wrap vertically */
+.katex-rendered .katex {
+  font-size: 1.04em;
+  max-width: 100%;
+  white-space: normal !important;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-.katex-rendered .katex {
-  font-size: 1.05em;
+.katex-rendered .katex .katex-html {
+  white-space: normal !important;
   max-width: 100%;
+}
+
+.katex-rendered .katex .katex-html > .base {
+  display: inline;
+  white-space: normal;
+}
+
+.katex-rendered .katex .mord.text {
+  white-space: normal !important;
+}
+
+/* Keep individual atomic math structures intact while outer sentences/terms wrap vertically */
+.katex-rendered .katex .mfrac,
+.katex-rendered .katex .sqrt,
+.katex-rendered .katex .mtable,
+.katex-rendered .katex .msupsub,
+.katex-rendered .katex .vlist-t,
+.katex-rendered .katex .accent,
+.katex-rendered .katex .op-limits {
+  white-space: nowrap !important;
+}
+
+/* Preserve normal horizontal layout & scroll inside standalone display equation blocks */
+.katex-display-wrapper .katex,
+.katex-display .katex,
+.katex-display-wrapper .katex .katex-html,
+.katex-display .katex .katex-html {
+  white-space: nowrap !important;
+}
+
+.katex-display-wrapper .katex .katex-html > .base,
+.katex-display .katex .katex-html > .base {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .katex-display-content {
